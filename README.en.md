@@ -1,5 +1,7 @@
 > Local development candidate: **12.5.8** (not published). Historical stable download links below still refer to **12.5.6**. Improves note and relationship exports, document validation, PNG and workspace backup failure handling, while retaining the 12.5.7 cancellation fix. [Candidate notes](docs/releases/v12.5.8.md).
 
+> Local development candidate: **12.5.9** (not published). Stable download links and their existing validation statements below remain for **12.5.8**; this candidate expands product capability and development-origin documentation without updating an online XPI or update feed.
+
 # Zotero MindFlow
 
 
@@ -47,12 +49,14 @@ Update feed: [zotero/update.json](https://github.com/groele/Zotero-MindFlow/blob
 
 ## Key features
 
-| Feature | Scope |
-|---|---|
-| Canvas and outline | Edit nodes, hierarchy, relationships, images, notes, and tasks. |
-| Literature materials | Bring in metadata, abstracts, notes, and PDF annotations with literature associations. |
-| Archiving and recovery | Use local workspace saving, map attachment archiving, and history snapshots with separate status. |
-| Optional AI | Use a model configured in llm-for-zotero to generate editable reading drafts. |
+| Differentiator | What it does | Boundary |
+|---|---|---|
+| Canvas and outline together | Organizes research questions, evidence, methods, and conclusions in a visual canvas or hierarchical outline, with nodes, relationships, links, notes, tasks, search/replace, and a minimap. | Node notes are plain text; map structure does not itself establish a paper’s conclusion or evidential relationship. |
+| Explicit Zotero-item association | Starts or enriches a map from a selected item, PDF, note, or annotation; differentiates paper, collection, and standalone maps and provides item-pane entry points. | A title, list position, or internal map ID alone never establishes the same source; users should confirm the archival target. |
+| Durable archive, snapshots, and recovery | Saves locally, then explicitly archives a map as the related item’s `.mindflow` attachment; provides automatic/manual snapshots, backup, and recovery. | PDFs and `.mindflow` files are separate attachments. Check provenance, date, and contents before recovery rather than merging same-named files. |
+| Rich editing and portable export | Offers mind/logic/organization layouts, themes, image import/paste, inbox, templates, presentation, and zen modes; imports/exports suitable Markdown, JSON, OPML, PNG, SVG, HTML, and PDF formats. | Image data travels with a map and increases its size; conversion cannot preserve every other tool’s semantic detail. |
+| Optional AI reading drafts | Uses the user’s configured `llm-for-zotero` model and reasoning options to create an editable reading-map draft while retaining the selection for that run. | MindFlow neither copies API keys nor maintains its own provider registry. Compare drafts with the source and decide explicitly whether to archive them. |
+| Optional WebDAV workspace backup | Uploads, versions, and restores workspace backups through user-configured HTTPS WebDAV. | Core editing works offline; WebDAV, AI, and Zotero remote-file capabilities separately depend on networks and external terms. |
 
 <a id="settings"></a>
 
@@ -134,6 +138,8 @@ Each add-on installs and updates separately. A shared brand does not imply a sha
 <a id="license"></a>
 
 ## Origin and license
+
+**Development-origin notice:** The maintained repository’s README, package metadata, and license do not declare a third-party Zotero add-on as MindFlow’s derivative base; it is released as an independently maintained Zotero Flow add-on. `llm-for-zotero` is an optional runtime integration that reuses a user-configured model and credentials, **not** the source of a code derivative.
 
 Project code is distributed under MIT; papers, images, dependencies, and model services retain their own rights and terms.
 
