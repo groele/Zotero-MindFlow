@@ -1,9 +1,10 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   LayoutNode, ConnectionCurve, ViewportTransform, ThemeColors,
   RelationshipLink
 } from '../../core/model/types';
 import { NodeCard } from '../node/NodeCard';
+import { relationshipCurves } from '../../core/layout/relationshipGeometry';
 import {
   Plus, ArrowDown, Edit3, ImagePlus, Link2, Palette, Trash2, X
 } from 'lucide-react';
@@ -100,6 +101,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   // Floating Micro-toolbar & Relationship Connection states
   const [connectingFromId, setConnectingFromId] = useState<string | null>(null);
   const [showQuickColors, setShowQuickColors] = useState(false);
+  const curves = useMemo(() => relationshipCurves(nodes, relationships), [nodes, relationships]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -369,17 +371,18 @@ export const Canvas: React.FC<CanvasProps> = ({
             <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
               <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.08" />
             </filter>
-            <marker
-              id="rel-arrow"
+            {curves.map(({ link: rel }, index) => <marker
+              key={rel.id}
+              id={`rel-arrow-${index}`}
               viewBox="0 0 10 10"
-              refX="9"
+              refX="8"
               refY="5"
               markerWidth="6"
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#8b5cf6" />
-            </marker>
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill={rel.color || '#8b5cf6'} />
+            </marker>)}
           </defs>
 
           {/* Tree Hierarchical Connections */}
@@ -396,32 +399,18 @@ export const Canvas: React.FC<CanvasProps> = ({
           ))}
 
           {/* Cross-node Relationship Links */}
-          {relationships.map((rel) => {
-            const from = nodes.find((n) => n.id === rel.fromId);
-            const to = nodes.find((n) => n.id === rel.toId);
-            if (!from || !to) return null;
-            const fromCenter = { x: from.x + from.width / 2, y: from.y + from.height / 2 };
-            const toCenter = { x: to.x + to.width / 2, y: to.y + to.height / 2 };
-            const dx = toCenter.x - fromCenter.x;
-            const dy = toCenter.y - fromCenter.y;
-            const dist = Math.hypot(dx, dy) || 1;
-            const curvature = Math.min(Math.max(dist * 0.2, 30), 80);
-            const midX = (fromCenter.x + toCenter.x) / 2;
-            const midY = (fromCenter.y + toCenter.y) / 2;
-            const ctrlX = midX - (dy / dist) * curvature;
-            const ctrlY = midY + (dx / dist) * curvature;
-            const pathD = `M ${fromCenter.x} ${fromCenter.y} Q ${ctrlX} ${ctrlY} ${toCenter.x} ${toCenter.y}`;
+          {curves.map(({ link: rel, path }, index) => {
             const strokeColor = rel.color || '#8b5cf6';
 
             return (
               <path
                 key={rel.id}
-                d={pathD}
+                d={path}
                 fill="none"
                 stroke={strokeColor}
                 strokeWidth="2"
                 strokeDasharray={rel.style === 'solid' ? undefined : '5,4'}
-                markerEnd="url(#rel-arrow)"
+                markerEnd={`url(#rel-arrow-${index})`}
                 className={`transition-colors duration-200 ${focusedTag ? 'opacity-25' : 'opacity-80 hover:opacity-100'}`}
               />
             );
@@ -431,23 +420,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         {/* DOM Layer for Interactive Nodes & Relationship Labels */}
         <div className="absolute inset-0 pointer-events-auto">
           {/* Relationship Editable Labels */}
-          {relationships.map((rel) => {
-            const from = nodes.find((n) => n.id === rel.fromId);
-            const to = nodes.find((n) => n.id === rel.toId);
-            if (!from || !to) return null;
-            const fromCenter = { x: from.x + from.width / 2, y: from.y + from.height / 2 };
-            const toCenter = { x: to.x + to.width / 2, y: to.y + to.height / 2 };
-            const dx = toCenter.x - fromCenter.x;
-            const dy = toCenter.y - fromCenter.y;
-            const dist = Math.hypot(dx, dy) || 1;
-            const curvature = Math.min(Math.max(dist * 0.2, 30), 80);
-            const midX = (fromCenter.x + toCenter.x) / 2;
-            const midY = (fromCenter.y + toCenter.y) / 2;
-            const ctrlX = midX - (dy / dist) * curvature;
-            const ctrlY = midY + (dx / dist) * curvature;
-            const labelX = 0.25 * fromCenter.x + 0.5 * ctrlX + 0.25 * toCenter.x;
-            const labelY = 0.25 * fromCenter.y + 0.5 * ctrlY + 0.25 * toCenter.y;
-
+          {curves.map(({ link: rel, labelX, labelY }) => {
             return (
               <div
                 key={`label-${rel.id}`}

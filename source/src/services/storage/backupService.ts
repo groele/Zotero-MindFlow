@@ -68,6 +68,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 
 function validateWorkspaceData(value: unknown): WorkspaceBackupData {
+  if (new TextEncoder().encode(JSON.stringify(value)).byteLength > MAX_BACKUP_BYTES) {
+    throw new Error('备份文件超过 20 MB 安全恢复上限；请减少历史快照或分批导出导图 JSON');
+  }
   if (!isRecord(value) || !Array.isArray(value.documents)) {
     throw new Error('无效的 MindFlow 备份文件结构');
   }
@@ -251,19 +254,26 @@ export class BackupService {
   public static async exportFullWorkspaceBackup(): Promise<void> {
     const backupData = await this.getFullWorkspaceData();
     const serialized = JSON.stringify(backupData, null, 2);
+    if (new TextEncoder().encode(serialized).byteLength > MAX_BACKUP_BYTES) {
+      throw new Error('备份文件超过 20 MB 安全恢复上限；请减少历史快照或分批导出导图 JSON');
+    }
     const blob = new Blob([serialized], { type: 'application/json;charset=utf-8;' });
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
     const filename = `MindFlow_Workspace_Backup_${dateStr}.json`;
 
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    let a: HTMLAnchorElement | undefined;
+    try {
+      a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+    } finally {
+      try { a?.remove(); }
+      finally { window.setTimeout(() => URL.revokeObjectURL(url), 1000); }
+    }
   }
 
   // 6a. Import from WorkspaceBackupData object

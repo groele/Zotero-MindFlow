@@ -693,6 +693,54 @@
       } finally { fixture.remove(); }
     });
     tabs.close(auditTab); await host._closeSaveQueue;
+    await run('native document validation rejects impossible task dates and malformed relationship attributes', async () => {
+      const candidate = { ...map('Invalid Native Document'), id: 'native_invalid', revision: 0 };
+      candidate.root.task = { status: 'todo', dueDate: '2025-02-29' };
+      let rejected = false;
+      try { await host.workspaceStorage('commitDocument', { doc: candidate, expectedRevision: 0 }); }
+      catch (_) { rejected = true; }
+      check(rejected, 'invalid task date was written');
+      delete candidate.root.task;
+      candidate.relationships = [{ id: 'bad', fromId: candidate.root.id, toId: candidate.root.id, label: {} }];
+      rejected = false;
+      try { await host.workspaceStorage('commitDocument', { doc: candidate, expectedRevision: 0 }); }
+      catch (_) { rejected = true; }
+      check(rejected, 'invalid relationship was written');
+      check(!(await host.workspaceStorage('get', { key: 'mindflow_doc_native_invalid' })), 'invalid test touched storage');
+    });
+    await run('native export integrity matrix and regular/narrow light/dark canvas', async () => {
+      const fixture = win.document.createElementNS('http://www.w3.org/1999/xhtml', 'iframe');
+      fixture.style.cssText = 'position:fixed;inset:0;width:900px;height:650px;z-index:999999';
+      fixture.src = 'chrome://mindflow/content/integrity-test.html';
+      win.document.documentElement.appendChild(fixture);
+      try {
+        const api = await waitFor(() => fixture.contentWindow?.wrappedJSObject?.__mindflowIntegrityTest, 'native export fixture');
+        const verification = await api.verify();
+        await IOUtils.writeUTF8(PathUtils.join(Zotero.DataDirectory.dir, 'native-export-results.json'), JSON.stringify(verification.results, null, 2));
+        for (const [name, contents] of Object.entries(verification.files)) {
+          if (name.endsWith('.base64')) await IOUtils.write(PathUtils.join(Zotero.DataDirectory.dir, name.replace('.base64', '')),
+            Uint8Array.from(win.atob(contents), c => c.charCodeAt(0)));
+          else await IOUtils.writeUTF8(PathUtils.join(Zotero.DataDirectory.dir, name), contents);
+        }
+        for (const themeId of ['classic-blue', 'dark-nebula', 'paper-reading']) {
+          for (const width of [900, 440]) {
+            fixture.style.width = `${width}px`;
+            await Zotero.Promise.delay(80); api.render(themeId, 'mindmap');
+            await Zotero.Promise.delay(80);
+            const doc = fixture.contentDocument, view = fixture.contentWindow;
+            check(doc.querySelectorAll('path[marker-end]').length === 2, 'live canvas relationship arrows lost');
+            check(doc.documentElement.scrollWidth <= width, 'canvas page overflow');
+            const canvas = win.document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
+            canvas.width = width; canvas.height = 650;
+            canvas.getContext('2d').drawWindow(view, 0, 0, width, 650, 'rgb(255,255,255)');
+            await IOUtils.write(PathUtils.join(Zotero.DataDirectory.dir, `canvas-${themeId}-${width}.png`),
+              Uint8Array.from(win.atob(canvas.toDataURL('image/png').split(',')[1]), c => c.charCodeAt(0)));
+          }
+        }
+        check(verification.results.length === 11 && verification.results.every(result => result.pass),
+          JSON.stringify(verification.results.filter(result => !result.pass)));
+      } finally { fixture.remove(); }
+    });
     try {
       tabs.select(tabA);
       const canvas=win.document.createElementNS('http://www.w3.org/1999/xhtml','canvas');

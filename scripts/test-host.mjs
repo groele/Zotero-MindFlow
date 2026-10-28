@@ -51,6 +51,33 @@ function hangingTurn(_request, _onEvent, { signal }) {
     if (signal.aborted) abort(); else signal.addEventListener('abort', abort, { once: true });
   });
 }
+
+for (const mode of ['cancel', 'shutdown']) {
+  test(`${mode} releases PDF preparation before an unresponsive worker finishes`, async () => {
+    const f = llmFixture(), paper = f.paper('WAITPDF1'), controller = new AbortController();
+    const pdf = f.attachment('WAITPDF2', 1, paper.id, '/waiting.pdf'); pdf.isPDFAttachment = () => true;
+    paper.attachments.push(pdf.id); f.disk.set('/waiting.pdf', 'PDF');
+    f.IOUtils.stat = async () => ({ size: 100, lastModified: 1 });
+    let started, release, watchdog;
+    const ready = new Promise(resolve => { started = resolve; });
+    f.Zotero.PDFWorker = { getFullText: () => { started(); return new Promise(resolve => { release = resolve; }); } };
+    const pending = f.host.preparePaperAnalysis(`zotero://select/library/items/${paper.key}`,
+      { readingMode: 'full', signal: controller.signal });
+    await ready;
+    if (mode === 'shutdown') f.host.shutdown(); else controller.abort();
+    try {
+      await assert.rejects(Promise.race([pending, new Promise((_, reject) => {
+        watchdog = setTimeout(() => reject(new Error('PDF cancellation is still waiting')), 100);
+      })]), /已取消/);
+      assert.equal(f.host._aiCancellers.size, 0);
+    } finally {
+      clearTimeout(watchdog); release({ text: 'Late worker text', extractedPages: 1, totalPages: 1 });
+      await pending.catch(() => {});
+    }
+    assert.equal(f.host._aiPdfTextCache?.size || 0, 0);
+    assert.equal(f.host._aiPrepared?.size || 0, 0);
+  });
+}
 test('upstream call timeout remains effective when a caller supplies cancellation signal', async () => {
   const f = llmFixture(hangingTurn), controller = new AbortController();
   let watchdog;
@@ -834,6 +861,26 @@ test('host storage applies the same strict document-shape checks before any writ
 test('stale revision-one writer cannot recreate a deleted document', async () => {
   const f=fixture();f.disk.set('/data/mindflow/workspace/mindflow_deleted_doc_doc_a.json','123');
   await assert.rejects(()=>f.host.workspaceStorage('setMany',{items:{mindflow_doc_doc_a:JSON.stringify(f.map())}}),/删除|CONFLICT/);
+});
+
+test('host rejects invalid calendar dates and rendering attributes without touching disk', async () => {
+  const f = fixture();
+  for (const attributes of [
+    { task: { status: 'todo', dueDate: '2025-02-29' } },
+    { task: { status: 'todo', dueDate: '2026-04-31' } },
+    { task: { status: 'todo', dueDate: '0000-01-01' } },
+    { isExpanded: 'false' }, { shape: 'circle' }, { type: {} }, { textColor: {} },
+  ]) {
+    const doc = f.map(); Object.assign(doc.root, attributes);
+    await assert.rejects(() => f.host.workspaceStorage('commitDocument', { doc, expectedRevision: 0 }));
+  }
+  for (const attributes of [{ label: {} }, { style: 'unknown' }, { color: 123 }]) {
+    const doc = f.map(); doc.relationships = [{ id: 'rel', fromId: doc.root.id, toId: doc.root.id, ...attributes }];
+    await assert.rejects(() => f.host.workspaceStorage('commitDocument', { doc, expectedRevision: 0 }));
+  }
+  assert.equal(f.disk.size, 0);
+  const doc = f.map(); doc.root.task = { status: 'todo', dueDate: '2024-02-29' };
+  assert.equal((await f.host.workspaceStorage('commitDocument', { doc, expectedRevision: 0 })).root.task.dueDate, '2024-02-29');
 });
 test('archive refuses a document deleted from workspace', async () => {
   const f=fixture(),p=f.paper('PAPERAAA');f.disk.set('/data/mindflow/workspace/mindflow_deleted_doc_doc_a.json','123');

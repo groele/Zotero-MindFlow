@@ -6,6 +6,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
+function isCalendarDate(value: unknown): boolean {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || value.startsWith('0000-')) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 export function validateMindMapDocument(value: unknown, label = '导图'): MindMapDocument {
   if (!isRecord(value) || typeof value.id !== 'string' || !/^[a-zA-Z0-9_-]{1,148}$/.test(value.id) ||
       typeof value.title !== 'string' ||
@@ -29,6 +35,11 @@ export function validateMindMapDocument(value: unknown, label = '导图'): MindM
     }
     if ((entry.node.note !== undefined && typeof entry.node.note !== 'string') ||
         (entry.node.link !== undefined && typeof entry.node.link !== 'string') ||
+        (entry.node.isExpanded !== undefined && typeof entry.node.isExpanded !== 'boolean') ||
+        (entry.node.type !== undefined && !['topic', 'text', 'task', 'link', 'image', 'note'].includes(entry.node.type as string)) ||
+        (entry.node.shape !== undefined && !['rounded', 'pill', 'rectangle', 'underline'].includes(entry.node.shape as string)) ||
+        (entry.node.color !== undefined && typeof entry.node.color !== 'string') ||
+        (entry.node.textColor !== undefined && typeof entry.node.textColor !== 'string') ||
         (entry.node.tags !== undefined && (!Array.isArray(entry.node.tags) || !entry.node.tags.every(tag => typeof tag === 'string'))) ||
         (entry.node.icons !== undefined && (!Array.isArray(entry.node.icons) || !entry.node.icons.every(icon => typeof icon === 'string')))) {
       throw new Error(`${label}包含格式无效的节点属性`);
@@ -44,7 +55,7 @@ export function validateMindMapDocument(value: unknown, label = '导图'): MindM
     if (entry.node.task !== undefined) {
       if (!isRecord(entry.node.task) || !['todo', 'doing', 'done'].includes(String(entry.node.task.status)) ||
           (entry.node.task.priority !== undefined && ![1, 2, 3].includes(entry.node.task.priority as number)) ||
-          (entry.node.task.dueDate !== undefined && (typeof entry.node.task.dueDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(entry.node.task.dueDate))) ||
+          (entry.node.task.dueDate !== undefined && !isCalendarDate(entry.node.task.dueDate)) ||
           (entry.node.task.progress !== undefined && (typeof entry.node.task.progress !== 'number' || !Number.isFinite(entry.node.task.progress) || entry.node.task.progress < 0 || entry.node.task.progress > 100))) {
         throw new Error(`${label}包含格式无效的任务属性`);
       }
@@ -65,8 +76,11 @@ export function validateMindMapDocument(value: unknown, label = '导图'): MindM
       if (!isRecord(relationship) || typeof relationship.id !== 'string' ||
           typeof relationship.fromId !== 'string' || typeof relationship.toId !== 'string' ||
           !relationship.id || relationshipIds.has(relationship.id) ||
+          (relationship.label !== undefined && typeof relationship.label !== 'string') ||
+          (relationship.color !== undefined && typeof relationship.color !== 'string') ||
+          (relationship.style !== undefined && !['dashed', 'solid'].includes(relationship.style as string)) ||
           !seenNodeIds.has(relationship.fromId) || !seenNodeIds.has(relationship.toId)) {
-        throw new Error(`${label}包含指向不存在节点的关系线`);
+        throw new Error(`${label}的关系线属性、ID 或节点引用无效`);
       }
       relationshipIds.add(relationship.id);
     }

@@ -13,3 +13,10 @@ await build({ configFile: false, root: path.join(root, 'source'), plugins: [reac
     entry: path.join(root, 'source/tests/modal-focus-fixture.tsx'), name: 'MindFlowModalTest',
     formats: ['iife'], fileName: () => 'modal-test.iife.js' } } });
 await writeFile(path.join(outDir, 'modal-test.html'), '<!doctype html><html><head><meta charset="UTF-8"><link rel="stylesheet" href="assets/mindflow.css"></head><body><div id="root"></div><script src="assets/modal-test.iife.js"></script></body></html>');
+await build({ configFile: false, root: path.join(root, 'source'), plugins: [react()],
+  resolve: { alias: { '@': path.join(root, 'source/src') } },
+  define: { 'process.env.NODE_ENV': '"production"', 'process.env': '{"NODE_ENV":"production"}', global: 'window' },
+  build: { outDir, emptyOutDir: false, lib: {
+    entry: path.join(root, 'source/tests/integrity-fixture.tsx'), name: 'MindFlowIntegrityTest',
+    formats: ['iife'], fileName: () => 'integrity-test.iife.js' } } });
+await writeFile(path.join(outDir, 'integrity-test.html'), '<!doctype html><html><head><meta charset="UTF-8"><link rel="stylesheet" href="assets/mindflow.css"><style>html,body,#root{width:100%;height:100%;margin:0;overflow:hidden}</style></head><body><div id="root"></div><script src="assets/integrity-test.iife.js"></script></body></html>');

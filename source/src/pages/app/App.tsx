@@ -11,6 +11,7 @@ import {
 } from '../../core/model/treeOps';
 import { validRelationships, captureNodeDrafts, retargetDocumentLinks } from '../../core/model/editorState';
 import { computeLayout } from '../../core/layout/layoutEngine';
+import { relationshipBounds, relationshipCurves } from '../../core/layout/relationshipGeometry';
 import { prepareNodeImage } from '../../core/model/nodeImage';
 import { getTheme } from '../../core/theme/themes';
 import { TemplateDefinition } from '../../core/model/templates';
@@ -1095,11 +1096,12 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
   // Layout calculation
   const layout = useMemo(() => {
     if (!doc) return { nodes: [], connections: [], bounds: { minX: 0, maxX: 0, minY: 0, maxY: 0 } };
-    return computeLayout(doc.root, doc.layoutType, theme, {
+    const result = computeLayout(doc.root, doc.layoutType, theme, {
       rainbowBranches: settings.rainbowBranches,
       curveStyle: settings.curveStyle,
     });
-  }, [doc, theme, settings.rainbowBranches, settings.curveStyle]);
+    return { ...result, bounds: relationshipBounds(result.bounds, relationshipCurves(result.nodes, relationships)) };
+  }, [doc, theme, relationships, settings.rainbowBranches, settings.curveStyle]);
 
   // Commit changes to root and push history
   const commitRootChange = useCallback((newRoot: MindMapNode, nextRelationships = latestRelationshipsRef.current) => {
@@ -2264,9 +2266,9 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
       if (format === 'json') exportToJSON({ ...current, relationships: latestRelationshipsRef.current });
       else if (format === 'markdown') exportToMarkdown(current.root, current.title);
       else if (format === 'opml') exportToOPML(current.root, current.title);
-      else if (format === 'png') await exportToPNG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false });
-      else if (format === 'svg') exportToSVG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false });
-      else if (format === 'html') exportToInteractiveHTML(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false });
+      else if (format === 'png') await exportToPNG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current });
+      else if (format === 'svg') exportToSVG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current });
+      else if (format === 'html') exportToInteractiveHTML(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current });
       else {
         // Print uses the live DOM; wait until React has rendered the captured draft.
         await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));

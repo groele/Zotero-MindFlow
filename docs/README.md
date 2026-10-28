@@ -2,6 +2,8 @@
 
 [返回双语 README / Bilingual README](../README.md)
 
+本地候选 / Local candidate：[12.5.8 完整性优化与验证范围 / Integrity improvements and validation](releases/v12.5.8.md)。该候选尚未发布；历史版本记录保留原始结论。
+
 ## 版本与证据 / Versions and evidence
 
 | 阶段 / Stage | 状态 / Status | 说明 / Description |

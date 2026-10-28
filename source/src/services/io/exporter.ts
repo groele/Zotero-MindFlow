@@ -1,4 +1,5 @@
-import { MindMapDocument, MindMapNode, LayoutNode, ConnectionCurve, ThemeColors, TaskInfo } from '../../core/model/types';
+import { MindMapDocument, MindMapNode, LayoutNode, ConnectionCurve, ThemeColors, TaskInfo, RelationshipLink } from '../../core/model/types';
+import { relationshipCurves, relationshipBounds, RelationshipCurve } from '../../core/layout/relationshipGeometry';
 import { imageDisplayHeight, isSafeNodeImage } from '../../core/model/nodeImage';
 import { generateId } from '../../core/model/treeOps';
 
@@ -38,6 +39,7 @@ export function exportToJSON(data: MindMapDocument | MindMapNode, fallbackTitle 
 export function exportToMarkdown(root: MindMapNode, title: string): void {
   if (!confirmTextOnlyExport(root)) return;
   const lines: string[] = [`# ${root.text}\n`];
+  if (root.note) lines.push(`<!-- 备注: ${encodeMarkdownNote(root.note)} -->\n`);
 
   function walk(node: MindMapNode, depth: number) {
     for (const child of node.children) {
@@ -54,7 +56,7 @@ export function exportToMarkdown(root: MindMapNode, title: string): void {
         line += ` ${child.tags.map(t => `#${t}`).join(' ')}`;
       }
       if (child.note) {
-        line += ` <!-- 备注: ${child.note} -->`;
+        line += ` <!-- 备注: ${encodeMarkdownNote(child.note)} -->`;
       }
       lines.push(line);
       if (child.children && child.children.length > 0) {
@@ -99,6 +101,11 @@ export function importFromMarkdown(mdContent: string): MindMapNode {
 
   for (let i = startIndex; i < lines.length; i++) {
     const rawLine = lines[i];
+    const standaloneNote = rawLine.trim().match(/^<!-- 备注: (.*?) -->$/) || rawLine.trim().match(/^<!--\s*备注:\s*(.*?)\s*-->$/);
+    if (standaloneNote) {
+      stack[stack.length - 1].node.note = decodeMarkdownNote(standaloneNote[1]);
+      continue;
+    }
     const leadingSpaces = rawLine.match(/^\s*/)?.[0].length || 0;
     const depth = Math.floor(leadingSpaces / 2);
 
@@ -117,9 +124,9 @@ export function importFromMarkdown(mdContent: string): MindMapNode {
     }
 
     // Parse note if any
-    const noteMatch = cleanText.match(/<!--\s*备注:\s*(.*?)\s*-->/);
+    const noteMatch = cleanText.match(/<!-- 备注: (.*?) -->/) || cleanText.match(/<!--\s*备注:\s*(.*?)\s*-->/);
     if (noteMatch) {
-      note = noteMatch[1];
+      note = decodeMarkdownNote(noteMatch[1]);
       cleanText = cleanText.replace(noteMatch[0], '').trim();
     }
 
@@ -337,6 +344,26 @@ export interface ExportOptions {
   watermark?: boolean;
   watermarkText?: string;
   highDpi?: boolean;
+  relationships?: RelationshipLink[];
+}
+
+function encodeMarkdownNote(note: string): string {
+  return escapeXml(note).replace(/\r/g, '&#13;').replace(/\n/g, '&#10;');
+}
+
+function decodeMarkdownNote(note: string): string {
+  return unescapeXml(note.replace(/&#13;/g, '\r').replace(/&#10;/g, '\n'));
+}
+
+function relationshipSvg(curves: RelationshipCurve[], theme: ThemeColors): { paths: string; labels: string } {
+  let paths = '', labels = '';
+  curves.forEach((curve, index) => {
+    const color = escapeXml(safeColor(curve.link.color || '#8b5cf6', '#8b5cf6'));
+    paths += `<defs><marker id="mindflow-export-arrow-${index}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="${color}" /></marker></defs>`;
+    paths += `<path data-relationship="${escapeXml(curve.link.id)}" d="${curve.path}" fill="none" stroke="${color}" stroke-width="2"${curve.link.style === 'solid' ? '' : ' stroke-dasharray="5,4"'} marker-end="url(#mindflow-export-arrow-${index})" />`;
+    labels += `<g transform="translate(${curve.labelX}, ${curve.labelY})"><rect x="${-curve.labelWidth / 2}" y="-13" width="${curve.labelWidth}" height="26" rx="8" fill="${escapeXml(safeColor(theme.surface, '#ffffff'))}" stroke="${color}" /><text text-anchor="middle" y="4" font-family="system-ui, Microsoft YaHei, sans-serif" font-size="12" fill="${escapeXml(safeColor(theme.text, '#0f172a'))}">${escapeXml(curve.link.label || '关联')}</text></g>`;
+  });
+  return { paths, labels };
 }
 
 // Export as SVG
@@ -366,6 +393,9 @@ export function exportToSVG(
   title: string,
   options?: ExportOptions
 ): string {
+  const curves = relationshipCurves(nodes, options?.relationships || []);
+  bounds = relationshipBounds(bounds, curves);
+  const relationships = relationshipSvg(curves, theme);
   const padding = 60;
   const width = bounds.maxX - bounds.minX + padding * 2;
   const height = bounds.maxY - bounds.minY + padding * 2;
@@ -385,6 +415,7 @@ export function exportToSVG(
   }
 
   // Draw nodes
+  svg += relationships.paths;
   for (const n of nodes) {
     if (n.textLines) { svg += readingNodeSvg(n); continue; }
     const rx = n.level === 0 ? 12 : (n.shape === 'pill' ? 16 : 8);
@@ -392,6 +423,7 @@ export function exportToSVG(
     const fill = n.level === 0 ? safeColor(n.bgColor, '#ffffff') : safeColor(theme.surface, '#ffffff');
 
     svg += `  <g transform="translate(${n.x}, ${n.y})">\n`;
+    svg += `    <title>${escapeXml(n.node.note || n.node.text)}</title>\n`;
     svg += `    <rect width="${n.width}" height="${n.height}" rx="${rx}" fill="${escapeXml(fill)}" stroke="${escapeXml(stroke)}" stroke-width="1.5" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.06))" />\n`;
 
     const fontSize = n.level === 0 ? 16 : (n.level === 1 ? 14 : 12);
@@ -404,6 +436,7 @@ export function exportToSVG(
     svg += `  </g>\n`;
   }
 
+  svg += relationships.labels;
   svg += `</g>\n`;
 
   // Optional Watermark
@@ -428,18 +461,24 @@ export async function exportToPNG(
   title: string,
   options?: ExportOptions
 ): Promise<void> {
+  const curves = relationshipCurves(nodes, options?.relationships || []);
+  bounds = relationshipBounds(bounds, curves);
   const padding = 80;
   const width = Math.ceil(bounds.maxX - bounds.minX + padding * 2);
   const height = Math.ceil(bounds.maxY - bounds.minY + padding * 2);
   const offsetX = -bounds.minX + padding;
   const offsetY = -bounds.minY + padding;
 
+  const dpr = options?.highDpi === false ? 1 : 2;
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0 ||
+      width * dpr > 16384 || height * dpr > 16384 || width * height * dpr * dpr > 32 * 1024 * 1024) {
+    throw new Error('导图超过 PNG 安全尺寸（最长边 16384 像素、总计 33554432 像素）；请改用 SVG 或 JSON 导出');
+  }
   const canvas = document.createElement('canvas');
-  const dpr = 2; // High-DPI export
   canvas.width = width * dpr;
   canvas.height = height * dpr;
   const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+  if (!ctx) throw new Error('无法创建 PNG 绘图画布；请改用 SVG 或 JSON 导出');
 
   ctx.scale(dpr, dpr);
 
@@ -467,6 +506,20 @@ export async function exportToPNG(
     ctx.lineCap = 'round';
     const p = new Path2D(conn.path);
     ctx.stroke(p);
+  }
+
+  // Relationship curves and arrowheads, underneath the nodes.
+  for (const curve of curves) {
+    ctx.save();
+    ctx.strokeStyle = ctx.fillStyle = safeColor(curve.link.color || '#8b5cf6', '#8b5cf6');
+    ctx.lineWidth = 2; ctx.setLineDash(curve.link.style === 'solid' ? [] : [5, 4]);
+    ctx.beginPath(); ctx.moveTo(curve.start.x, curve.start.y);
+    ctx.quadraticCurveTo(curve.control.x, curve.control.y, curve.end.x, curve.end.y); ctx.stroke();
+    ctx.setLineDash([]);
+    const angle = Math.atan2(curve.end.y - curve.control.y, curve.end.x - curve.control.x);
+    ctx.translate(curve.end.x, curve.end.y); ctx.rotate(angle);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-10, -4.5); ctx.lineTo(-10, 4.5); ctx.closePath(); ctx.fill();
+    ctx.restore();
   }
 
   // Nodes
@@ -532,6 +585,15 @@ export async function exportToPNG(
     ctx.restore();
   }
 
+  for (const curve of curves) {
+    ctx.save();
+    ctx.fillStyle = safeColor(theme.surface, '#ffffff');
+    roundRect(ctx, curve.labelX - curve.labelWidth / 2, curve.labelY - 13, curve.labelWidth, 26, 8); ctx.fill();
+    ctx.strokeStyle = safeColor(curve.link.color || '#8b5cf6', '#8b5cf6'); ctx.lineWidth = 1; ctx.stroke();
+    ctx.font = '12px system-ui, "Microsoft YaHei", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = safeColor(theme.text, '#0f172a'); ctx.fillText(curve.link.label || '关联', curve.labelX, curve.labelY);
+    ctx.restore();
+  }
   ctx.restore();
 
   // Draw optional watermark
@@ -546,11 +608,10 @@ export async function exportToPNG(
   }
 
   // Trigger download
-  const dataUrl = canvas.toDataURL('image/png');
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = `${title}.png`;
-  a.click();
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(value => value ? resolve(value) : reject(new Error('PNG 编码失败；请改用 SVG 或 JSON 导出')), 'image/png');
+  });
+  downloadBlob(blob, `${title}.png`);
 }
 
 // Export as Standalone Offline Interactive HTML
@@ -560,8 +621,11 @@ export function exportToInteractiveHTML(
   bounds: { minX: number; maxX: number; minY: number; maxY: number },
   theme: ThemeColors,
   title: string,
-  _options?: ExportOptions
+  options?: ExportOptions
 ): void {
+  const curves = relationshipCurves(nodes, options?.relationships || []);
+  bounds = relationshipBounds(bounds, curves);
+  const relationships = relationshipSvg(curves, theme);
   const padding = 100;
   const width = Math.ceil(bounds.maxX - bounds.minX + padding * 2);
   const height = Math.ceil(bounds.maxY - bounds.minY + padding * 2);
@@ -643,7 +707,9 @@ export function exportToInteractiveHTML(
     <svg id="svg-canvas" viewBox="0 0 ${width} ${height}">
       <g id="viewport" transform="translate(${offsetX}, ${offsetY}) scale(1)">
         ${curvesSvg}
+        ${relationships.paths}
         ${nodesSvg}
+        ${relationships.labels}
       </g>
     </svg>
   </div>
@@ -756,13 +822,17 @@ function unescapeXml(str: string): string {
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  let a: HTMLAnchorElement | undefined;
+  try {
+    a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+  } finally {
+    try { if (a) a.remove ? a.remove() : document.body.removeChild(a); }
+    finally { window.setTimeout(() => URL.revokeObjectURL(url), 1000); }
+  }
 }
 
 /**

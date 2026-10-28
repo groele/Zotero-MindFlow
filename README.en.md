@@ -1,3 +1,5 @@
+> Local development candidate: **12.5.8** (not published). Historical stable download links below still refer to **12.5.6**. Improves note and relationship exports, document validation, PNG and workspace backup failure handling, while retaining the 12.5.7 cancellation fix. [Candidate notes](docs/releases/v12.5.8.md).
+
 # Zotero MindFlow
 
 

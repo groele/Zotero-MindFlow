@@ -39,6 +39,8 @@ if (!$PreviewMap) {
   if ($LASTEXITCODE -ne 0) { throw 'Modal test fixture build failed.' }
   Copy-Item -LiteralPath (Join-Path $workspace 'tests/modal-fixture/modal-test.html') -Destination (Join-Path $addon 'chrome/content/modal-test.html')
   Copy-Item -LiteralPath (Join-Path $workspace 'tests/modal-fixture/modal-test.iife.js') -Destination (Join-Path $addon 'chrome/content/assets/modal-test.iife.js')
+  Copy-Item -LiteralPath (Join-Path $workspace 'tests/modal-fixture/integrity-test.html') -Destination (Join-Path $addon 'chrome/content/integrity-test.html')
+  Copy-Item -LiteralPath (Join-Path $workspace 'tests/modal-fixture/integrity-test.iife.js') -Destination (Join-Path $addon 'chrome/content/assets/integrity-test.iife.js')
 }
 if ($PreviewMap) { Copy-Item -LiteralPath (Resolve-Path -LiteralPath $PreviewMap).Path -Destination (Join-Path $dataDir 'preview-input.mindflow') }
 $bootstrapPath = Join-Path $addon 'bootstrap.js'
@@ -63,6 +65,8 @@ user_pref("extensions.mindflow.showWelcomeOnStartup", false);
 user_pref("extensions.mindflow.windowMode", "tab");
 user_pref("extensions.zotero.panes.mindflow\\@groele\\.org-mindflow-item-pane.open", false);
 user_pref("app.update.auto", false);
+user_pref("extensions.update.enabled", false);
+user_pref("extensions.update.autoUpdateDefault", false);
 "@
 [IO.File]::WriteAllText((Join-Path $profile 'user.js'), $prefs)
 $arguments = '-no-remote -profile "' + $profile + '" -ZoteroDebugText'

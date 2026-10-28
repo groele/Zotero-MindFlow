@@ -37,6 +37,11 @@
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+  const isCalendarDate = (value) => {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || value.startsWith('0000-')) return false;
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  };
   const validateHostDocument = (doc) => {
     if (!doc || !/^[a-zA-Z0-9_-]{1,148}$/.test(doc.id) || typeof doc.title !== 'string' ||
         typeof doc.themeId !== 'string' ||
@@ -52,6 +57,11 @@
           !Array.isArray(node.children) || depth > 256 || ids.size >= 25000 || ids.has(node.id) ||
           (node.note !== undefined && typeof node.note !== 'string') ||
           (node.link !== undefined && typeof node.link !== 'string') ||
+          (node.isExpanded !== undefined && typeof node.isExpanded !== 'boolean') ||
+          (node.type !== undefined && !['topic', 'text', 'task', 'link', 'image', 'note'].includes(node.type)) ||
+          (node.shape !== undefined && !['rounded', 'pill', 'rectangle', 'underline'].includes(node.shape)) ||
+          (node.color !== undefined && typeof node.color !== 'string') ||
+          (node.textColor !== undefined && typeof node.textColor !== 'string') ||
           (node.tags !== undefined && (!Array.isArray(node.tags) || !node.tags.every(tag => typeof tag === 'string'))) ||
           (node.icons !== undefined && (!Array.isArray(node.icons) || !node.icons.every(icon => typeof icon === 'string')))) {
         throw new Error('导图节点无效、重复或超出安全上限');
@@ -75,7 +85,7 @@
         if (!task || typeof task !== 'object' || Array.isArray(task) ||
             !['todo', 'doing', 'done'].includes(String(task.status)) ||
             (task.priority !== undefined && ![1, 2, 3].includes(task.priority)) ||
-            (task.dueDate !== undefined && (typeof task.dueDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(task.dueDate))) ||
+            (task.dueDate !== undefined && !isCalendarDate(task.dueDate)) ||
             (task.progress !== undefined && (typeof task.progress !== 'number' || !Number.isFinite(task.progress) || task.progress < 0 || task.progress > 100))) {
           throw new Error('导图节点任务属性无效');
         }
@@ -90,7 +100,10 @@
         if (!relation || typeof relation !== 'object' || Array.isArray(relation) ||
             typeof relation.id !== 'string' || !relation.id || relationshipIds.has(relation.id) ||
             typeof relation.fromId !== 'string' || typeof relation.toId !== 'string' ||
-            !ids.has(relation.fromId) || !ids.has(relation.toId)) throw new Error('导图关系线目标不存在或 ID 重复');
+            (relation.label !== undefined && typeof relation.label !== 'string') ||
+            (relation.color !== undefined && typeof relation.color !== 'string') ||
+            (relation.style !== undefined && !['dashed', 'solid'].includes(relation.style)) ||
+            !ids.has(relation.fromId) || !ids.has(relation.toId)) throw new Error('导图关系线属性无效、目标不存在或 ID 重复');
         relationshipIds.add(relation.id);
       }
     }
@@ -3756,16 +3769,21 @@
       const readingMode = options.readingMode || 'abstract';
       if (!AI_READING_MODES.includes(readingMode)) throw new Error('论文读取范围无效，请重新选择。');
       let cancelled = false;
-      const cancel = () => { cancelled = true; };
+      let rejectPreparation;
+      const cancellation = new Promise((_, reject) => { rejectPreparation = reject; });
+      // Cancellation can arrive before the first asynchronous preparation step.
+      void cancellation.catch(() => {});
+      const cancel = () => { cancelled = true; rejectPreparation(new Error(AI_CANCELLED)); };
       if (!this._aiCancellers) this._aiCancellers = new Set();
       this._aiCancellers.add(cancel);
+      const ensureActive = () => { if (cancelled || this._lifecycleActive === false) throw new Error(AI_CANCELLED); };
+      const wait = operation => Promise.race([Promise.resolve().then(() => { ensureActive(); return operation(); }), cancellation]);
+      try {
       options.registerCancel?.(cancel);
       if (options.signal) {
         if (options.signal.aborted) cancel();
         else options.signal.addEventListener('abort', cancel, { once: true });
       }
-      const ensureActive = () => { if (cancelled || this._lifecycleActive === false) throw new Error(AI_CANCELLED); };
-      try {
       ensureActive();
       const item = resolveItemReference(reference);
       if (!item?.isRegularItem?.()) throw new Error('请选择一篇常规 Zotero 文献。');
@@ -3826,7 +3844,7 @@
       const requestedPages = Number(Zotero.Prefs.get('extensions.mindflow.aiMaxPdfPages', true));
       const maxPages = [50, 120, 200].includes(requestedPages) ? requestedPages : 120;
       let preferredAttachment = null;
-      try { preferredAttachment = await item.getBestAttachment?.(); } catch (_) {}
+      try { preferredAttachment = await wait(() => item.getBestAttachment?.()); } catch (_) { ensureActive(); }
       ensureActive();
       const attachmentIDs = [...new Set([preferredAttachment?.id, ...(item.getAttachments?.() || [])].filter(Boolean))];
       const pdfAttachmentCount = attachmentIDs.filter((id) => Zotero.Items.get(id)?.isPDFAttachment?.()).length;
@@ -3835,9 +3853,9 @@
         const attachment = Zotero.Items.get(attachmentID);
         if (!attachment?.isPDFAttachment?.()) continue;
         try {
-          const path = await attachment.getFilePathAsync?.();
+          const path = await wait(() => attachment.getFilePathAsync?.());
           ensureActive();
-          const fileExists = path ? await IOUtils.exists(path) : false;
+          const fileExists = path ? await wait(() => IOUtils.exists(path)) : false;
           ensureActive();
           if (!fileExists) { pdfState = 'PDF 附件尚未下载到本机'; continue; }
           if (!Zotero.PDFWorker?.getFullText) { pdfState = '当前 Zotero 不支持 PDF 文字提取'; break; }
@@ -3850,13 +3868,13 @@
           // page limits and a short TTL invalidate the cache; selected sections
           // are still extracted separately and never widened to the full paper.
           let stat = null;
-          try { stat = IOUtils.stat ? await IOUtils.stat(path) : null; } catch (_) { /* Extract normally without a cache. */ }
+          try { stat = IOUtils.stat ? await wait(() => IOUtils.stat(path)) : null; } catch (_) { ensureActive(); /* Extract normally without a cache. */ }
           ensureActive();
           const cacheKey = stat ? `${attachment.libraryID}:${attachment.key}:${path}:${pageLimit}:${stat.size}:${stat.lastModified}` : '';
           if (!this._aiPdfTextCache) this._aiPdfTextCache = new Map();
           const cached = cacheKey && this._aiPdfTextCache.get(cacheKey);
           const extracted = cached && Date.now() - cached.createdAt < 5 * 60 * 1000
-            ? cached.extracted : await Zotero.PDFWorker.getFullText(attachment.id, pageLimit);
+            ? cached.extracted : await wait(() => Zotero.PDFWorker.getFullText(attachment.id, pageLimit));
           ensureActive();
           if (cacheKey && (!cached || Date.now() - cached.createdAt >= 5 * 60 * 1000)) {
             while (this._aiPdfTextCache.size >= 3) this._aiPdfTextCache.delete(this._aiPdfTextCache.keys().next().value);
