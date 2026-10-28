@@ -1,7 +1,3 @@
-> Local development candidate: **12.5.8** (not published). Historical stable download links below still refer to **12.5.6**. Improves note and relationship exports, document validation, PNG and workspace backup failure handling, while retaining the 12.5.7 cancellation fix. [Candidate notes](docs/releases/v12.5.8.md).
-
-> Local development candidate: **12.5.9** (not published). Stable download links and their existing validation statements below remain for **12.5.8**; this candidate expands product capability and development-origin documentation without updating an online XPI or update feed.
-
 # Zotero MindFlow
 
 
@@ -13,7 +9,7 @@ Organize papers, annotations, and ideas into editable maps.
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Release](https://img.shields.io/badge/version-12.5.6-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.5.6) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.5.6/zotero-mindflow-12.5.6.xpi) · [Report an issue](https://github.com/groele/Zotero-MindFlow/issues)
+[![Release](https://img.shields.io/badge/version-12.5.10-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.5.10) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.5.10/zotero-mindflow-12.5.10.xpi) · [Report an issue](https://github.com/groele/Zotero-MindFlow/issues)
 
 [Overview](#overview) · [Installation and updates](#installation) · [Quick start](#quick-start) · [Key features](#features) · [Settings](#settings) · [Data, sync, and services](#data) · [Compatibility and validation](#compatibility) · [Troubleshooting](#troubleshooting) · [Development and documentation](#development) · [The Flow series](#series) · [Origin and license](#license)
 
@@ -29,7 +25,7 @@ Install this add-on independently and combine it with other Flow products as nee
 
 ## Installation and updates
 
-1. Download [zotero-mindflow-12.5.6.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.5.6/zotero-mindflow-12.5.6.xpi) (add-on version **12.5.6**), not the Source code ZIP.
+1. Download [zotero-mindflow-12.5.10.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.5.10/zotero-mindflow-12.5.10.xpi) (add-on version **12.5.10**), not the Source code ZIP.
 2. In Zotero, open **Tools → Plugins/Add-ons**, then choose **Install Add-on From File** from the gear menu.
 3. Select the XPI, complete installation, and restart if requested.
 
@@ -80,11 +76,11 @@ Configure window mode, welcome page, material imports, outline notes, and worksp
 
 | Item | Scope |
 |---|---|
-| Current add-on version | 12.5.6 |
+| Current add-on version | 12.5.10 |
 | Declared Zotero range | `10.0` through `10.0.*` |
 | Evidence boundary | The current manifest limits support to Zotero 10.0.x. The 12.3.4 settings pane was checked in Windows Zotero 10.0.6, including sequential navigation and MetaFlow card palette comparison; live AI, WebDAV, and cross-device workflows were not rerun. |
 
-Add-on and Zotero versions are separate. Version 12.5.6 passes 82 simulated host regressions, frontend suites and type checking, including shutdown cancellation and prepared-material cleanup. See the release report for native acceptance. Live AI services, WebDAV and cross-device workflows were not revalidated.
+Add-on and Zotero versions are separate. Version 12.5.10 passes host simulations, frontend tests, type checking, production build and XPI integrity checks. The settings-button fix was not separately clicked in a live Zotero window. Live AI services, WebDAV and cross-device workflows were not revalidated. See the [release notes](docs/releases/v12.5.10.md).
 
 <a id="troubleshooting"></a>
 
@@ -110,7 +106,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [审查文档索引 / Audit documentation](docs/README.md)
-- [版本说明 / Release notes](docs/release-v12.5.6.md)
+- [版本说明 / Release notes](docs/releases/v12.5.10.md)
 - [产品简介 / Product profile](docs/brand/PRODUCT.md)
 - [品牌规范 / Brand guide](docs/brand/BRAND.md)
 - [README 模板 / README template](docs/brand/README-TEMPLATE.md)

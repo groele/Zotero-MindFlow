@@ -604,8 +604,26 @@ window.MindFlow_Preferences = (() => {
           const button = element(doc, 'button', 'mindflow-btn-open-llm', '打开 llm-for-zotero 设置');
           button.type = 'button';
           button.addEventListener('click', () => {
-            try { Zotero.MindFlow.openLLMPreferences(); }
-            catch (error) { status(doc, String(error?.message || error), true); }
+            const pane = 'zotero-llm@github.com.yilewang';
+            try {
+              if (typeof Zotero.openPreferences === 'function') {
+                Zotero.openPreferences(pane);
+                return;
+              }
+              const mainWindow = Zotero.getMainWindow?.();
+              if (mainWindow && typeof mainWindow.openDialog === 'function') {
+                mainWindow.openDialog(
+                  'chrome://zotero/content/preferences/preferences.xhtml',
+                  'preferences',
+                  'chrome,titlebar,toolbar,centerscreen,resizable=yes',
+                  { pane }
+                );
+                return;
+              }
+              status(doc, '无法打开 Zotero 设置窗口。', true);
+            } catch (error) {
+              status(doc, String(error?.message || error), true);
+            }
           });
           container.appendChild(button);
         }
