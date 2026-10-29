@@ -1098,7 +1098,7 @@
             color: transparent !important;
             white-space: nowrap !important;
             background-image: url("chrome://mindflow/content/icons/mindflow.svg") !important;
-            background-size: 18px 18px !important;
+            background-size: 20px 20px !important;
             background-position: center !important;
             background-repeat: no-repeat !important;
           }
