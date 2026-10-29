@@ -25,7 +25,12 @@ export interface ToolbarButtonsConfig {
   zoom: boolean;          // 缩放比例与缩放控制
 }
 
+export type ToolbarPlacement = 'toolbar' | 'more' | 'hidden';
+
 export interface AppSettings {
+  toolbarTemplatesPlacement: ToolbarPlacement;
+  toolbarPresentationPlacement: ToolbarPlacement;
+  toolbarExportPlacement: ToolbarPlacement;
   // 1. 界面与工具栏定制
   toolbarPosition: 'top' | 'bottom';          // 工具栏位置 (顶部 vs 底部)
   workbenchDockPosition: 'left' | 'right';    // 工作台停靠位置 (左端 vs 右端)
@@ -62,6 +67,9 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
+  toolbarTemplatesPlacement: 'more',
+  toolbarPresentationPlacement: 'more',
+  toolbarExportPlacement: 'more',
   toolbarPosition: 'top',
   workbenchDockPosition: 'left',
   toolbarButtons: {

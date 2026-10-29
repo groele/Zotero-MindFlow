@@ -5,15 +5,19 @@ import {
   HelpCircle, Maximize2, Minimize2, ZoomIn, ZoomOut,
   ChevronDown, Check, Inbox, Sparkles, Command, Settings,
   Presentation, Search as SearchIcon, Scan, Layers, ImagePlus, GraduationCap,
-  Expand, GitBranch, Image, Shapes, FileText, Braces, ListTree as ListTreeIcon, Globe, Paperclip
+  MoreHorizontal, Expand, GitBranch, Image, Shapes, FileText, Braces, ListTree as ListTreeIcon, Globe, Paperclip
 } from 'lucide-react';
 import { LayoutType, ThemeColors } from '../../core/model/types';
 import { THEMES } from '../../core/theme/themes';
-import { ToolbarButtonsConfig } from '../../core/model/settingsTypes';
+import { useToolbarPopup } from './useToolbarPopup';
+import { ToolbarButtonsConfig, ToolbarPlacement } from '../../core/model/settingsTypes';
 import { MindFlowMark } from '../brand/MindFlowMark';
 import { saveStatusLabel } from '../../core/model/saveStatus';
 
 interface ToolbarProps {
+  toolbarTemplatesPlacement?: ToolbarPlacement;
+  toolbarPresentationPlacement?: ToolbarPlacement;
+  toolbarExportPlacement?: ToolbarPlacement;
   title: string;
   saveStatus?: { state: 'saving' | 'saved' | 'warning' | 'error'; message: string };
   onTitleChange: (newTitle: string) => void;
@@ -68,6 +72,7 @@ interface ToolbarProps {
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
+  toolbarTemplatesPlacement = 'more', toolbarPresentationPlacement = 'more', toolbarExportPlacement = 'more',
   title,
   saveStatus,
   onTitleChange,
@@ -133,11 +138,19 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     zoom: true,
   };
 
-  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
-  const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
-  const [isLevelMenuOpen, setIsLevelMenuOpen] = useState(false);
-  const [isZoteroMenuOpen, setIsZoteroMenuOpen] = useState(false);
+  const [popup, setPopup] = useState<string | null>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  useToolbarPopup(headerRef, popup, () => setPopup(null));
+  const isThemeMenuOpen = popup === 'theme';
+  const setIsThemeMenuOpen = (open: boolean) => setPopup(current => open ? 'theme' : current === 'theme' ? null : current);
+  const isLayoutMenuOpen = popup === 'layout';
+  const setIsLayoutMenuOpen = (open: boolean) => setPopup(current => open ? 'layout' : current === 'layout' ? null : current);
+  const isExportMenuOpen = popup === 'export';
+  const setIsExportMenuOpen = (open: boolean) => setPopup(current => open ? 'export' : current === 'export' ? null : current);
+  const isLevelMenuOpen = popup === 'level';
+  const setIsLevelMenuOpen = (open: boolean) => setPopup(current => open ? 'level' : current === 'level' ? null : current);
+  const isZoteroMenuOpen = popup === 'zotero';
+  const setIsZoteroMenuOpen = (open: boolean) => setPopup(current => open ? 'zotero' : current === 'zotero' ? null : current);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nodeImageInputRef = useRef<HTMLInputElement>(null);
@@ -167,9 +180,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   return (
-    <header className="min-h-14 shrink-0 py-2 px-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap 2xl:flex-nowrap items-center justify-between gap-2 z-30 select-none">
+    <header ref={headerRef} className="mindflow-toolbar min-h-14 shrink-0 py-2 px-4 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap 2xl:flex-nowrap items-center justify-start gap-2 z-30 select-none">
       {/* Left: App Logo & Document Title */}
-      <div className="flex items-center gap-3 min-w-0 shrink-0">
+      <div className="flex items-center gap-3 min-w-0 shrink-0 w-full 2xl:w-auto">
         <div className="flex items-center gap-2 flex-shrink-0" title="MindFlow" aria-label="MindFlow">
           <MindFlowMark className="w-8 h-8 flex-shrink-0" />
 
@@ -184,20 +197,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onChange={(e) => onTitleChange(e.target.value)}
           className="bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-slate-100 px-2 py-1 rounded-md border border-transparent focus:border-blue-400 outline-none transition-colors truncate max-w-[140px] sm:max-w-[240px]"
           title="点击修改思维导图标题"
+          aria-label="思维导图标题"
         />
         {saveStatus && (
           <div
             role="status"
             aria-live="polite"
             title={saveStatus.message}
-            className={`relative text-[10px] whitespace-nowrap ${
+            className={`relative text-xs whitespace-nowrap ${
               saveStatus.state === 'error'
                 ? 'text-red-600 dark:text-red-400'
                 : saveStatus.state === 'warning'
                 ? 'text-amber-600 dark:text-amber-400'
                 : saveStatus.state === 'saving'
                 ? 'text-slate-400'
-                : 'text-emerald-600 dark:text-emerald-400'
+                : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             {saveStatus.state === 'warning' || saveStatus.state === 'error' ? (
@@ -212,7 +226,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
       {/* Center: Core Action Buttons */}
       {(buttons.history || buttons.insert) && (
-        <div className="flex w-max flex-nowrap shrink-0 items-center gap-1 whitespace-nowrap bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+        <div className="flex w-max flex-nowrap shrink-0 items-center gap-1 whitespace-nowrap px-1 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/30">
           {/* Undo / Redo */}
           {buttons.history && (
             <>
@@ -289,12 +303,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       )}
 
       {/* Right: Layout, Theme, Outline, Export, Zoom & Extensions */}
-      <div className="flex items-center gap-1.5 flex-shrink-0">
+      <div className="flex flex-1 flex-wrap items-center gap-1.5 min-w-0">
 
         {/* Layout dropdown */}
         {buttons.layout && (
           <div className="relative">
-            <button
+            <button data-mindflow-popup-trigger="layout" aria-haspopup="menu" aria-expanded={isLayoutMenuOpen}
               onClick={() => {
                 setIsLayoutMenuOpen(!isLayoutMenuOpen);
                 setIsThemeMenuOpen(false);
@@ -311,7 +325,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </button>
 
             {isLayoutMenuOpen && (
-              <div className="absolute right-0 mt-1 w-36 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+              <div data-mindflow-popup="layout" className="absolute right-0 mt-1 w-36 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50">
                 <button
                   onClick={() => { onLayoutChange('mindmap'); setIsLayoutMenuOpen(false); }}
                   className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 ${currentLayout === 'mindmap' ? 'text-blue-600 font-semibold' : 'text-slate-700 dark:text-slate-300'}`}
@@ -341,7 +355,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         {/* Theme dropdown */}
         {buttons.theme && (
           <div className="relative">
-            <button
+            <button data-mindflow-popup-trigger="theme" aria-haspopup="menu" aria-expanded={isThemeMenuOpen}
               onClick={() => {
                 setIsThemeMenuOpen(!isThemeMenuOpen);
                 setIsLayoutMenuOpen(false);
@@ -354,7 +368,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </button>
 
             {isThemeMenuOpen && (
-              <div className="absolute right-0 mt-1 w-52 max-h-80 overflow-y-auto bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1.5 z-50">
+              <div data-mindflow-popup="theme" className="absolute right-0 mt-1 w-52 max-h-80 overflow-y-auto bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 z-50">
                 <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                   选择设计主题
                 </div>
@@ -385,7 +399,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           >
             <Command className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
             <span className="hidden xl:inline text-[11px]">命令</span>
-            <kbd className="hidden lg:inline text-[10px] text-slate-400 bg-white dark:bg-slate-700 px-1 rounded border border-slate-200 dark:border-slate-600">⌘K</kbd>
+            <kbd className="hidden lg:inline text-[10px] text-slate-400 bg-white dark:bg-slate-700 px-1 rounded border border-slate-200 dark:border-slate-600">{/Mac/i.test(navigator.platform) ? '⌘K' : 'Ctrl K'}</kbd>
           </button>
         )}
 
@@ -405,7 +419,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         )}
 
         {/* Templates button */}
-        {buttons.templates && onOpenTemplates && (
+        {buttons.templates && onOpenTemplates && toolbarTemplatesPlacement === 'toolbar' && (
           <button
             onClick={onOpenTemplates}
             title="模版库 (SWOT/读书笔记/敏捷规划)"
@@ -418,7 +432,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         {/* Branch Level Fold / Expand menu */}
         {onCollapseByLevel && (
           <div className="relative">
-            <button
+            <button data-mindflow-popup-trigger="level" aria-haspopup="menu" aria-expanded={isLevelMenuOpen}
               onClick={() => {
                 setIsLevelMenuOpen(!isLevelMenuOpen);
                 setIsExportMenuOpen(false);
@@ -431,7 +445,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               <Layers className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             </button>
             {isLevelMenuOpen && (
-              <div className="absolute left-0 mt-1 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div data-mindflow-popup="level" className="absolute left-0 mt-1 w-44 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 z-50">
                 <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                   视图层级折叠
                 </div>
@@ -492,20 +506,20 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         )}
 
         {/* Presentation Mode */}
-        {onStartPresentation && (
+        {onStartPresentation && toolbarPresentationPlacement === 'toolbar' && (
           <button
             onClick={onStartPresentation}
             title="全屏路演/演示模式 (Presentation Mode)"
-            className="p-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 transition-colors"
+            className="p-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <Presentation className="w-4 h-4" />
           </button>
         )}
 
         {/* Export / Import dropdown */}
-        {buttons.export && (
+        {buttons.export && toolbarExportPlacement === 'toolbar' && (
           <div className="relative">
-            <button
+            <button data-mindflow-popup-trigger="export" aria-haspopup="menu" aria-expanded={isExportMenuOpen}
               onClick={() => {
                 setIsExportMenuOpen(!isExportMenuOpen);
                 setIsThemeMenuOpen(false);
@@ -519,7 +533,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </button>
 
             {isExportMenuOpen && (
-              <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 z-50">
+              <div data-mindflow-popup="export" className="absolute right-0 mt-1 w-44 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 z-50">
                 <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                   导出格式
                 </div>
@@ -591,9 +605,26 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </div>
         )}
 
+        <div className="relative">
+          <button data-mindflow-popup-trigger="more" aria-haspopup="menu" aria-expanded={popup === 'more'}
+            title="更多操作" aria-label="更多操作" onClick={() => setPopup(popup === 'more' ? null : 'more')}
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"><MoreHorizontal className="w-4 h-4" /></button>
+          {popup === 'more' && <div data-mindflow-popup="more" className="absolute right-0 mt-1 w-52 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-1 z-50">
+            {buttons.templates && onOpenTemplates && toolbarTemplatesPlacement === 'more' && <button onClick={() => { setPopup(null); onOpenTemplates(); }} className="mindflow-menu-action">模板库</button>}
+            {onStartPresentation && toolbarPresentationPlacement === 'more' && <button onClick={() => { setPopup(null); onStartPresentation(); }} className="mindflow-menu-action">演示导图</button>}
+            {buttons.export && toolbarExportPlacement === 'more' && <>
+              <div className="px-3 py-1 text-xs text-slate-500">导入与导出</div>
+              {([['PNG 图片', onExportPNG], ['SVG 矢量图', onExportSVG], ['Markdown 大纲', onExportMarkdown], ['JSON 工程备份', onExportJSON], ['OPML 大纲', onExportOPML], ['HTML 网页', onExportHTML], ['打印 / PDF', onExportPDF], ['存为 Zotero 大纲笔记', onSaveToZoteroNote]] as const).filter(([, action]) => action).map(([label, action]) => <button key={label} className="mindflow-menu-action" onClick={() => { setPopup(null); action?.(); }}>{label}</button>)}
+              <button className="mindflow-menu-action" onClick={() => { setPopup(null); fileInputRef.current?.click(); }}>导入文件…</button>
+            </>}
+            <button className="mindflow-menu-action" onClick={() => { setPopup(null); onOpenShortcuts(); }}>快捷键帮助</button>
+            {onOpenSettings && <button className="mindflow-menu-action" onClick={() => { setPopup(null); onOpenSettings(); }}>工具栏与偏好设置…</button>}
+          </div>}
+        </div>
+
         {/* Zotero Academic Hub */}
         <div className="relative">
-          <button
+          <button data-mindflow-popup-trigger="zotero" aria-haspopup="menu" aria-expanded={isZoteroMenuOpen}
             onClick={() => {
               setIsZoteroMenuOpen(!isZoteroMenuOpen);
               setIsExportMenuOpen(false);
@@ -614,7 +645,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </button>
 
           {isZoteroMenuOpen && (
-            <div className="absolute right-0 mt-1 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div data-mindflow-popup="zotero" className="absolute right-0 mt-1 w-64 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 z-50">
               <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
                 <span>Zotero 伴读联动</span>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-normal ${

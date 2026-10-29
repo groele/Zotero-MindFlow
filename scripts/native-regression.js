@@ -86,6 +86,47 @@
       await waitFor(()=>titleFor(tabA)==='Native Map A','A document visible');
       check(tabs._tabs.find(t=>t.id===tabA).data.targetItemId===`attachment:${aa.libraryID}:${aa.key}`,'A routing mismatch');
     });
+    await run('native context menu navigates in Gecko and restores its invoker without editing the map', async () => {
+      const frame = frameFor(tabA), doc = frame.contentDocument, view = frame.contentWindow;
+      const invoker = doc.querySelector('header input');
+      invoker.focus();
+      const canvas = doc.querySelector('.canvas-background');
+      check(canvas, 'canvas missing');
+      canvas.dispatchEvent(new view.MouseEvent('contextmenu', { bubbles: true, cancelable: true,
+        clientX: view.innerWidth - 5, clientY: view.innerHeight - 5 }));
+      const menu = await waitFor(() => doc.querySelector('.mindflow-context-menu'), 'context menu');
+      const choices = [...menu.querySelectorAll('button:not(:disabled)')];
+      await waitFor(() => doc.activeElement === choices[0], 'menu initial focus');
+      const press = key => doc.activeElement.dispatchEvent(new view.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      press('End'); check(doc.activeElement === choices.at(-1), 'End did not reach last action');
+      press('ArrowDown'); check(doc.activeElement === choices[0], 'ArrowDown did not wrap');
+      const box = menu.getBoundingClientRect();
+      check(box.x >= 0 && box.y >= 0 && box.right <= view.innerWidth && box.bottom <= view.innerHeight, 'menu exceeds viewport');
+      press('Escape');
+      await waitFor(() => !doc.querySelector('.mindflow-context-menu'), 'menu dismissal');
+      check(doc.activeElement === invoker, 'menu did not restore focus');
+      check(titleFor(tabA) === 'Native Map A', 'menu navigation edited the document');
+    });
+    await run('native toolbar placement settings refresh all three entries without reopening the editor', async () => {
+      const document = frameFor(tabA).contentDocument;
+      const key = 'mindflow.mindflow_app_settings';
+      const original = Zotero.Prefs.get(key, true) || '{}';
+      const stored = JSON.parse(original);
+      const apply = mode => Zotero.Prefs.set(key, JSON.stringify({ ...stored,
+        toolbarButtons: { ...stored.toolbarButtons, templates: true, export: true },
+        toolbarTemplatesPlacement: mode, toolbarPresentationPlacement: mode, toolbarExportPlacement: mode }), true);
+      try {
+        apply('toolbar');
+        await waitFor(() => document.querySelector('button[title^="模版库"]') &&
+          document.querySelector('button[title="导入与导出"]') && document.querySelector('button[title^="全屏路演"]'), 'toolbar placement refresh');
+        apply('hidden');
+        await waitFor(() => !document.querySelector('button[title^="模版库"]') &&
+          !document.querySelector('button[title="导入与导出"]') && !document.querySelector('button[title^="全屏路演"]'), 'hidden placement refresh');
+      } finally {
+        Zotero.Prefs.set(key, original, true);
+        await Zotero.Promise.delay(150);
+      }
+    });
     await run('B with the same document ID shows B and isolates A', async () => {
       tabs.select('zotero-pane'); await host.openMindflowAttachment(bb,win);tabB=tabs.selectedID;
       await waitFor(()=>titleFor(tabB)==='Native Map B','B document visible');
@@ -617,7 +658,7 @@
       Components.utils.exportFunction(blob => { exportedBlob = blob; return 'blob:mindflow-native-export-test'; }, editor.URL, { defineAs: 'createObjectURL' });
       Components.utils.exportFunction(() => {}, editor.HTMLAnchorElement.prototype, { defineAs: 'click' });
       try {
-        document.querySelector('button[title="导入与导出"]').click();
+        document.querySelector('button[title="更多操作"]').click();
         const button = await waitFor(() => [...document.querySelectorAll('button')].find(node => node.textContent.includes('JSON 工程备份')), 'JSON export action');
         button.click();
         await waitFor(() => exportedBlob, 'generated JSON blob');

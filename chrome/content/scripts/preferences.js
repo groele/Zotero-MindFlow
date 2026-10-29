@@ -12,6 +12,7 @@ window.MindFlow_Preferences = (() => {
   const HTML = 'http://www.w3.org/1999/xhtml';
 
   const DEFAULTS = {
+    toolbarTemplatesPlacement: 'more', toolbarPresentationPlacement: 'more', toolbarExportPlacement: 'more',
     toolbarPosition: 'top',
     workbenchDockPosition: 'left',
     toolbarButtons: {
@@ -117,6 +118,9 @@ window.MindFlow_Preferences = (() => {
       },
     ],
     interface: [
+      { path: 'toolbarTemplatesPlacement', title: '模板入口位置', desc: '选择固定展示、收纳到更多或隐藏入口；功能本身不被禁用', type: 'select', options: [['toolbar', '工具栏'], ['more', '更多（推荐）'], ['hidden', '隐藏']] },
+      { path: 'toolbarPresentationPlacement', title: '演示入口位置', desc: '选择固定展示、收纳到更多或隐藏入口；功能本身不被禁用', type: 'select', options: [['toolbar', '工具栏'], ['more', '更多（推荐）'], ['hidden', '隐藏']] },
+      { path: 'toolbarExportPlacement', title: '导入与导出入口位置', desc: '选择固定展示、收纳到更多或隐藏入口；功能本身不被禁用', type: 'select', options: [['toolbar', '工具栏'], ['more', '更多（推荐）'], ['hidden', '隐藏']] },
       {
         path: 'toolbarPosition',
         title: '主工具栏位置',

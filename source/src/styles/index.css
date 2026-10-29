@@ -1,4 +1,30 @@
 @import "tailwindcss" source("../");
+@custom-variant dark (&:where(.dark, .dark *));
+
+.mindflow-app {
+  font-family: system-ui, "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+}
+
+.mindflow-toolbar .mindflow-menu-action {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  text-align: start;
+  font-size: 13px;
+  color: inherit;
+}
+.mindflow-toolbar .mindflow-menu-action:hover {
+  background: color-mix(in srgb, currentColor 6%, transparent);
+}
+.mindflow-toolbar [role="menu"] { color: #334155; }
+.mindflow-app.dark .mindflow-toolbar [role="menu"] { color: #e2e8f0; }
+
+.mindflow-toolbar button:focus-visible,
+.mindflow-inspector button:focus-visible,
+.mindflow-inspector select:focus-visible {
+  outline: 2px solid Highlight;
+  outline-offset: 2px;
+}
 
 @layer base {
   * {
@@ -11,6 +37,12 @@
 }
 
 /* Custom scrollbars */
+.mindflow-context-menu button:focus-visible {
+  outline: 2px solid Highlight;
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

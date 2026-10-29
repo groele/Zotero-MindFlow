@@ -11,6 +11,7 @@ import { BackupService } from '../src/services/storage/backupService';
 import { WebDAVService } from '../src/services/sync/webdavService';
 import type { MindMapNode, MindMapDocument } from '../src/core/model/types';
 import { saveStatusLabel } from '../src/core/model/saveStatus';
+import { shouldHandleCanvasShortcut } from '../src/core/keyboard/shortcuts';
 
 let passed = 0, failed = 0;
 async function run(name: string, fn: () => unknown) {
@@ -18,6 +19,27 @@ async function run(name: string, fn: () => unknown) {
   catch (error) { failed++; console.error(`FAIL: ${name}: ${(error as Error).message}`); }
 }
 const root: MindMapNode = { id: 'root', text: 'MoS2 mos2 MOS2', note: 'MOS2 evidence', children: [], task: { status: 'todo' } };
+await run('toolbar placement choices persist independently and retain legacy visibility switches', async () => {
+  const original = await SettingsService.getSettings();
+  try {
+    await SettingsService.updateSettings({ toolbarTemplatesPlacement: 'toolbar', toolbarPresentationPlacement: 'hidden' });
+    await SettingsService.updateSettings({ toolbarExportPlacement: 'more', toolbarButtons: { ...original.toolbarButtons, templates: false } });
+    const restored = await SettingsService.getSettings();
+    assert.equal(restored.toolbarTemplatesPlacement, 'toolbar');
+    assert.equal(restored.toolbarPresentationPlacement, 'hidden');
+    assert.equal(restored.toolbarExportPlacement, 'more');
+    assert.equal(restored.toolbarButtons.templates, false);
+  } finally { await SettingsService.updateSettings(original); }
+});
+await run('native controls retain Tab, Enter, and Space while canvas shortcuts remain available elsewhere', () => {
+  const button = { closest: (selector: string) => selector.includes('button') ? {} : null } as unknown as EventTarget;
+  const combobox = { closest: (selector: string) => selector.includes('[role="combobox"]') ? {} : null } as unknown as EventTarget;
+  const canvas = { closest: () => null } as unknown as EventTarget;
+  assert.equal(shouldHandleCanvasShortcut(button), false);
+  assert.equal(shouldHandleCanvasShortcut(combobox), false);
+  assert.equal(shouldHandleCanvasShortcut(canvas), true);
+  assert.equal(shouldHandleCanvasShortcut(null), true);
+});
 await run('status distinguishes AI review and archive warnings from real backup failures', () => {
   assert.equal(saveStatusLabel({ state: 'warning', message: 'AI 草稿已保存在本机，但没有原文片段核对' }), '待核对');
   assert.equal(saveStatusLabel({ state: 'warning', message: '本地已保存；云端备份失败：401' }), '云备份失败');

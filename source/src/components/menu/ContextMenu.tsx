@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
+import { useContextMenu } from './useContextMenu';
 import {
   CornerDownRight, Plus, Trash2,
   Copy, FolderPlus, FolderMinus, Eye, FileText,
@@ -45,66 +46,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close when clicking outside or pressing Escape
-  useEffect(() => {
-    let timerId: ReturnType<typeof setTimeout>;
-    const handleClickOutside = (e: MouseEvent) => {
-      // Ignore right-click events; let contextmenu manage opening/closing
-      if (e.button === 2) return;
-      if (menuRef.current && !menuRef.current.contains(e.target as HTMLElement)) {
-        onClose();
-      }
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    // Attach listeners on next tick to avoid being immediately closed by the initiating right-click event
-    timerId = setTimeout(() => {
-      window.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('keydown', handleKeyDown);
-    }, 16);
-
-    return () => {
-      clearTimeout(timerId);
-      window.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [onClose]);
-
-  const [measuredHeight, setMeasuredHeight] = React.useState(420);
-
-  React.useLayoutEffect(() => {
-    if (menuRef.current) {
-      const h = menuRef.current.offsetHeight;
-      if (h > 100) setMeasuredHeight(h);
-    }
-  }, []);
-
-  // Adjust position to stay inside viewport
-  const adjustedStyle = React.useMemo(() => {
-    const menuWidth = 216;
-    const menuHeight = Math.max(measuredHeight, 380);
-    const screenW = window.innerWidth;
-    const screenH = window.innerHeight;
-
-    let posX = x;
-    let posY = y;
-
-    if (posX + menuWidth > screenW) {
-      posX = Math.max(10, screenW - menuWidth - 12);
-    }
-    if (posY + menuHeight > screenH) {
-      posY = Math.max(10, screenH - menuHeight - 12);
-    }
-
-    return {
-      left: `${posX}px`,
-      top: `${posY}px`,
-    };
-  }, [x, y, measuredHeight]);
+  const adjustedStyle = useContextMenu(menuRef, onClose, x, y);
 
   const handleCopyText = async () => {
     try {
@@ -120,12 +62,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   return (
     <div
       ref={menuRef}
+      role="menu"
+      aria-label="节点操作"
       style={adjustedStyle}
       onContextMenu={(e) => {
         e.preventDefault();
         e.stopPropagation();
       }}
-      className="fixed z-[100] w-52 max-h-[calc(100vh-24px)] overflow-y-auto py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-2xl rounded-xl text-xs text-slate-700 dark:text-slate-200 animate-in fade-in zoom-in-95 duration-100 select-none"
+      className="mindflow-context-menu fixed z-[100] w-52 max-h-[calc(100vh-24px)] overflow-y-auto py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg rounded-md text-xs text-slate-700 dark:text-slate-200 select-none"
     >
       <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800/80 truncate mb-1">
         {node.text}

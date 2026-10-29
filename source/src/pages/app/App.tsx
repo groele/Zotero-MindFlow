@@ -55,6 +55,7 @@ import { createResearchDocument, prepareResearchAnalysis, requestResearchAnalysi
 import { AIResearchModal, AIResearchStage } from '../../components/modal/AIResearchModal';
 import { Minimize2 } from 'lucide-react';
 import { sameDocumentSource, planIncomingDocument, detachedMetadata } from '../../services/zotero/documentIdentity';
+import { shouldHandleCanvasShortcut } from '../../core/keyboard/shortcuts';
 
 interface AppProps {
   isSidepanelMode?: boolean;
@@ -1763,11 +1764,18 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
         return;
       }
 
-      // If editing text in input or textarea, skip global shortcuts
+      // Preserve editing controls and the host's native text-entry behavior.
       if (editingId) return;
       const activeTag = document.activeElement?.tagName.toLowerCase();
       if (activeTag === 'input' || activeTag === 'textarea') return;
       if (document.activeElement?.closest('[contenteditable]:not([contenteditable="false"])')) return;
+
+      // Let Zotero and the focused control keep their native keyboard behavior.
+      // In particular, consuming Tab here prevents keyboard users from moving
+      // through the toolbar and sidebars, while consuming Enter/Space can stop
+      // the focused button from activating. Canvas shortcuts remain available
+      // when focus is on the canvas or the document body.
+      if (!shouldHandleCanvasShortcut(e.target)) return;
 
       // Fullscreen: F11
       if (e.key === 'F11') {
@@ -2403,6 +2411,9 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
           onOpenSettings={handleOpenSettings}
           isPro={true}
           toolbarButtons={settings.toolbarButtons}
+          toolbarTemplatesPlacement={settings.toolbarTemplatesPlacement}
+          toolbarPresentationPlacement={settings.toolbarPresentationPlacement}
+          toolbarExportPlacement={settings.toolbarExportPlacement}
           onExportPNG={() => { void handleExportCurrentDocument('png'); }}
           onExportSVG={() => { void handleExportCurrentDocument('svg'); }}
           onExportMarkdown={() => { void handleExportCurrentDocument('markdown'); }}

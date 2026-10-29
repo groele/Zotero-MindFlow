@@ -555,6 +555,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <p className="text-xs text-slate-500">低频入口位置：原有功能开关关闭时，该入口同时隐藏。</p>
+                  {([['toolbarTemplatesPlacement', '模板'], ['toolbarPresentationPlacement', '演示'], ['toolbarExportPlacement', '导入与导出']] as const).map(([key, label]) => (
+                    <label key={key} className="flex items-center justify-between gap-3 text-xs">
+                      {label}
+                      <select value={currentSettings[key]} onChange={event => handleSaveSettings({ [key]: event.target.value })}
+                        className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1">
+                        <option value="toolbar">工具栏</option><option value="more">更多</option><option value="hidden">隐藏</option>
+                      </select>
+                    </label>
+                  ))}
+                </div>
+
                 <div className="h-px bg-slate-200 dark:border-slate-800" />
 
                 <div>

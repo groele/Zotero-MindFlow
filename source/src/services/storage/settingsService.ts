@@ -110,6 +110,9 @@ export class SettingsService {
 
     const merged = deepMerge(DEFAULT_SETTINGS,
       loadedSettings || (getZoteroInstance() ? legacyZoteroSettings() : {}));
+    for (const key of ['toolbarTemplatesPlacement', 'toolbarPresentationPlacement', 'toolbarExportPlacement']) {
+      if (!['toolbar', 'more', 'hidden'].includes(merged[key])) merged[key] = 'more';
+    }
     this.cachedSettings = merged;
     return structuredClone(merged);
   }

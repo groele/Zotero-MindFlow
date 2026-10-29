@@ -158,14 +158,16 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
   )));
 
   return (
-    <aside className={`w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-slate-200 dark:border-slate-800 flex flex-col h-full z-20 select-none shadow-xl ${dockSide === 'left' ? 'border-r order-first animate-in slide-in-from-left duration-150' : 'border-l order-last animate-in slide-in-from-right duration-150'}`}>
+    <aside className={`mindflow-inspector w-72 shrink-0 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 flex flex-col h-full z-20 select-none ${dockSide === 'left' ? 'border-r order-first animate-in slide-in-from-left duration-150' : 'border-l order-last animate-in slide-in-from-right duration-150'}`}>
       {/* Header */}
       <div className="h-14 px-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 ">
           主题样式与属性
         </span>
         <button
           onClick={onClose}
+          aria-label="关闭属性栏"
+          title="关闭属性栏"
           className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <X className="w-4 h-4" />
@@ -183,9 +185,9 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
             className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 outline-none focus:border-blue-400" />
         </div>
 
-        <div className="space-y-2 p-2.5 rounded-xl border border-violet-200 dark:border-violet-900 bg-violet-50/40 dark:bg-violet-950/20">
-          <label className="flex items-center gap-1.5 font-medium text-violet-700 dark:text-violet-300"><ImagePlus className="w-3.5 h-3.5" /> 节点图片</label>
-          <p className="text-[10px] text-slate-500">支持 PNG、JPEG、WebP；可将图片拖到画布节点，或选中节点后粘贴截图。导入时自动压缩并保存。</p>
+        <div className="space-y-2 p-2.5 rounded-md border border-slate-200 dark:border-slate-700 bg-sky-50/60 dark:bg-sky-950/20">
+          <label className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300"><ImagePlus className="w-3.5 h-3.5" /> 节点图片</label>
+          <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">导入图片，或向选中节点粘贴截图。支持 PNG、JPEG、WebP。</p>
           <input ref={imageInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" aria-label="选择节点图片"
             onChange={async event => {
               const file = event.target.files?.[0];
@@ -203,12 +205,12 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
             <div className="flex items-center justify-between text-[11px]"><span>显示宽度</span><span>{nodeImage.width} px · 高约 {imageDisplayHeight(nodeImage)} px</span></div>
             <input type="range" min="80" max="480" step="10" value={nodeImage.width} aria-label="调整节点图片宽度"
               onChange={event => onUpdateNode(selectedNode.id, { image: { ...nodeImage, width: Number(event.target.value) } })}
-              className="w-full accent-violet-600" />
+              className="w-full accent-blue-600" />
           </>}
           {selectedNode.image && !nodeImage && <p role="alert" className="text-[11px] text-red-600">此节点图片数据无效，可替换或删除。</p>}
           <div className="flex gap-2">
             <button type="button" disabled={imageBusy} onClick={() => imageInputRef.current?.click()}
-              className="px-2.5 py-1.5 rounded-lg bg-violet-600 text-white disabled:opacity-50">{imageBusy ? '处理中…' : selectedNode.image ? '替换图片' : '导入图片'}</button>
+              className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50">{imageBusy ? '处理中…' : selectedNode.image ? '替换图片' : '导入图片'}</button>
             {selectedNode.image && <button type="button" onClick={() => onUpdateNode(selectedNode.id, { image: undefined, type: selectedNode.type === 'image' ? 'topic' : selectedNode.type })}
               className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-red-600 flex items-center gap-1"><Trash2 className="w-3 h-3" /> 删除图片</button>}
           </div>
@@ -247,11 +249,13 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
               <button
                 key={color}
                 onClick={() => handleColorChange(color)}
-                style={{ backgroundColor: color }}
-                className={`w-7 h-7 rounded-full transition-transform hover:scale-110 flex items-center justify-center ${
+                aria-label={`分支颜色 ${color}`}
+                aria-pressed={selectedNode.color === color}
+                title={color}
+                className={`w-7 h-7 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center ${
                   selectedNode.color === color ? 'ring-2 ring-offset-2 ring-blue-500' : ''
                 }`}
-              />
+              ><span aria-hidden="true" className="w-4 h-4 rounded-full" style={{ backgroundColor: color }} /></button>
             ))}
           </div>
         </div>
@@ -452,8 +456,8 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
         })()}
 
         {/* Link to another document or a specific topic */}
-        <div className="space-y-2 p-2.5 rounded-xl border border-violet-200 dark:border-violet-900 bg-violet-50/50 dark:bg-violet-950/20">
-          <label className="flex items-center gap-1.5 font-medium text-violet-700 dark:text-violet-300">
+        <div className="space-y-2 p-2.5 rounded-md border border-slate-200 dark:border-slate-700 bg-teal-50/50 dark:bg-teal-950/20">
+          <label className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
             <Link2 className="w-3.5 h-3.5" /> 关联导图主题
           </label>
           <select
@@ -487,15 +491,15 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
                     <button key={node.id} type="button" onClick={() => {
                       onUpdateNode(selectedNode.id, { internalLink: { documentId: selectedNode.internalLink!.documentId, nodeId: node.id } });
                       setTargetSearch('');
-                    }} className="block w-full text-left truncate px-2 py-1 rounded hover:bg-violet-100 dark:hover:bg-violet-900/40" title={node.text}>
+                    }} className="block w-full text-left truncate px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800" title={node.text}>
                       {'· '.repeat(Math.min(node.depth, 5))}{node.text}
                     </button>
                   ))}
                 </div>
               )}
               <div className="flex gap-2">
-                <button type="button" onClick={() => onUpdateNode(selectedNode.id, { internalLink: { documentId: selectedNode.internalLink!.documentId } })} className="text-[11px] text-violet-600">指向中心主题</button>
-                <button type="button" onClick={() => onOpenInternalLink?.(selectedNode.internalLink!.documentId, selectedNode.internalLink!.nodeId)} className="text-[11px] font-medium text-violet-700 dark:text-violet-300">打开目标</button>
+                <button type="button" onClick={() => onUpdateNode(selectedNode.id, { internalLink: { documentId: selectedNode.internalLink!.documentId } })} className="text-[11px] text-blue-600">指向中心主题</button>
+                <button type="button" onClick={() => onOpenInternalLink?.(selectedNode.internalLink!.documentId, selectedNode.internalLink!.nodeId)} className="text-[11px] font-medium text-slate-700 dark:text-slate-300">打开目标</button>
               </div>
             </>
           )}

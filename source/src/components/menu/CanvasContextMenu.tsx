@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useRef } from 'react';
+import { useContextMenu } from './useContextMenu';
 import {
   Focus, RotateCcw, Plus,
   Grid, CircleDot, Square, Moon, Sun,
@@ -38,65 +39,19 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close when clicking outside or pressing Escape
-  useEffect(() => {
-    let timerId: ReturnType<typeof setTimeout>;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (e.button === 2) return;
-      if (menuRef.current && !menuRef.current.contains(e.target as HTMLElement)) {
-        onClose();
-      }
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    timerId = setTimeout(() => {
-      window.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('keydown', handleKeyDown);
-    }, 16);
-
-    return () => {
-      clearTimeout(timerId);
-      window.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [onClose]);
-
-  // Adjust position to stay inside viewport
-  const adjustedStyle = useMemo(() => {
-    const menuWidth = 210;
-    const menuHeight = 290;
-    const screenW = window.innerWidth;
-    const screenH = window.innerHeight;
-
-    let posX = x;
-    let posY = y;
-
-    if (posX + menuWidth > screenW) {
-      posX = Math.max(10, screenW - menuWidth - 10);
-    }
-    if (posY + menuHeight > screenH) {
-      posY = Math.max(10, screenH - menuHeight - 10);
-    }
-
-    return {
-      left: `${posX}px`,
-      top: `${posY}px`,
-    };
-  }, [x, y]);
+  const adjustedStyle = useContextMenu(menuRef, onClose, x, y);
 
   return (
     <div
       ref={menuRef}
+      role="menu"
+      aria-label="画布导航与视图"
       style={adjustedStyle}
       onContextMenu={(e) => {
         e.preventDefault();
         e.stopPropagation();
       }}
-      className="fixed z-[100] w-52 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-2xl rounded-xl text-xs text-slate-700 dark:text-slate-200 animate-in fade-in zoom-in-95 duration-100 select-none"
+      className="mindflow-context-menu fixed z-[100] w-52 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg rounded-md text-xs text-slate-700 dark:text-slate-200 select-none"
     >
       <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800/80 truncate mb-1">
         画布导航与视图

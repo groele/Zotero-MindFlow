@@ -318,7 +318,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
   return (
     <div className={`relative flex h-full z-30 select-none ${isLeftDock ? 'order-first' : 'order-last'}`}>
       {/* 1. Mini Navigation Rail (Always visible icon strip, 44px) */}
-      <aside className={`w-11 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-slate-200 dark:border-slate-800 flex flex-col items-center py-3 justify-between z-40 ${isLeftDock ? 'border-r' : 'border-l'}`}>
+      <aside className={`w-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 flex flex-col items-center py-3 justify-between z-40 ${isLeftDock ? 'border-r' : 'border-l'}`}>
         {/* Top Feature Tabs */}
         <div className="flex flex-col items-center gap-1.5 w-full">
           <button
@@ -428,7 +428,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
 
       {/* 2. Expandable Content Drawer (280px) */}
       {isOpen && (
-        <div className={`w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-slate-200 dark:border-slate-800 flex flex-col h-full shadow-2xl animate-in ${isLeftDock ? 'slide-in-from-left border-r' : 'slide-in-from-right border-l'}`}>
+        <div className={`w-72 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 flex flex-col h-full animate-in ${isLeftDock ? 'slide-in-from-left border-r' : 'slide-in-from-right border-l'}`}>
           {/* Header */}
           <div className="h-12 px-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 uppercase tracking-wider">
