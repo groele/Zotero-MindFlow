@@ -86,6 +86,27 @@
       await waitFor(()=>titleFor(tabA)==='Native Map A','A document visible');
       check(tabs._tabs.find(t=>t.id===tabA).data.targetItemId===`attachment:${aa.libraryID}:${aa.key}`,'A routing mismatch');
     });
+    await run('native toolbar stays compact and all groups remain within wide and narrow viewports', async () => {
+      const frame = frameFor(tabA), original = frame.style.cssText, measurements = [];
+      try {
+        for (const width of [1876, 1200, 600]) {
+          frame.style.cssText = `position:fixed;left:0;top:0;width:${width}px;height:960px;z-index:999999`;
+          await Zotero.Promise.delay(250);
+          const view = frame.contentWindow, header = frame.contentDocument.querySelector('header');
+          const box = header.getBoundingClientRect();
+          const groups = [...header.children].map(el => ({ rect: el.getBoundingClientRect().toJSON(),
+            width: view.getComputedStyle(el).width, flex: view.getComputedStyle(el).flex }));
+          measurements.push({ width, viewport: view.innerWidth, header: box.toJSON(), groups });
+        }
+        await IOUtils.writeUTF8(PathUtils.join(Zotero.DataDirectory.dir, 'header-layout-metrics.json'), JSON.stringify(measurements, null, 2));
+        for (const measurement of measurements) {
+          check(measurement.header.height < (measurement.width >= 1200 ? 120 : 200), `toolbar too tall at ${measurement.width}: ${measurement.header.height}`);
+          for (const group of measurement.groups.filter(g => g.rect.width && g.rect.height)) {
+            check(group.rect.left >= -1 && group.rect.right <= measurement.viewport + 1, `toolbar group outside viewport at ${measurement.width}`);
+          }
+        }
+      } finally { frame.style.cssText = original; }
+    });
     await run('native context menu navigates in Gecko and restores its invoker without editing the map', async () => {
       const frame = frameFor(tabA), doc = frame.contentDocument, view = frame.contentWindow;
       const invoker = doc.querySelector('header input');
@@ -223,6 +244,9 @@
       check(button.getAttribute('aria-label')==='MindFlow' && button.getAttribute('tooltiptext'),'toolbar lacks accessible name');
     });
     await run('item-pane sidenav keeps the MindFlow entry icon-only', async () => {
+      // Earlier workspace/selection tests can persist the section's open state.
+      // Establish this test's collapsed-state fixture immediately before use.
+      Zotero.Prefs.set('panes.mindflow\\@groele\\.org-mindflow-item-pane.open', false);
       check(Zotero.Prefs.get('panes.mindflow\\@groele\\.org-mindflow-item-pane.open') === false,
         'native test did not start from the saved collapsed-section state');
       tabs.select('zotero-pane');

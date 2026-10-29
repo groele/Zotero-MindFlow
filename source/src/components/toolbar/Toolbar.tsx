@@ -180,9 +180,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   return (
-    <header ref={headerRef} className="mindflow-toolbar min-h-14 shrink-0 py-2 px-4 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap 2xl:flex-nowrap items-center justify-start gap-2 z-30 select-none">
+    <header ref={headerRef} style={{ display: 'flex', flex: '0 0 auto', flexWrap: 'wrap', alignItems: 'center', alignContent: 'flex-start', gap: 8, minHeight: 56 }} className="mindflow-toolbar py-2 px-4 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 z-30 select-none">
       {/* Left: App Logo & Document Title */}
-      <div className="flex items-center gap-3 min-w-0 shrink-0 w-full 2xl:w-auto">
+      <div style={{ flex: '0 1 auto', width: 'auto', maxWidth: '100%' }} className="flex items-center gap-3 min-w-0">
         <div className="flex items-center gap-2 flex-shrink-0" title="MindFlow" aria-label="MindFlow">
           <MindFlowMark className="w-8 h-8 flex-shrink-0" />
 
@@ -303,7 +303,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       )}
 
       {/* Right: Layout, Theme, Outline, Export, Zoom & Extensions */}
-      <div className="flex flex-1 flex-wrap items-center gap-1.5 min-w-0">
+      <div style={{ flex: '1 1 360px', minWidth: 0, alignContent: 'flex-start' }} className="flex flex-wrap items-center gap-1.5">
 
         {/* Layout dropdown */}
         {buttons.layout && (

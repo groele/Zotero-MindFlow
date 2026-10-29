@@ -666,6 +666,7 @@
   let windowListener = null;
 
   Zotero.MindFlow = {
+    workspaceURL: `${CHROME_ROOT}index.html?v=${encodeURIComponent(typeof version !== 'undefined' ? version : 'development')}`,
     rootURI: typeof rootURI !== 'undefined' ? rootURI : '',
     addonId: ADDON_ID,
     restoreSessionOnStartup: typeof restoreSessionOnStartup !== 'undefined' && restoreSessionOnStartup,
@@ -3492,7 +3493,7 @@
             workspaceFrame = iframe;
             iframe.id = `mindflow-iframe-${tabId}`;
             iframe.className = 'mindflow-workspace-iframe';
-            iframe.setAttribute('src', `${CHROME_ROOT}index.html`);
+            iframe.setAttribute('src', this.workspaceURL);
             iframe.setAttribute(
               'style',
               'width: 100%; height: 100%; border: none; flex: 1; display: block;'
@@ -3543,7 +3544,7 @@
         // dialog=no,all,resizable=yes,minimizable=yes ensures standard OS window controls (minimize, maximize/restore, close) on Windows
         const features =
           'chrome,dialog=no,all,centerscreen,resizable=yes,minimizable=yes,close=yes,titlebar=yes,width=1440,height=920';
-        const url = `${CHROME_ROOT}index.html`;
+        const url = this.workspaceURL;
 
         const serializedItems = Array.isArray(options.items)
           ? options.items.map((i) => this.serializeZoteroItem(i)).filter(Boolean)

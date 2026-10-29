@@ -1,8 +1,10 @@
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { readFile, writeFile } from 'node:fs/promises';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dependencies = path.join(root, 'source/node_modules');
+const { version } = JSON.parse(await readFile(path.join(root, 'source/package.json'), 'utf8'));
 const { build } = await import(pathToFileURL(path.join(dependencies, 'vite/dist/node/index.js')).href);
 const { default: react } = await import(pathToFileURL(path.join(dependencies, '@vitejs/plugin-react/dist/index.js')).href);
 const { default: tailwindcss } = await import(pathToFileURL(path.join(dependencies, '@tailwindcss/vite/dist/index.mjs')).href);
@@ -14,6 +16,9 @@ await build({ configFile: false, root: path.join(root, 'source'),
   build: { outDir: path.join(root, 'chrome/content/assets'), emptyOutDir: false,
     lib: { entry: path.join(root, 'source/src/main.tsx'), name: 'MindFlowApp', formats: ['iife'],
       fileName: () => 'app.iife.js', cssFileName: 'mindflow' } } });
+const htmlPath = path.join(root, 'chrome/content/index.html');
+const html = await readFile(htmlPath, 'utf8');
+await writeFile(htmlPath, html.replace(/(\.\/assets\/(?:mindflow\.css|app\.iife\.js))(?:\?v=[^"']*)?/g, `$1?v=${version}`));
 for (const file of ['bootstrap.js', 'chrome/content/scripts/index.js', 'chrome/content/scripts/preferences.js', 'chrome/content/assets/app.iife.js']) {
   const result = spawnSync(process.execPath, ['--check', path.join(root, file)], { stdio: 'inherit' });
   if (result.status) process.exit(result.status);

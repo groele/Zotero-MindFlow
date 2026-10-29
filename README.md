@@ -9,7 +9,7 @@
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![当前正式版](https://img.shields.io/badge/version-12.6.0-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.0) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.0/zotero-mindflow-12.6.0.xpi) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
+[![当前正式版](https://img.shields.io/badge/version-12.6.1-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.1) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.1/zotero-mindflow-12.6.1.xpi) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
 
 [产品定位](#overview) · [安装与更新](#installation) · [快速开始](#quick-start) · [核心功能](#features) · [设置与使用](#settings) · [数据、同步与外部服务](#data) · [兼容性与验证范围](#compatibility) · [常见问题](#troubleshooting) · [开发与详细文档](#development) · [系列产品](#series) · [项目来源与许可](#license)
 
@@ -25,7 +25,7 @@
 
 ## 安装与更新
 
-1. 下载 [zotero-mindflow-12.6.0.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.0/zotero-mindflow-12.6.0.xpi)（当前正式版 **12.6.0**），不要安装 Source code ZIP。
+1. 下载 [zotero-mindflow-12.6.1.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.1/zotero-mindflow-12.6.1.xpi)（当前正式版 **12.6.1**），不要安装 Source code ZIP。
 2. 在 Zotero 打开 **工具 → 插件／附加组件**，从齿轮菜单选择 **从文件安装插件**。
 3. 选择 XPI，完成安装；按提示重启 Zotero。
 
@@ -76,11 +76,11 @@
 
 | 项目 | 范围 |
 |---|---|
-| 当前正式版 | 12.6.0 |
+| 当前正式版 | 12.6.1 |
 | 清单声明的 Zotero 范围 | `10.0` 至 `10.0.*` |
 | 当前说明 | 当前清单限定 Zotero 10.0.x。12.3.4 设置页已在 Windows Zotero 10.0.6 原生检查（含同窗连续切换与 MetaFlow 卡片配色对照）；本轮未重跑真实 AI、WebDAV 或跨设备协作。 |
 
-插件版本与 Zotero 版本分别管理。12.6.0 的 85 项宿主模拟、JavaScript 语法检查、标签策略自检及 XPI 更新源/资源校验通过；Windows Zotero 10.0.6 隔离原生回归与重启恢复通过；完整主题/缩放视觉验收和主 profile 安装未完成。真实 AI 服务、WebDAV 与跨设备流程也未重新验收。详见[版本说明](docs/release-v12.6.0.md)。工具栏的模板、演示和导入导出可在设置中选择“工具栏 / 更多 / 隐藏”。
+插件版本与 Zotero 版本分别管理。12.6.1 的 86 项宿主模拟、JavaScript 语法检查、标签策略自检及 XPI 更新源/资源校验通过；Windows Zotero 10.0.6 隔离原生回归与重启恢复通过；完整主题/缩放视觉验收和主 profile 安装未完成。真实 AI 服务、WebDAV 与跨设备流程也未重新验收。详见[版本说明](docs/release-v12.6.1.md)。工具栏的模板、演示和导入导出可在设置中选择“工具栏 / 更多 / 隐藏”。
 
 <a id="troubleshooting"></a>
 

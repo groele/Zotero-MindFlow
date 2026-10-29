@@ -88,6 +88,14 @@ class ReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "badge mismatch"):
             metadata(self.root)
 
+    def test_runtime_cache_version_must_match_the_package(self):
+        index = self.root / 'chrome/content/index.html'
+        index.write_text('<link href="./assets/mindflow.css?v=1.2.3"><script src="./assets/app.iife.js?v=1.2.3"></script>')
+        metadata(self.root)
+        index.write_text(index.read_text().replace('mindflow.css?v=1.2.3', 'mindflow.css?v=1.2.2'))
+        with self.assertRaisesRegex(ValueError, 'cache version mismatch'):
+            metadata(self.root)
+
     def test_invalid_later_feed_never_partially_updates_earlier_feed(self):
         build(self.root, self.output)
         before = (self.root / self.feeds[0]).read_bytes()

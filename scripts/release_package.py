@@ -26,6 +26,11 @@ def metadata(root):
                 "source/package-lock.json: version mismatch")
     prefs = (root / "chrome/content/preferences.xhtml").read_text(encoding="utf-8")
     require(f">v{version}<" in prefs, "Settings version badge mismatch")
+    index = root / 'chrome/content/index.html'
+    if index.is_file():
+        html = index.read_text(encoding='utf-8')
+        for asset in ('mindflow.css', 'app.iife.js'):
+            require(f'./assets/{asset}?v={version}"' in html, f'{asset}: runtime cache version mismatch')
     for name in ("applications", "browser_specific_settings"):
         if name in manifest:
             require(manifest[name]["zotero"]["id"] == manifest["applications"]["zotero"]["id"],

@@ -33,5 +33,20 @@ try {
     assert.equal(await page.getByRole('menuitem', { name: '模板库', exact: true }).count(), 0);
     assert.equal(await page.getByRole('menuitem', { name: '演示导图', exact: true }).count(), 0);
   }
+  for (const legacy of [false, true]) {
+    if (legacy && !process.env.MINDFLOW_LEGACY_CSS) continue;
+    if (legacy) await page.route('**/mindflow.css', route => route.fulfill({ path: process.env.MINDFLOW_LEGACY_CSS, contentType: 'text/css' }));
+    for (const width of [1876, 1200, 600]) {
+      await page.setViewportSize({ width, height: 960 });
+      await page.goto(url);
+      await page.locator('header').waitFor();
+      const geometry = await page.locator('header').evaluate(header => ({
+        height: header.getBoundingClientRect().height,
+        groups: [...header.children].map(child => child.getBoundingClientRect().toJSON()),
+      }));
+      assert.ok(geometry.height < (width >= 1200 ? 120 : 200), JSON.stringify({ legacy, width, geometry }));
+      for (const box of geometry.groups.filter(box => box.width && box.height)) assert.ok(box.left >= -1 && box.right <= width + 1, JSON.stringify({ legacy, width, box }));
+    }
+  }
   console.log('PASS: toolbar placement modes, popup exclusion, dismissal and focus restoration.');
 } finally { await browser.close(); }

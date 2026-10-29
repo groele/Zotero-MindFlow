@@ -18,6 +18,15 @@ test('item-pane sidenav localization is tooltip-only so the narrow rail stays ic
   }
 });
 
+test('new workspace frames use a versioned page URL to invalidate old chrome caches', () => {
+  const f = fixture();
+  f.host.openMindFlow({ mode: 'open' }, f.win);
+  const tab = f.tabs._tabs.find(tab => tab.type === 'mindflow');
+  const frame = f.tabs.getTabContent(tab.id).children[0];
+  assert.equal(frame.attrs.src, f.host.workspaceURL);
+  assert.match(frame.attrs.src, /index\.html\?v=development$/);
+});
+
 test('host inbox concurrent additions preserve both durable records', async () => {
   const f = fixture(), item = id => ({ id, text: id, createdAt: 1, isProcessed: false });
   await Promise.all(['one', 'two'].map(id => f.host.workspaceStorage('mutateInbox', { additions: [item(id)] })));
