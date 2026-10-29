@@ -15,7 +15,7 @@
   </defs>
 
   <!-- 底层流翼：柔和托底 -->
-  <g transform="translate(-3.84 -3.84) scale(1.12)">
+  <g transform="translate(-7.68 -7.68) scale(1.24)">
   <path d="M 14 44 C 24 42, 34 46, 50 42 C 42 50, 30 56, 14 44 Z" 
         fill="url(#wing-3)" />
 
