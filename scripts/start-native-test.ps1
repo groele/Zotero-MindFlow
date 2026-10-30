@@ -6,6 +6,20 @@ $profile = Join-Path $testRoot 'profile'
 $dataDir = Join-Path $testRoot 'data'
 $addon = Join-Path $profile 'extensions\mindflow@groele.org'
 New-Item -ItemType Directory -Path $addon,$dataDir -Force | Out-Null
+# Prune old native-test runs (disk-heavy, git-ignored). Keep the newest runs; archive small evidence first.
+$keepRuns = 3
+$evidenceRoot = Join-Path $workspace 'output\native-test-evidence'
+Get-ChildItem -LiteralPath (Join-Path $workspace 'tests') -Directory -Filter 'native-test-*' |
+  Where-Object { $_.FullName -ne $testRoot } | Sort-Object Name -Descending | Select-Object -Skip ($keepRuns - 1) | ForEach-Object {
+    try {
+      $evidence = Join-Path $evidenceRoot $_.Name
+      foreach ($name in 'native-regression-results.json', 'native-ui.png') {
+        $src = Join-Path $_.FullName "data\$name"
+        if (Test-Path -LiteralPath $src) { New-Item -ItemType Directory -Path $evidence -Force | Out-Null; Copy-Item -LiteralPath $src -Destination $evidence -Force }
+      }
+      Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop
+    } catch { Write-Warning ("Could not prune " + $_.FullName + ": " + $_.Exception.Message) }
+  }
 $version = (Get-Content -LiteralPath (Join-Path $workspace 'manifest.json') -Raw | ConvertFrom-Json).version
 $packagePath = Join-Path $workspace $(if ($PackageName) { $PackageName } else { "zotero-mindflow-$version.xpi" })
 if (!(Test-Path -LiteralPath $packagePath)) { throw 'Build and package the XPI before native tests.' }
