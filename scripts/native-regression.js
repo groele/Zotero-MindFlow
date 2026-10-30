@@ -695,20 +695,34 @@
       const input = await waitFor(() => document.querySelector('input[data-mindflow-node-draft]'), 'export node draft');
       Object.getOwnPropertyDescriptor(frame.contentWindow.HTMLInputElement.prototype, 'value').set.call(input, 'Native Export Pending Draft');
       input.dispatchEvent(new frame.contentWindow.Event('input', { bubbles: true }));
-      let exportedBlob;
-      const originalURL = editor.URL.createObjectURL, originalClick = editor.HTMLAnchorElement.prototype.click;
-      Components.utils.exportFunction(blob => { exportedBlob = blob; return 'blob:mindflow-native-export-test'; }, editor.URL, { defineAs: 'createObjectURL' });
-      Components.utils.exportFunction(() => {}, editor.HTMLAnchorElement.prototype, { defineAs: 'click' });
-      try {
+      const target = PathUtils.join(Zotero.DataDirectory.dir, 'native-export.json');
+      Zotero._mindflowExportTestChoice = { path: target };
+      const exportAction = async text => {
         document.querySelector('button[title="更多操作"]').click();
-        const button = await waitFor(() => [...document.querySelectorAll('button')].find(node => node.textContent.includes('JSON 工程备份')), 'JSON export action');
-        button.click();
-        await waitFor(() => exportedBlob, 'generated JSON blob');
-        const parsed = JSON.parse(await exportedBlob.text());
+        (await waitFor(() => [...document.querySelectorAll('button')].find(node => node.textContent === '导出文件…'), 'export submenu')).click();
+        (await waitFor(() => [...document.querySelectorAll('[data-mindflow-popup="export"] button')].find(node => node.textContent.includes(text)), 'export action')).click();
+      };
+      try {
+        await exportAction('JSON 工程备份');
+        await waitFor(() => IOUtils.exists(target), 'JSON written by native export');
+        const parsed = JSON.parse(await IOUtils.readUTF8(target));
         check(parsed.root.text === 'Native Export Pending Draft', 'export discarded uncommitted draft');
+        await waitFor(() => [...document.querySelectorAll('[role="status"]')].some(node => node.textContent.includes('导出完成')), 'export success feedback');
         const saved = JSON.parse(await host.workspaceStorage('get', { key: 'mindflow_doc_' + parsed.id }));
         check(saved.root.text === parsed.root.text, 'export did not persist captured draft');
-      } finally { editor.URL.createObjectURL = originalURL; editor.HTMLAnchorElement.prototype.click = originalClick; }
+        const png = PathUtils.join(Zotero.DataDirectory.dir, 'native-export.png');
+        Zotero._mindflowExportTestChoice = { path: png };
+        await exportAction('PNG');
+        await waitFor(() => IOUtils.exists(png), 'PNG written by native export');
+        const bytes = await IOUtils.read(png);
+        check(bytes[0] === 137 && bytes[1] === 80 && bytes[2] === 78 && bytes[3] === 71, 'export is not a PNG');
+        await waitFor(() => [...document.querySelectorAll('[role="status"]')].some(node => node.textContent.includes('导出完成')), 'PNG success feedback');
+        const cancelled = PathUtils.join(Zotero.DataDirectory.dir, 'cancelled-export.json');
+        Zotero._mindflowExportTestChoice = { path: cancelled, cancel: true };
+        await exportAction('JSON 工程备份');
+        await waitFor(() => [...document.querySelectorAll('[role="status"]')].some(node => node.textContent.includes('已取消导出')), 'cancel feedback');
+        check(!(await IOUtils.exists(cancelled)), 'cancelled export wrote a file');
+      } finally { delete Zotero._mindflowExportTestChoice; }
     });
     await run('workspace restore locks the editor and reloads canonical restored content', async () => {
       const frame = auditFrame(), document = frame.contentDocument, editor = frame.contentWindow.wrappedJSObject;

@@ -517,8 +517,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         )}
 
         {/* Export / Import dropdown */}
-        {buttons.export && toolbarExportPlacement === 'toolbar' && (
+        {buttons.export && toolbarExportPlacement !== 'hidden' && (
           <div className="relative">
+            {toolbarExportPlacement === 'toolbar' && <>
             <button data-mindflow-popup-trigger="export" aria-haspopup="menu" aria-expanded={isExportMenuOpen}
               onClick={() => {
                 setIsExportMenuOpen(!isExportMenuOpen);
@@ -532,8 +533,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
 
+            </>}
             {isExportMenuOpen && (
-              <div data-mindflow-popup="export" className="absolute right-0 mt-1 w-44 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 z-50">
+              <div data-mindflow-popup="export" className="absolute right-0 mt-1 w-64 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-200 dark:border-slate-700 py-1.5 z-50">
                 <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                   导出格式
                 </div>
@@ -541,13 +543,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   onClick={() => { onExportPNG(); setIsExportMenuOpen(false); }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
                 >
-                  <Image className="mr-2 w-4 h-4" />高清图片 (PNG)
+                  <Image className="mr-2 w-4 h-4" />PNG 图片 · 分享与插图
                 </button>
                 <button
                   onClick={() => { onExportSVG(); setIsExportMenuOpen(false); }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
                 >
-                  <Shapes className="mr-2 w-4 h-4" />矢量图形 (SVG)
+                  <Shapes className="mr-2 w-4 h-4" />SVG 矢量图 · 排版与打印
                 </button>
                 <button
                   onClick={() => { onExportMarkdown(); setIsExportMenuOpen(false); }}
@@ -559,7 +561,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   onClick={() => { onExportJSON(); setIsExportMenuOpen(false); }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
                 >
-                  <Braces className="mr-2 w-4 h-4" />JSON 工程备份
+                  <Braces className="mr-2 w-4 h-4" />JSON 工程备份 · 可再次编辑
                 </button>
                 <button
                   onClick={() => { onExportOPML?.(); setIsExportMenuOpen(false); }}
@@ -573,12 +575,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 >
                   <Globe className="mr-2 w-4 h-4" />独立离线交互网页 (.html)
                 </button>
+                {!isZoteroMode && onExportPDF && <>
                 <button
                   onClick={() => { onExportPDF?.(); setIsExportMenuOpen(false); }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
                 >
                   <FileText className="mr-2 w-4 h-4" />矢量 PDF 打印排版 (PDF)
                 </button>
+                </>}
                 {onSaveToZoteroNote && (
                   <button
                     onClick={() => { onSaveToZoteroNote(); setIsExportMenuOpen(false); }}
@@ -613,9 +617,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             {buttons.templates && onOpenTemplates && toolbarTemplatesPlacement === 'more' && <button onClick={() => { setPopup(null); onOpenTemplates(); }} className="mindflow-menu-action">模板库</button>}
             {onStartPresentation && toolbarPresentationPlacement === 'more' && <button onClick={() => { setPopup(null); onStartPresentation(); }} className="mindflow-menu-action">演示导图</button>}
             {buttons.export && toolbarExportPlacement === 'more' && <>
-              <div className="px-3 py-1 text-xs text-slate-500">导入与导出</div>
-              {([['PNG 图片', onExportPNG], ['SVG 矢量图', onExportSVG], ['Markdown 大纲', onExportMarkdown], ['JSON 工程备份', onExportJSON], ['OPML 大纲', onExportOPML], ['HTML 网页', onExportHTML], ['打印 / PDF', onExportPDF], ['存为 Zotero 大纲笔记', onSaveToZoteroNote]] as const).filter(([, action]) => action).map(([label, action]) => <button key={label} className="mindflow-menu-action" onClick={() => { setPopup(null); action?.(); }}>{label}</button>)}
-              <button className="mindflow-menu-action" onClick={() => { setPopup(null); fileInputRef.current?.click(); }}>导入文件…</button>
+              <button className="mindflow-menu-action" onClick={() => setPopup('export')}>导出文件…</button>
+              <button className="mindflow-menu-action" onClick={() => { setPopup(null); fileInputRef.current?.click(); }}>导入导图…</button>
             </>}
             <button className="mindflow-menu-action" onClick={() => { setPopup(null); onOpenShortcuts(); }}>快捷键帮助</button>
             {onOpenSettings && <button className="mindflow-menu-action" onClick={() => { setPopup(null); onOpenSettings(); }}>工具栏与偏好设置…</button>}

@@ -16,7 +16,7 @@ function confirmTextOnlyExport(root: MindMapNode): boolean {
 }
 
 // Export as formatted JSON (supports both MindMapDocument and bare MindMapNode)
-export function exportToJSON(data: MindMapDocument | MindMapNode, fallbackTitle = 'mindmap'): void {
+export function exportToJSON(data: MindMapDocument | MindMapNode, fallbackTitle = 'mindmap', download?: ExportDownload): void {
   let doc: MindMapDocument;
   if ('root' in data && 'themeId' in data) {
     doc = data as MindMapDocument;
@@ -32,11 +32,11 @@ export function exportToJSON(data: MindMapDocument | MindMapNode, fallbackTitle 
     };
   }
   const jsonStr = JSON.stringify(doc, null, 2);
-  downloadBlob(new Blob([jsonStr], { type: 'application/json' }), `${doc.title}.mindflow.json`);
+  downloadBlob(new Blob([jsonStr], { type: 'application/json' }), `${doc.title}.mindflow.json`, download);
 }
 
 // Export to Markdown with task checkboxes and metadata
-export function exportToMarkdown(root: MindMapNode, title: string): void {
+export function exportToMarkdown(root: MindMapNode, title: string, download?: ExportDownload): void {
   if (!confirmTextOnlyExport(root)) return;
   const lines: string[] = [`# ${root.text}\n`];
   if (root.note) lines.push(`<!-- 备注: ${encodeMarkdownNote(root.note)} -->\n`);
@@ -67,7 +67,7 @@ export function exportToMarkdown(root: MindMapNode, title: string): void {
 
   walk(root, 0);
   const mdContent = lines.join('\n');
-  downloadBlob(new Blob([mdContent], { type: 'text/markdown;charset=utf-8;' }), `${title}.md`);
+  downloadBlob(new Blob([mdContent], { type: 'text/markdown;charset=utf-8;' }), `${title}.md`, download);
 }
 
 // Parse Markdown into MindMapNode tree (with task checkbox support)
@@ -182,7 +182,7 @@ function renderOutline(node: MindMapNode, indent: string): string {
   return res;
 }
 
-export function exportToOPML(root: MindMapNode, title: string): void {
+export function exportToOPML(root: MindMapNode, title: string, download?: ExportDownload): void {
   if (!confirmTextOnlyExport(root)) return;
   const opmlContent = `<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
@@ -193,7 +193,7 @@ export function exportToOPML(root: MindMapNode, title: string): void {
 ${renderOutline(root, '    ')}  </body>
 </opml>`;
 
-  downloadBlob(new Blob([opmlContent], { type: 'text/xml;charset=utf-8' }), `${title}.opml`);
+  downloadBlob(new Blob([opmlContent], { type: 'text/xml;charset=utf-8' }), `${title}.opml`, download);
 }
 
 export function parseOPMLString(xmlContent: string): MindMapNode {
@@ -340,7 +340,10 @@ export function importFromOPML(xmlContent: string): MindMapNode {
 
 // ---------------- SVG / PNG / HTML ----------------
 
+export type ExportDownload = (blob: Blob, filename: string) => void;
+
 export interface ExportOptions {
+  download?: ExportDownload;
   watermark?: boolean;
   watermarkText?: string;
   highDpi?: boolean;
@@ -448,7 +451,7 @@ export function exportToSVG(
 
   svg += `</svg>`;
 
-  downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), `${title}.svg`);
+  downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), `${title}.svg`, options?.download);
   return svg;
 }
 
@@ -611,7 +614,7 @@ export async function exportToPNG(
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(value => value ? resolve(value) : reject(new Error('PNG 编码失败；请改用 SVG 或 JSON 导出')), 'image/png');
   });
-  downloadBlob(blob, `${title}.png`);
+  downloadBlob(blob, `${title}.png`, options?.download);
 }
 
 // Export as Standalone Offline Interactive HTML
@@ -773,7 +776,7 @@ export function exportToInteractiveHTML(
 </body>
 </html>`;
 
-  downloadBlob(new Blob([htmlContent], { type: 'text/html;charset=utf-8' }), `${title}.html`);
+  downloadBlob(new Blob([htmlContent], { type: 'text/html;charset=utf-8' }), `${title}.html`, options?.download);
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -820,7 +823,8 @@ function unescapeXml(str: string): string {
     .replace(/&apos;/g, "'");
 }
 
-function downloadBlob(blob: Blob, filename: string) {
+function downloadBlob(blob: Blob, filename: string, download?: ExportDownload) {
+  if (download) { download(blob, filename); return; }
   const url = URL.createObjectURL(blob);
   let a: HTMLAnchorElement | undefined;
   try {

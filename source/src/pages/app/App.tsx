@@ -2260,28 +2260,52 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
 
   const exportBusyRef = useRef(false);
   const handleExportCurrentDocument = useCallback(async (format: 'png' | 'svg' | 'markdown' | 'json' | 'opml' | 'html' | 'pdf') => {
-    if (exportBusyRef.current) return;
+    if (exportBusyRef.current) {
+      setSaveStatus({ state: 'warning', message: '已有导出正在进行，请先完成或取消保存对话框。' });
+      return;
+    }
     exportBusyRef.current = true;
     const sourceId = currentDocIdRef.current;
     try {
       if (!(await flushCurrentDocument()) || sourceId !== currentDocIdRef.current) return;
       const current = latestDocRef.current;
       if (!current) return;
+      const host = getZoteroInstance()?.MindFlow;
+      const saves: Promise<void>[] = [];
+      let cancelled = false;
+      let savedPath = '';
+      const download = host ? (blob: Blob, filename: string) => {
+        const pending = (async () => {
+          if (typeof host.saveExportFile !== 'function') throw new Error('导出保存通道未就绪，请重启 Zotero 后重试。');
+          const bytes = new Uint8Array(await blob.arrayBuffer());
+          const result = await host.saveExportFile(window, { filename, bytes });
+          if (result.cancelled) cancelled = true;
+          else savedPath = result.path;
+        })();
+        pending.catch(() => {});
+        saves.push(pending);
+      } : undefined;
+      if (isZoteroMode && !host) throw new Error('Zotero 导出通道未连接，请重启 Zotero 后重试。');
+      if (format === 'pdf' && isZoteroMode) throw new Error('Zotero 工作台暂不支持直接打印 PDF；请先导出 SVG 或 PNG，再从浏览器或文稿中打印。');
+      setSaveStatus({ state: 'saving', message: '正在准备导出文件…' });
       const currentTheme = getTheme(current.themeId);
       const currentLayout = computeLayout(current.root, current.layoutType, currentTheme, {
         rainbowBranches: settings.rainbowBranches, curveStyle: settings.curveStyle,
       });
-      if (format === 'json') exportToJSON({ ...current, relationships: latestRelationshipsRef.current });
-      else if (format === 'markdown') exportToMarkdown(current.root, current.title);
-      else if (format === 'opml') exportToOPML(current.root, current.title);
-      else if (format === 'png') await exportToPNG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current });
-      else if (format === 'svg') exportToSVG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current });
-      else if (format === 'html') exportToInteractiveHTML(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current });
+      if (format === 'json') exportToJSON({ ...current, relationships: latestRelationshipsRef.current }, current.title, download);
+      else if (format === 'markdown') exportToMarkdown(current.root, current.title, download);
+      else if (format === 'opml') exportToOPML(current.root, current.title, download);
+      else if (format === 'png') await exportToPNG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current, download });
+      else if (format === 'svg') exportToSVG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current, download });
+      else if (format === 'html') exportToInteractiveHTML(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current, download });
       else {
         // Print uses the live DOM; wait until React has rendered the captured draft.
         await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
         if (sourceId === currentDocIdRef.current) printToPDF();
       }
+      await Promise.all(saves);
+      if (host && !saves.length) cancelled = true;
+      setSaveStatus({ state: 'saved', message: cancelled ? '已取消导出；导图内容未改变。' : savedPath ? `已导出：${savedPath}` : '已请求浏览器下载，请检查下载列表。' });
     } catch (error: any) {
       setSaveStatus({ state: 'error', message: `导出失败：${error?.message || error}` });
     } finally { exportBusyRef.current = false; }
@@ -2420,7 +2444,7 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
           onExportJSON={() => { void handleExportCurrentDocument('json'); }}
           onExportOPML={() => { void handleExportCurrentDocument('opml'); }}
           onExportHTML={() => { void handleExportCurrentDocument('html'); }}
-          onExportPDF={() => { void handleExportCurrentDocument('pdf'); }}
+          onExportPDF={isZoteroMode ? undefined : () => { void handleExportCurrentDocument('pdf'); }}
           onCollapseByLevel={handleCollapseByLevel}
           onImportFile={handleImportFile}
           isSidepanelMode={isSidepanelMode}
@@ -2617,7 +2641,7 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
         onExportPNG={() => { void handleExportCurrentDocument('png'); }}
         onExportSVG={() => { void handleExportCurrentDocument('svg'); }}
         onExportMarkdown={() => { void handleExportCurrentDocument('markdown'); }}
-        onExportPDF={() => { void handleExportCurrentDocument('pdf'); }}
+        onExportPDF={isZoteroMode ? undefined : () => { void handleExportCurrentDocument('pdf'); }}
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
         onOpenSettings={handleOpenSettings}
         onCreateBlank={handleCreateBlankDoc}

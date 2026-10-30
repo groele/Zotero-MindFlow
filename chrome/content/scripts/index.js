@@ -666,6 +666,32 @@
   let windowListener = null;
 
   Zotero.MindFlow = {
+    async saveExportFile(source, payload) {
+      if (!this.ownsWorkspaceWindow(source)) throw new Error('导出来源未连接到当前工作台');
+      const bytes = payload?.bytes;
+      if (!bytes || !Number.isSafeInteger(bytes.byteLength) || bytes.byteLength === 0 || bytes.byteLength > 32 * 1024 * 1024) {
+        throw new Error('导出文件为空或超过 32 MiB，请改用 SVG 或 JSON。');
+      }
+      const rawName = String(payload.filename || '').replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
+      const extension = rawName.match(/\.(png|svg|json|md|opml|html)$/i)?.[1];
+      if (!extension) throw new Error('不支持的导出文件格式');
+      const filename = rawName.slice(0, -extension.length - 1).slice(0, 150) + '.' + extension;
+      const contents = new Uint8Array(bytes);
+      const { FilePicker } = ChromeUtils.importESModule('chrome://zotero/content/modules/filePicker.mjs');
+      const picker = new FilePicker(); // mindflow-export-picker
+      const owner = source.top?.browsingContext ? source.top : Zotero.getMainWindow();
+      picker.init(owner, '保存导出文件', picker.modeSave);
+      picker.defaultString = filename;
+      picker.defaultExtension = extension;
+      picker.appendFilter(`${extension.toUpperCase()} 文件`, `*.${extension}`);
+      const result = await picker.show();
+      if (result === picker.returnCancel) return { cancelled: true };
+      if (result !== picker.returnOK && result !== picker.returnReplace) throw new Error('保存对话框未返回有效结果');
+      await IOUtils.write(picker.file, contents, { tmpPath: picker.file + '.mindflow-tmp' });
+      const actual = await IOUtils.read(picker.file);
+      if (actual.length !== contents.length || actual.some((value, index) => value !== contents[index])) throw new Error('导出文件写入后校验失败');
+      return { cancelled: false, path: picker.file };
+    },
     workspaceURL: `${CHROME_ROOT}index.html?v=${encodeURIComponent(typeof version !== 'undefined' ? version : 'development')}`,
     rootURI: typeof rootURI !== 'undefined' ? rootURI : '',
     addonId: ADDON_ID,

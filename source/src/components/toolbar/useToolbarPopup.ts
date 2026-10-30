@@ -7,7 +7,7 @@ export function useToolbarPopup(ref: RefObject<HTMLElement | null>, active: stri
     const header = ref.current;
     if (!header || !active) return;
     const menu = header.querySelector<HTMLElement>(`[data-mindflow-popup="${active}"]`);
-    const trigger = header.querySelector<HTMLElement>(`[data-mindflow-popup-trigger="${active}"]`);
+    const trigger = header.querySelector<HTMLElement>(`[data-mindflow-popup-trigger="${active}"]`) || header.querySelector<HTMLElement>('[data-mindflow-popup-trigger="more"]');
     if (!menu || !trigger) return;
     const win = header.ownerDocument.defaultView!;
     const items = () => [...menu.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')];

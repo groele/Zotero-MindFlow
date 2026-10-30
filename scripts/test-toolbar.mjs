@@ -13,7 +13,10 @@ try {
   await page.getByRole('button', { name: '更多操作', exact: true }).click();
   await page.getByRole('menuitem', { name: '模板库', exact: true }).waitFor();
   await page.getByRole('menuitem', { name: '演示导图', exact: true }).waitFor();
-  await page.getByRole('menuitem', { name: 'JSON 工程备份', exact: true }).waitFor();
+  assert.equal(await page.getByRole('menuitem', { name: /JSON 工程备份/ }).count(), 0);
+  await page.getByRole('menuitem', { name: '导出文件…', exact: true }).click();
+  await page.getByRole('menuitem', { name: /JSON 工程备份/ }).waitFor();
+  assert.equal(await page.getByRole('menuitem', { name: /打印.*PDF/ }).count(), 0);
   await page.keyboard.press('End');
   await page.keyboard.press('Escape');
   assert.equal(await page.getByRole('menu').count(), 0);

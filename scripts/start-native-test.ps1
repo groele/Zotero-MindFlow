@@ -12,6 +12,19 @@ if (!(Test-Path -LiteralPath $packagePath)) { throw 'Build and package the XPI b
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [IO.Compression.ZipFile]::ExtractToDirectory($packagePath, $addon)
 if (!$PreviewMap) {
+  # Stub only the dialog choice in the extracted test profile; product byte
+  # validation, ownership checks, native writes and read-back remain unchanged.
+  $runtimePath = Join-Path $addon 'chrome/content/scripts/index.js'
+  $runtime = [IO.File]::ReadAllText($runtimePath)
+  $runtime = $runtime.Replace('const picker = new FilePicker(); // mindflow-export-picker', @'
+const picker = new FilePicker();
+if (Zotero._mindflowExportTestChoice) {
+  const choice = Zotero._mindflowExportTestChoice;
+  Object.defineProperty(picker, 'show', { value: async () => choice.cancel ? picker.returnCancel : picker.returnOK });
+  Object.defineProperty(picker, 'file', { get: () => choice.path });
+}
+'@)
+  [IO.File]::WriteAllText($runtimePath, $runtime)
   # Probe cold-start file imports before React mounts. This instrumentation
   # exists only in the extracted temporary profile, never in the output XPI.
   $testIndexPath = Join-Path $addon 'chrome\content\index.html'

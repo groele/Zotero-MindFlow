@@ -9,7 +9,7 @@ Organize papers, annotations, and ideas into editable maps.
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Current release](https://img.shields.io/badge/version-12.6.2-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.2) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.2/zotero-mindflow-12.6.2.xpi) · [Report an issue](https://github.com/groele/Zotero-MindFlow/issues)
+[![Current release](https://img.shields.io/badge/version-12.6.3-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.3) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.3/zotero-mindflow-12.6.3.xpi) · [Report an issue](https://github.com/groele/Zotero-MindFlow/issues)
 
 [Overview](#overview) · [Installation and updates](#installation) · [Quick start](#quick-start) · [Key features](#features) · [Settings](#settings) · [Data, sync, and services](#data) · [Compatibility and validation](#compatibility) · [Troubleshooting](#troubleshooting) · [Development and documentation](#development) · [The Flow series](#series) · [Origin and license](#license)
 
@@ -25,7 +25,7 @@ Install this add-on independently and combine it with other Flow products as nee
 
 ## Installation and updates
 
-1. Download [zotero-mindflow-12.6.2.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.2/zotero-mindflow-12.6.2.xpi) (current release **12.6.2**), not the Source code ZIP.
+1. Download [zotero-mindflow-12.6.3.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.3/zotero-mindflow-12.6.3.xpi) (current release **12.6.3**), not the Source code ZIP.
 2. In Zotero, open **Tools → Plugins/Add-ons**, then choose **Install Add-on From File** from the gear menu.
 3. Select the XPI, complete installation, and restart if requested.
 
@@ -50,7 +50,7 @@ Update feed: [zotero/update.json](https://github.com/groele/Zotero-MindFlow/blob
 | Canvas and outline together | Organizes research questions, evidence, methods, and conclusions in a visual canvas or hierarchical outline, with nodes, relationships, links, notes, tasks, search/replace, and a minimap. | Node notes are plain text; map structure does not itself establish a paper’s conclusion or evidential relationship. |
 | Explicit Zotero-item association | Starts or enriches a map from a selected item, PDF, note, or annotation; differentiates paper, collection, and standalone maps and provides item-pane entry points. | A title, list position, or internal map ID alone never establishes the same source; users should confirm the archival target. |
 | Durable archive, snapshots, and recovery | Saves locally, then explicitly archives a map as the related item’s `.mindflow` attachment; provides automatic/manual snapshots, backup, and recovery. | PDFs and `.mindflow` files are separate attachments. Check provenance, date, and contents before recovery rather than merging same-named files. |
-| Rich editing and portable export | Offers mind/logic/organization layouts, themes, image import/paste, inbox, templates, presentation, and zen modes; imports/exports suitable Markdown, JSON, OPML, PNG, SVG, HTML, and PDF formats. | Image data travels with a map and increases its size; conversion cannot preserve every other tool’s semantic detail. |
+| Rich editing and portable export | Offers mind/logic/organization layouts, themes, image import/paste, inbox, templates, presentation, and zen modes; imports/exports suitable Markdown, JSON, OPML, PNG, SVG, and HTML formats. | Image data travels with a map and increases its size; conversion cannot preserve every other tool’s semantic detail. |
 | Optional AI reading drafts | Uses the user’s configured `llm-for-zotero` model and reasoning options to create an editable reading-map draft while retaining the selection for that run. | MindFlow neither copies API keys nor maintains its own provider registry. Compare drafts with the source and decide explicitly whether to archive them. |
 | Optional WebDAV workspace backup | Uploads, versions, and restores workspace backups through user-configured HTTPS WebDAV. | Core editing works offline; WebDAV, AI, and Zotero remote-file capabilities separately depend on networks and external terms. |
 
@@ -76,11 +76,11 @@ Configure window mode, welcome page, material imports, outline notes, and worksp
 
 | Item | Scope |
 |---|---|
-| Current published version | 12.6.2 |
+| Current published version | 12.6.3 |
 | Declared Zotero range | `10.0` through `10.0.*` |
 | Evidence boundary | The current manifest limits support to Zotero 10.0.x. The 12.3.4 settings pane was checked in Windows Zotero 10.0.7, including sequential navigation and MetaFlow card palette comparison; live AI, WebDAV, and cross-device workflows were not rerun. |
 
-Add-on and Zotero versions are separate. Version 12.6.2 passes 86 host simulations, JavaScript syntax checks, tag-policy self-test, and XPI update-feed/payload verification. Isolated Windows Zotero 10.0.7 native and restart regressions pass; full theme/scale visual acceptance and main-profile installation remain unverified; live AI services, WebDAV, and cross-device workflows were not revalidated. See the [release notes](docs/release-v12.6.2.md). Settings can place templates, presentation, and import/export on the toolbar, in More, or hide their entries.
+Add-on and Zotero versions are separate. Version 12.6.3 passes 87 host simulations, JavaScript syntax checks, tag-policy self-test, and XPI update-feed/payload verification. Isolated Windows Zotero 10.0.7 native and restart regressions pass; full theme/scale visual acceptance and main-profile installation remain unverified; live AI services, WebDAV, and cross-device workflows were not revalidated. See the [release notes](docs/release-v12.6.3.md). Settings can place templates, presentation, and import/export on the toolbar, in More, or hide their entries.
 
 <a id="troubleshooting"></a>
 
@@ -144,3 +144,5 @@ License: [MIT](LICENSE).
 This series is independently maintained and is not an official Zotero product. Zotero and third-party names, trademarks, and materials belong to their respective rights holders.
 
 [Release/tag policy](docs/release-tag-policy.md)
+
+File exports use the Zotero native save dialog. JSON preserves an editable map, PNG supports sharing, SVG supports publishing, Markdown/OPML preserve text hierarchy, and HTML supports offline viewing. Direct PDF printing is unavailable inside the Zotero workspace; print an exported image from a browser or document instead.

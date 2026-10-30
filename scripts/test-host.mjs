@@ -157,7 +157,9 @@ function fixture(options = {}) {
     makeDirectory: async () => {}, getChildren: async dir => [...disk.keys()].filter(p=>p.startsWith(dir+'/')),
     move: async (p,q) => {disk.set(q,disk.get(p));disk.delete(p);},
     remove: async p => { for (const k of disk.keys()) if (k===p||k.startsWith(p+'/')) disk.delete(k); } };
-  const ctx = { Zotero, window:win, Services: { wm: { addListener() {}, removeListener() {}, getEnumerator: () => ({hasMoreElements:()=>false}) } },
+  IOUtils.write = async (path, bytes) => disk.set(path, new Uint8Array(bytes));
+  IOUtils.read = async path => disk.get(path);
+  const ctx = { Zotero, window:win, ChromeUtils: { importESModule: () => ({ FilePicker: options.exportPicker }) }, Services: { wm: { addListener() {}, removeListener() {}, getEnumerator: () => ({hasMoreElements:()=>false}) } },
     IOUtils, PathUtils: { join: (...parts)=>parts.join('/'), parent:p=>p.slice(0,p.lastIndexOf('/')), filename:p=>p.split('/').pop(), tempDir:'/tmp' },
     URL, setTimeout, clearTimeout, console };
   vm.runInNewContext(runtime.replace('  Zotero.MindFlow.init();','  Zotero.MindFlow._testLLMRequest = callLLMForZotero;'), ctx);
@@ -1280,4 +1282,24 @@ test('privileged message ownership excludes unknown and closed editor windows', 
   standalone.closed = true;
   assert.equal(f.host.ownsWorkspaceWindow(standalone), false);
   assert.equal(f.host.ownsWorkspaceWindow({}), false);
+});
+
+test('native export saves verified bytes, preserves extensions, and handles cancellation and read-back failure', async () => {
+  let cancel = false;
+  class Picker {
+    modeSave = 1; returnOK = 0; returnCancel = 1; returnReplace = 2; file = '/export/result.json';
+    init() {} appendFilter() {} async show() { assert.ok(this.defaultString.endsWith('.json')); return cancel ? 1 : 0; }
+  }
+  const f = fixture({ exportPicker: Picker }), source = { closed: false };
+  f.host._standaloneWindows = new Map([['export', source]]);
+  const payload = { filename: 'x'.repeat(250) + '.json', bytes: new Uint8Array([123,125]) };
+  const saved = await f.host.saveExportFile(source, payload);
+  assert.equal(saved.path, '/export/result.json');
+  assert.deepEqual(Array.from(f.disk.get(saved.path)), [123,125]);
+  cancel = true;
+  assert.equal((await f.host.saveExportFile(source, payload)).cancelled, true);
+  cancel = false;
+  f.IOUtils.read = async () => new Uint8Array([0]);
+  await assert.rejects(() => f.host.saveExportFile(source, payload), /校验失败/);
+  await assert.rejects(() => f.host.saveExportFile({closed:false}, payload), /来源/);
 });

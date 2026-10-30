@@ -9,7 +9,7 @@
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![当前正式版](https://img.shields.io/badge/version-12.6.2-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.2) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.2/zotero-mindflow-12.6.2.xpi) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
+[![当前正式版](https://img.shields.io/badge/version-12.6.3-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.3) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.3/zotero-mindflow-12.6.3.xpi) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
 
 [产品定位](#overview) · [安装与更新](#installation) · [快速开始](#quick-start) · [核心功能](#features) · [设置与使用](#settings) · [数据、同步与外部服务](#data) · [兼容性与验证范围](#compatibility) · [常见问题](#troubleshooting) · [开发与详细文档](#development) · [系列产品](#series) · [项目来源与许可](#license)
 
@@ -25,7 +25,7 @@
 
 ## 安装与更新
 
-1. 下载 [zotero-mindflow-12.6.2.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.2/zotero-mindflow-12.6.2.xpi)（当前正式版 **12.6.2**），不要安装 Source code ZIP。
+1. 下载 [zotero-mindflow-12.6.3.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.3/zotero-mindflow-12.6.3.xpi)（当前正式版 **12.6.3**），不要安装 Source code ZIP。
 2. 在 Zotero 打开 **工具 → 插件／附加组件**，从齿轮菜单选择 **从文件安装插件**。
 3. 选择 XPI，完成安装；按提示重启 Zotero。
 
@@ -50,7 +50,7 @@
 | 画布与大纲双视图 | 在可视画布和层级大纲之间组织研究问题、证据、方法与结论；支持节点、关系线、链接、备注、任务、搜索替换和小地图。 | 节点备注是纯文本；导图结构不自动证明论文结论或证据关系。 |
 | 与 Zotero 条目一一关联 | 从选中文献、PDF、笔记与批注创建或补充导图；区分单篇论文、合集和独立导图，并提供文献侧栏入口。 | 标题、列表位置或导图内部 ID 不能单独认定为同一来源；用户应确认当前归档目标。 |
 | 可靠归档、快照与恢复 | 本地工作区保存后，可显式归档为关联条目的 `.mindflow` 附件，并提供自动/手动快照、备份与恢复。 | PDF 与 `.mindflow` 是独立附件；恢复应先核对来源、时间和内容，避免以同名文件误合并。 |
-| 丰富编辑与可移植导出 | 支持思维/逻辑/组织布局、主题、图片导入/粘贴、收件箱、模板、演示和专注模式；可导入或导出 Markdown、JSON、OPML、PNG、SVG、HTML、PDF 等适用格式。 | 图片随导图保存会增加文件体积；格式转换可能无法保留其他工具的全部语义。 |
+| 丰富编辑与可移植导出 | 支持思维/逻辑/组织布局、主题、图片导入/粘贴、收件箱、模板、演示和专注模式；可导入或导出 Markdown、JSON、OPML、PNG、SVG、HTML 等适用格式。 | 图片随导图保存会增加文件体积；格式转换可能无法保留其他工具的全部语义。 |
 | 可选 AI 研读草稿 | 通过已安装的 `llm-for-zotero` 使用用户已配置的模型和推理选项，生成可编辑的研读导图草稿并记录本次选择。 | MindFlow 不复制 API 密钥或自建模型供应商；草稿须对照原文复核，并由用户决定是否归档。 |
 | 可选 WebDAV 工作区备份 | 使用用户配置的 HTTPS WebDAV 上传、保留版本并恢复工作区备份。 | 基础编辑可离线使用；WebDAV、AI 和 Zotero 远端文件能力各自依赖网络与外部服务条款。 |
 
@@ -76,11 +76,11 @@
 
 | 项目 | 范围 |
 |---|---|
-| 当前正式版 | 12.6.2 |
+| 当前正式版 | 12.6.3 |
 | 清单声明的 Zotero 范围 | `10.0` 至 `10.0.*` |
 | 当前说明 | 当前清单限定 Zotero 10.0.x。12.3.4 设置页已在 Windows Zotero 10.0.7 原生检查（含同窗连续切换与 MetaFlow 卡片配色对照）；本轮未重跑真实 AI、WebDAV 或跨设备协作。 |
 
-插件版本与 Zotero 版本分别管理。12.6.2 的 86 项宿主模拟、JavaScript 语法检查、标签策略自检及 XPI 更新源/资源校验通过；Windows Zotero 10.0.7 隔离原生回归与重启恢复通过；完整主题/缩放视觉验收和主 profile 安装未完成。真实 AI 服务、WebDAV 与跨设备流程也未重新验收。详见[版本说明](docs/release-v12.6.2.md)。工具栏的模板、演示和导入导出可在设置中选择“工具栏 / 更多 / 隐藏”。
+插件版本与 Zotero 版本分别管理。12.6.3 的 87 项宿主模拟、JavaScript 语法检查、标签策略自检及 XPI 更新源/资源校验通过；Windows Zotero 10.0.7 隔离原生回归与重启恢复通过；完整主题/缩放视觉验收和主 profile 安装未完成。真实 AI 服务、WebDAV 与跨设备流程也未重新验收。详见[版本说明](docs/release-v12.6.3.md)。工具栏的模板、演示和导入导出可在设置中选择“工具栏 / 更多 / 隐藏”。
 
 <a id="troubleshooting"></a>
 
@@ -144,3 +144,5 @@ python scripts/package-xpi.py --verify-only
 本系列独立维护，并非 Zotero 官方产品。Zotero 及第三方名称、商标与材料归各自权利人所有。
 
 [Release/tag policy](docs/release-tag-policy.md)
+
+导出文件使用 Zotero 原生保存对话框。PNG 用于分享，SVG 用于排版，JSON 用于完整可编辑备份；Markdown/OPML 用于文字层级，HTML 用于离线查看。Zotero 工作台不提供直接 PDF 打印，可将 SVG/PNG 放入浏览器或文稿后打印。
