@@ -26,6 +26,19 @@
   outline-offset: 2px;
 }
 
+.mindflow-workbench button:focus-visible,
+.mindflow-inspector-section > summary:focus-visible {
+  outline: 2px solid Highlight;
+  outline-offset: 2px;
+}
+.mindflow-inspector-section > summary {
+  cursor: pointer;
+  color: #475569;
+  line-height: 1.6;
+}
+.mindflow-inspector-section > summary > span { vertical-align: middle; }
+.mindflow-app.dark .mindflow-inspector-section > summary { color: #cbd5e1; }
+
 @layer base {
   * {
     box-sizing: border-box;

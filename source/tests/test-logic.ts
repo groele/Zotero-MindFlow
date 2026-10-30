@@ -37,6 +37,8 @@ await run('native controls retain Tab, Enter, and Space while canvas shortcuts r
   const canvas = { closest: () => null } as unknown as EventTarget;
   assert.equal(shouldHandleCanvasShortcut(button), false);
   assert.equal(shouldHandleCanvasShortcut(combobox), false);
+  const summary = { closest: (selector: string) => selector.includes('summary') ? {} : null } as unknown as EventTarget;
+  assert.equal(shouldHandleCanvasShortcut(summary), false);
   assert.equal(shouldHandleCanvasShortcut(canvas), true);
   assert.equal(shouldHandleCanvasShortcut(null), true);
 });

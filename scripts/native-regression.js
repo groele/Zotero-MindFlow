@@ -128,6 +128,24 @@
       check(doc.activeElement === invoker, 'menu did not restore focus');
       check(titleFor(tabA) === 'Native Map A', 'menu navigation edited the document');
     });
+    await run('native inspector disclosures preserve node text and keep Space out of canvas shortcuts', async () => {
+      const frame = frameFor(tabA), document = frame.contentDocument, view = frame.contentWindow;
+      const label = await waitFor(() => document.querySelector('span[title="Native Map A"]'), 'node selection label');
+      label.click();
+      const inspector = await waitFor(() => document.querySelector('.mindflow-inspector'), 'node inspector');
+      const section = inspector.querySelector('details'), summary = section.querySelector('summary');
+      check(!section.open, 'unused image tools should be collapsed');
+      summary.focus();
+      const event = new view.KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true, cancelable: true });
+      summary.dispatchEvent(event);
+      check(!event.defaultPrevented, 'canvas handler consumed disclosure Space');
+      summary.click();
+      check(section.open, 'native disclosure did not expand');
+      summary.click();
+      check(!section.open, 'native disclosure did not collapse');
+      check(inspector.querySelector('#node-text').value === 'Native Map A', 'disclosure changed node text');
+      inspector.querySelector('[aria-label="关闭属性栏"]').click();
+    });
     await run('native toolbar placement settings refresh all three entries without reopening the editor', async () => {
       const document = frameFor(tabA).contentDocument;
       const key = 'mindflow.mindflow_app_settings';

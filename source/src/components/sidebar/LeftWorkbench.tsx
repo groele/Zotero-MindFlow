@@ -282,7 +282,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
             </span>
           )}
 
-          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 ml-1">
+          <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 flex items-center gap-0.5 ml-1">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -316,35 +316,35 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
   const isLeftDock = dockPosition === 'left';
 
   return (
-    <div className={`relative flex h-full z-30 select-none ${isLeftDock ? 'order-first' : 'order-last'}`}>
+    <div className={`mindflow-workbench relative flex h-full min-h-0 z-30 select-none ${isLeftDock ? 'order-first' : 'order-last'}`}>
       {/* 1. Mini Navigation Rail (Always visible icon strip, 44px) */}
-      <aside className={`w-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 flex flex-col items-center py-3 justify-between z-40 ${isLeftDock ? 'border-r' : 'border-l'}`}>
+      <aside className={`w-11 shrink-0 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 flex flex-col items-center py-3 justify-between z-40 ${isLeftDock ? 'border-r' : 'border-l'}`}>
         {/* Top Feature Tabs */}
         <div className="flex flex-col items-center gap-1.5 w-full">
-          <button
+          <button aria-pressed={isOpen && activeTab === 'docs'} aria-label="文档库"
             onClick={() => {
               if (isOpen && activeTab === 'docs') onToggleOpen();
               else { onTabChange('docs'); if (!isOpen) onToggleOpen(); }
             }}
             title="文档库 (Documents)"
-            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+            className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
               isOpen && activeTab === 'docs'
-                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 font-bold shadow-xs'
+                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 font-medium'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <FolderOpen className="w-4 h-4" />
           </button>
 
-          <button
+          <button aria-pressed={isOpen && activeTab === 'outline'} aria-label="结构大纲"
             onClick={() => {
               if (isOpen && activeTab === 'outline') onToggleOpen();
               else { onTabChange('outline'); if (!isOpen) onToggleOpen(); }
             }}
             title="结构大纲 (Outline)"
-            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+            className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
               isOpen && activeTab === 'outline'
-                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 font-bold shadow-xs'
+                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 font-medium'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -353,42 +353,41 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
 
 
 
-          <button
+          <button aria-pressed={isOpen && activeTab === 'tags'} aria-label="标签聚焦与主题筛选"
             onClick={() => {
               if (isOpen && activeTab === 'tags') onToggleOpen();
               else { onTabChange('tags'); if (!isOpen) onToggleOpen(); }
             }}
             title="标签聚焦与主题筛选"
-            aria-label="标签聚焦与主题筛选"
-            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${isOpen && activeTab === 'tags' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+            className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${isOpen && activeTab === 'tags' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
           >
             <Tag className="w-4 h-4" />
           </button>
 
-          <button
+          <button aria-pressed={isOpen && activeTab === 'inbox'} aria-label="灵感与收集箱"
             onClick={() => {
               if (isOpen && activeTab === 'inbox') onToggleOpen();
               else { onTabChange('inbox'); if (!isOpen) onToggleOpen(); }
             }}
             title="灵感与收集箱 (Inbox)"
-            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors relative ${
+            className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors relative ${
               isOpen && activeTab === 'inbox'
-                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 font-bold shadow-xs'
+                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 font-medium'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <Inbox className="w-4 h-4" />
           </button>
 
-          <button
+          <button aria-pressed={isOpen && activeTab === 'backup'} aria-label="数据安全与备份"
             onClick={() => {
               if (isOpen && activeTab === 'backup') onToggleOpen();
               else { onTabChange('backup'); if (!isOpen) onToggleOpen(); }
             }}
             title="数据安全与备份 (Security & Snapshots)"
-            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+            className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
               isOpen && activeTab === 'backup'
-                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 font-bold shadow-xs'
+                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 font-medium'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -402,7 +401,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
             <button
               onClick={onOpenSettings}
               title={isZoteroMode ? '打开 Zotero 插件功能设置 (Ctrl+,)' : '系统设置 (Ctrl+,)'}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <Settings className="w-3.5 h-3.5" />
             </button>
@@ -411,7 +410,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
           <button
             onClick={onToggleDockPosition}
             title={isLeftDock ? '切换停靠至右侧' : '切换停靠至左侧'}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <ArrowLeftRight className="w-3.5 h-3.5" />
           </button>
@@ -419,7 +418,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
           <button
             onClick={onToggleOpen}
             title={isOpen ? '收起工作台' : '展开工作台'}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-8 h-8 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             {isOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
           </button>
@@ -430,8 +429,8 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
       {isOpen && (
         <div className={`w-72 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 flex flex-col h-full animate-in ${isLeftDock ? 'slide-in-from-left border-r' : 'slide-in-from-right border-l'}`}>
           {/* Header */}
-          <div className="h-12 px-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 uppercase tracking-wider">
+          <div className="h-12 shrink-0 px-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 ">
               {activeTab === 'docs' && <><FolderOpen className="w-4 h-4 text-slate-500" /> 我的导图文档</>}
               {activeTab === 'outline' && <><ListTree className="w-4 h-4 text-slate-500" /> 结构化大纲</>}
               {activeTab === 'tags' && <><Tag className="w-4 h-4 text-slate-500" /> 标签聚焦</>}
@@ -440,6 +439,8 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
             </span>
             <button
               onClick={onToggleOpen}
+              aria-label="收起工作台"
+              title="收起工作台"
               className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <X className="w-3.5 h-3.5" />
@@ -468,7 +469,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
                   />
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">
                 {docList
                   .filter(d => d.title.toLowerCase().includes(docSearch.toLowerCase()))
                   .map((d) => (
@@ -509,7 +510,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
                         <button
                           onClick={(e) => handleDeleteDoc(d.id, e)}
                           title="删除导图"
-                          className="p-1 rounded text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="p-1 rounded text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -522,13 +523,13 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
 
           {/* TAB 2: OUTLINE */}
           {activeTab === 'outline' && (
-            <div className="flex-1 overflow-y-auto p-2 text-xs">
+            <div className="flex-1 min-h-0 overflow-y-auto p-2 text-xs">
               {renderOutlineTree(currentDoc.root, 0)}
             </div>
           )}
 
           {activeTab === 'tags' && (
-            <div className="flex-1 overflow-y-auto p-3 space-y-3 text-xs">
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3 text-xs">
               <div className="flex items-center justify-between text-slate-500">
                 <span>{tagFacets.length} 个标签 · 点击后聚焦画布</span>
                 {focusedTag && <button type="button" onClick={() => onFocusTag(null)} className="text-teal-600 font-medium">清除聚焦</button>}
@@ -584,7 +585,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-2 space-y-2">
+              <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2">
                 {inboxItems.length === 0 ? (
                   <div className="py-12 text-center text-slate-400 space-y-1">
                     <Inbox className="w-6 h-6 mx-auto opacity-30 text-amber-500" />
@@ -617,7 +618,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
                         </button>
                         <button
                           onClick={(e) => handleDeleteInboxItem(item.id, e)}
-                          className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
+                          className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -631,7 +632,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
 
           {/* TAB 4: BACKUP & SNAPSHOTS */}
           {activeTab === 'backup' && (
-            <div className="flex-1 overflow-y-auto p-3 space-y-4 text-xs">
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-4 text-xs">
               {backupNotice && (
                 <div className="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-emerald-700 dark:text-emerald-300 text-[11px] flex items-center gap-1">
                   <Check className="w-3 h-3" />
@@ -707,7 +708,7 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
                           <button disabled={operationBusy} onClick={() => handleRestoreSnapshot(s.id)} title="还原此快照" className="p-1 text-blue-600 hover:bg-blue-50 rounded">
                             <RotateCcw className="w-3 h-3" />
                           </button>
-                          <button disabled={operationBusy} onClick={(e) => handleDeleteSnapshot(s.id, e)} title="删除快照" className="p-1 text-slate-400 hover:text-red-500 rounded opacity-0 group-hover:opacity-100">
+                          <button disabled={operationBusy} onClick={(e) => handleDeleteSnapshot(s.id, e)} title="删除快照" className="p-1 text-slate-400 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
                             <Trash2 className="w-3 h-3" />
                           </button>
                         </div>

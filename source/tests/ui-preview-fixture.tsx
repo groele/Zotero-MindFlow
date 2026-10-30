@@ -8,6 +8,9 @@ const noop = () => {};
 const placement = (key: string): 'toolbar' | 'more' | 'hidden' => { const value = params.get(key); return value === 'toolbar' || value === 'hidden' ? value : 'more'; };
 const doc = createBlankDocument();
 doc.root.text = '文献研究笔记';
+if (params.has('linked')) doc.root.internalLink = { documentId: doc.id, nodeId: doc.root.id };
+if (params.has('image')) doc.root.image = { width: 120, aspectRatio: 1,
+  dataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=' };
 const props: React.ComponentProps<typeof Toolbar> = {
   toolbarTemplatesPlacement: placement('templates'), toolbarPresentationPlacement: placement('presentation'), toolbarExportPlacement: placement('export'),
   title: '文献研究笔记', saveStatus: { state: 'saved', message: '已保存到本地' },

@@ -1,8 +1,8 @@
 {
-  "version": "12.6.1",
-  "file": "zotero-mindflow-12.6.1.xpi",
-  "size": 526385,
-  "sha256": "eadf5afd7dd2b5d05ebb6396cf95d6fcd2b06749f23be285cb35892c2434f392",
+  "version": "12.6.2",
+  "file": "zotero-mindflow-12.6.2.xpi",
+  "size": 526638,
+  "sha256": "2a0ca4f7b861e9ee7b4b8e2ce2b1757433146b29eb2b5a2115cc8bf648abf14d",
   "entries": 61,
   "payloadVerifiedAgainstWorkspace": true,
   "updateFeedsVerified": [
