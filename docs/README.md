@@ -2,13 +2,18 @@
 
 [返回双语 README / Bilingual README](../README.md)
 
-本地候选 / Local candidate：[12.5.8 完整性优化与验证范围 / Integrity improvements and validation](releases/v12.5.8.md)。该候选尚未发布；历史版本记录保留原始结论。
+当前正式发布 / Current release：[13.0.2 规范与文档精细化完善 / Audit refinement and card enhancement](releases/v13.0.2.md) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](releases/v13.0.1.md) · [13.0.0 大版本更新 / Major release](releases/v13.0.0.md)
 
 ## 版本与证据 / Versions and evidence
 
 | 阶段 / Stage | 状态 / Status | 说明 / Description |
 | --- | --- | --- |
-| 12.2.0 / Add-on minor | 发布准备 / Release preparation | 设置页改为三个常显分组，更新清单指向版本专属安装包 / Three always-visible settings groups and version-specific update-feed target |
+| 13.0.2 / Add-on patch | 公开发布 / Public release | 全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新 / Full documentation & badges audit, enhanced installation card, updated audit documentation index |
+| 13.0.1 / Add-on patch | 历史发布 / Historical release | 宿主生命周期样式卸载防御性修复、关于面板生态品牌对齐、AI 论文读取安全钳位 / Defensive unmount cleanup, About branding alignment, AI read page limit safety clamp |
+| 13.0.0 / Add-on major | 历史发布 / Historical release | 兼容版本上限跃升至 12.*、设置系统强类型校验清洗、Schema v2 备份门禁与研读预设随备份迁移、离线交互 HTML 导出微元对齐 / Bump max version to 12.*, settings sanitization, Schema v2 backup migration, interactive HTML export fidelity |
+| 12.7.1 / Add-on patch | 历史发布 / Historical release | 维护加固与安装包校验 / Maintenance hardening and package verification |
+| 12.7.0 / Add-on minor | 历史发布 / Historical release | 样式对齐与功能优化 / Styling alignment and enhancements |
+| 12.2.0 / Add-on minor | 历史发布 / Historical release | 设置页改为三个常显分组，更新清单指向版本专属安装包 / Three always-visible settings groups and version-specific update-feed target |
 | 12.3.0 / Add-on minor | 历史版本 / Historical | 统一偏好页紧凑样式 / Unified compact preferences style |
 | 12.3.1 / Add-on patch | 已发布 / Published | 修正偏好页复选框尺寸并统一字体、间距与控件对齐 / Normalize checkbox size, typography, spacing, and control alignment |
 | 12.3.2 / Add-on patch | 版本记录 / Release record | 统一配色、折叠样式与原生控件 / Unified colors, disclosure cards, and native controls |
@@ -29,9 +34,15 @@
 
 ## 中文索引
 
-- [12.2.0 发布记录](release-v12.2.0.md)：历史版本记录。
-- [12.3.0 发布记录](release-v12.3.0.md)：统一偏好页样式与可折叠一级分组。
+- [13.0.2 发布记录](releases/v13.0.2.md)：全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新。
+- [13.0.1 发布记录](releases/v13.0.1.md)：宿主侧样式卸载防御性清理、关于面板生态品牌对齐、AI 论文读取安全钳位。
+- [13.0.0 大版本发布记录](releases/v13.0.0.md)：兼容版本上限跃升至 12.*、设置系统强类型校验清洗、Schema v2 备份门禁与研读预设随备份迁移。
+- [12.7.1 发布记录](releases/v12.7.1.md)：维护加固与安装包校验。
+- [12.7.0 发布记录](releases/v12.7.0.md)：样式对齐与功能优化。
+- [12.3.2 发布记录](release-v12.3.2.md)：统一配色、折叠样式与原生控件。
 - [12.3.1 发布记录](release-v12.3.1.md)：复选框尺寸、字体与间距优化。
+- [12.3.0 发布记录](release-v12.3.0.md)：统一偏好页样式与可折叠一级分组。
+- [12.2.0 发布记录](release-v12.2.0.md)：历史版本记录。
 - [12.0.0 重大里程碑发布记录](release-v12.0.0.md)：全新品牌视觉系统（Zotero MindFlow & Fluid Origami Wing 流体折纸旋翼）、全场景触点覆盖与高分屏适配。
 - [11.2.0 发布记录](release-v11.2.0.md)：提示词与呈现预设、AI 导图工作流及发布验证边界。
 
@@ -49,7 +60,7 @@
 
 - [10.0.3 发布记录](release-v10.0.3.md)：公开 10.0.3 的修复与加固范围、测试验证与包校验。
 - [10.0.2 操作逻辑详细审查](操作逻辑审查与修复-10.0.2.md)：29 项问题与加固、基线失败、逐项修复及验证边界。
-- [10.0.2 验证汇总](logic-audit-validation-10.0.2.json)、[包校验](logic-audit-package-10.0.2.json)、[原生结果](logic-audit-native-10.0.2.json)、[重启结果](logic-audit-restart-10.0.2.json)：当前本地逻辑修复证据。
+- [10.0.2 证据](操作逻辑审查与修复-10.0.2.md)：包含 [包校验](logic-audit-package-10.0.2.json)、[原生结果](logic-audit-native-10.0.2.json) 本地逻辑修复证据。
 - [V10 发布记录](release-v10.md)：公开 10.0.0 的安装、修复范围与验证边界。
 - [首轮审查与修复清单](审查与修复清单.md)：5.0.1 阶段的 42 项问题与改进。
 - [全流程逻辑复审](全流程逻辑复审-5.0.2.md)：5.0.2 阶段新增的 28 项问题、身份链路与流程矩阵。
@@ -63,9 +74,15 @@
 
 ## English index
 
-- [12.2.0 release record](release-v12.2.0.md): historical release record.
-- [12.3.0 release record](release-v12.3.0.md): unified preferences styling and collapsible top-level groups.
+- [13.0.2 release record](releases/v13.0.2.md): full documentation & badges audit, enhanced installation card, updated audit documentation index.
+- [13.0.1 release record](releases/v13.0.1.md): defensive unmount cleanup, About branding alignment, AI read page limit safety clamp.
+- [13.0.0 major release report](releases/v13.0.0.md): bump max version to 12.*, settings sanitization, Schema v2 backup migration.
+- [12.7.1 release report](releases/v12.7.1.md): maintenance hardening and package verification.
+- [12.7.0 release report](releases/v12.7.0.md): styling alignment and enhancements.
+- [12.3.2 release record](release-v12.3.2.md): unified colors, disclosure cards, and native controls.
 - [12.3.1 release record](release-v12.3.1.md): checkbox sizing, typography, and spacing refinements.
+- [12.3.0 release record](release-v12.3.0.md): unified preferences styling and collapsible top-level groups.
+- [12.2.0 release record](release-v12.2.0.md): historical release record.
 - [12.0.0 major milestone report](release-v12.0.0.md): brand-new visual identity system (Zotero MindFlow & Fluid Origami Wing), full-touchpoint vector rendering, and high-DPI scaling.
 - [11.2.0 release report](release-v11.2.0.md): reusable prompt and presentation presets, AI mind-map workflow, and verification limits.
 - [11.1.2 patch report](release-v11.1.2.md): fix blank item-pane actions and restored collapse state.
@@ -79,7 +96,7 @@
 
 - [10.0.3 release report](release-v10.0.3.md): installation, fixes, and validation for public 10.0.3.
 - [10.0.2 detailed workflow audit](操作逻辑审查与修复-10.0.2.md): 29 issues and hardening items, baseline failures, fixes, and verification limits.
-- [10.0.2 validation](logic-audit-validation-10.0.2.json), [package verification](logic-audit-package-10.0.2.json), [native results](logic-audit-native-10.0.2.json), and [restart](logic-audit-restart-10.0.2.json): current local patch evidence.
+- [10.0.2 evidence](操作逻辑审查与修复-10.0.2.md): including [package verification](logic-audit-package-10.0.2.json) and [native results](logic-audit-native-10.0.2.json).
 - [V10 release report](release-v10.md): installation, fixes, and validation boundaries for public 10.0.0.
 - [Initial audit and repair checklist](审查与修复清单.md): 42 issues and improvements from the 5.0.1 stage.
 - [Full workflow re-audit](全流程逻辑复审-5.0.2.md): 28 additional issues, identity chain, and workflow matrix from 5.0.2.
@@ -91,4 +108,3 @@
 
 Detailed audit reports are currently in Chinese. Historical versions, hashes, and unpublished status refer to their respective stages. Use [GitHub Releases](https://github.com/groele/Zotero-MindFlow/releases) to identify public installation assets; a local validation report does not imply publication.
 
-- [12.3.2 发布记录 / Release record](release-v12.3.2.md)

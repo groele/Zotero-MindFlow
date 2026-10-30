@@ -1,22 +1,27 @@
 # Zotero MindFlow
 
-**Zotero Flow Series · Knowledge**
+**Dual-View Literature Maps · Native ItemPane Sidebar Integration · Academic Inquiry Presets · Offline Interactive HTML Export**
 
-*让研究的每一步衔接起来。 / Connect each step of research.*
+_让研究的每一步衔接起来。 / Connect each step of research._
 
 Organize papers, annotations, and ideas into editable maps.
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Current release](https://img.shields.io/badge/version-13.0.1-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.1) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.1/zotero-mindflow-13.0.1.xpi) · [Release Notes](docs/releases/v13.0.1.md) · [Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
+[![Version](https://img.shields.io/badge/version-13.0.2-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.2)
+[![Zotero Compatibility](https://img.shields.io/badge/Zotero-10.0--12.*-brightgreen?style=flat-square)](https://www.zotero.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
+[![Tests Passing](https://img.shields.io/badge/tests-111%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
 
-[Overview](#overview) · [Installation and updates](#installation) · [Quick start](#quick-start) · [Key features](#features) · [In-depth highlights](#highlights) · [Settings](#settings) · [Data, sync, and services](#data) · [Compatibility and validation](#compatibility) · [Troubleshooting](#troubleshooting) · [Development and documentation](#development) · [The Flow series](#series) · [Origin and license](#license)
+[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.2/zotero-mindflow-13.0.2.xpi) · [📝 Release Notes](docs/releases/v13.0.2.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
+
+[📖 Overview](#overview) · [📦 Installation and updates](#installation) · [🚀 Quick start](#quick-start) · [🛠️ Key features](#features) · [✨ In-depth highlights](#highlights) · [⚙️ Settings](#settings) · [🔒 Data, sync, and services](#data) · [🧪 Compatibility and validation](#compatibility) · [❓ Troubleshooting](#troubleshooting) · [💻 Development and documentation](#development) · [🔗 The Flow series](#series) · [📄 Origin and license](#license)
 
 ---
 
 <a id="overview"></a>
 
-## Overview
+## 📖 Overview
 
 **Zotero MindFlow** is engineered for in-depth literature reading, critical synthesis, survey structuring, and academic knowledge organization. It bridges the divide between static library items and disconnected third-party mind mapping applications by integrating deeply into the native Zotero ecosystem. Researchers can synthesize literature, extract highlights, schedule milestones, and optionally leverage AI to draft structured concept maps directly within the workspace and native sidebar.
 
@@ -26,24 +31,39 @@ As an integral pillar of the **Zotero Flow** series, MindFlow operates completel
 
 <a id="installation"></a>
 
-## Installation and updates
+## 📦 Installation and updates
 
-1. Download the official release package [zotero-mindflow-13.0.1.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.1/zotero-mindflow-13.0.1.xpi) (**current stable release v13.0.1**, 531,498 bytes; do not install the Source code ZIP).
+### Standard Specifications
+
+| Specification | Official Parameter & Requirement |
+|---|---|
+| **Add-on ID** | `mindflow@groele.org` |
+| **Current Stable Release** | `v13.0.2` (Patch Release) |
+| **Host Compatibility** | Zotero `10.0` through `12.*` (fully adaptive across 10.x / 11.x / 12.x light and dark themes) |
+| **Package File** | `zotero-mindflow-13.0.2.xpi` |
+| **File Size** | `531,494 bytes` |
+| **SHA-256 Checksum** | `798986cc0f0980685ada9186515efc15b9a37543ebd3d3227d7d556117986a55` |
+| **Online Update Feed** | [zotero/update.json](zotero/update.json) |
+
+### Installation Steps
+
+1. Download the official release package [zotero-mindflow-13.0.2.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.2/zotero-mindflow-13.0.2.xpi) (**current stable release v13.0.2**; download the XPI directly, do not install the Source code ZIP).
 2. In Zotero, navigate to **Tools → Plugins / Add-ons** from the top menu.
-3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**.
-4. Choose the downloaded `zotero-mindflow-13.0.1.xpi` file and restart Zotero when prompted.
+3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**, or drag and drop `zotero-mindflow-13.0.2.xpi` directly into the window.
+4. Choose the downloaded `zotero-mindflow-13.0.2.xpi` file and restart Zotero when prompted.
 
 > [!TIP]
 > **Update Feeds and Verification**  
 > - **Online Update Manifest**: Hosted as an immutable asset feed at [zotero/update.json](zotero/update.json) with Add-on ID `mindflow@groele.org`.  
-> - **SHA-256 Checksum**: `9f184d7c33b1e3639a953050bc509d0a5fe938a36a3aa4b309cf1a4caaec4959`.  
+> - **SHA-256 Checksum**: `798986cc0f0980685ada9186515efc15b9a37543ebd3d3227d7d556117986a55`.  
+> - **Browser Renaming Note**: Certain browsers (such as Safari or Edge) may occasionally rename downloaded files to `.zip`. If this occurs, simply rename the file back to `.xpi` before loading into Zotero.  
 > - Subsequent updates can be detected and applied directly through the Zotero Add-on Manager. Backing up the workspace before major version upgrades is always recommended.
 
 ---
 
 <a id="quick-start"></a>
 
-## Quick start
+## 🚀 Quick start
 
 Construct your literature knowledge map in three seamless steps:
 
@@ -64,7 +84,7 @@ graph LR
 
 <a id="features"></a>
 
-## Key features
+## 🛠️ Key features
 
 | Differentiator | What it does | Boundary & Practical Guidance |
 |---|---|---|
@@ -80,7 +100,7 @@ graph LR
 
 <a id="highlights"></a>
 
-## In-depth highlights
+## ✨ In-depth highlights
 
 ### 1. Seamless ItemPane Native Integration
 Unlike floating web popups, MindFlow conforms rigorously to native Zotero 10 / 11 / 12 design specifications:
@@ -115,7 +135,7 @@ MindFlow's **Interactive HTML** export sets a new standard for academic sharing:
 
 <a id="settings"></a>
 
-## Settings
+## ⚙️ Settings
 
 Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**:
 
@@ -131,7 +151,7 @@ Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**:
 
 <a id="data"></a>
 
-## Data, sync, and services
+## 🔒 Data, sync, and services
 
 - **Local Workspace Storage**: Active maps are stored safely under `mindflow/workspace` in the Zotero data directory using atomic write safeguards. Local save commits to disk; explicit "Archive" creates item attachments.
 - **Zotero Attachment Archiving**: Archived `.mindflow` attachments sync across devices through Zotero's native attachment sync mechanism (Zotero Storage or WebDAV).
@@ -143,11 +163,11 @@ Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**:
 
 <a id="compatibility"></a>
 
-## Compatibility and validation
+## 🧪 Compatibility and validation
 
 | Dimension | Specification & Verification Status |
 |---|---|
-| **Current Published Release** | **v13.0.1** (Patch Release) |
+| **Current Published Release** | **v13.0.2** (Patch Release) |
 | **Declared Manifest Range** | Zotero `10.0` through `12.*` (`strict_min_version: 10.0`, `strict_max_version: 12.*`) |
 | **TypeScript Static Check** | `npm run typecheck` (PASS, **0** errors) |
 | **Frontend Unit Suite** | `npm test` (**111 / 111** tests PASS: 45 data pipelines + 36 core logic + 7 presets + 23 data integrity) |
@@ -158,7 +178,7 @@ Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**:
 
 <a id="troubleshooting"></a>
 
-## Troubleshooting
+## ❓ Troubleshooting
 
 <details>
 <summary><b>1. Why doesn't a <code>.mindflow</code> attachment show up under the Zotero item after editing?</b></summary>
@@ -187,7 +207,7 @@ Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**:
 
 <a id="development"></a>
 
-## Development and documentation
+## 💻 Development and documentation
 
 Standard installation requires only the XPI. For developers building or extending the add-on locally:
 
@@ -212,7 +232,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [Audit Documentation Index](docs/README.md)
-- [Release Notes v13.0.1](docs/releases/v13.0.1.md)
+- [Release Notes v13.0.2](docs/releases/v13.0.2.md)
 - [Brand & Product Specifications](docs/brand/PRODUCT.md)
 - [Release Tag Policy](docs/release-tag-policy.md)
 - [Historical Reference Guide & Acknowledgments](docs/reference/README.md)
@@ -221,7 +241,7 @@ python scripts/package-xpi.py --verify-only
 
 <a id="series"></a>
 
-## The Flow series
+## 🔗 The Flow series
 
 **Zotero Flow Series** unites individual research phases into a coherent workflow:
 
@@ -241,7 +261,7 @@ python scripts/package-xpi.py --verify-only
 
 <a id="license"></a>
 
-## Origin and license
+## 📄 Origin and license
 
 - **Origin Notice**: Distributed as an independently maintained add-on within the Zotero Flow series; it is not a direct downstream fork of any single third-party mind mapping add-on. `llm-for-zotero` is an optional external runtime and not a derivative source of MindFlow's codebase.
 - **License**: Released under the [MIT License](LICENSE).

@@ -1,22 +1,27 @@
 # Zotero MindFlow
 
-**Zotero Flow Series · 知识组织**
+**双视图文献导图 · 原生文献侧栏深度融合 · 学术研读预设体系 · 离线全动态交互导出**
 
-*让研究的每一步衔接起来。 / Connect each step of research.*
+_让研究的每一步衔接起来。 / Connect each step of research._
 
-将文献、批注与思路组织为可编辑导图。
+将文献、批注与思路组织为可编辑导图。 / Organize papers, annotations, and ideas into editable maps.
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![当前正式版](https://img.shields.io/badge/version-13.0.1-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.1) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.1/zotero-mindflow-13.0.1.xpi) · [更新日志](docs/releases/v13.0.1.md) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
+[![Version](https://img.shields.io/badge/version-13.0.2-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.2)
+[![Zotero Compatibility](https://img.shields.io/badge/Zotero-10.0--12.*-brightgreen?style=flat-square)](https://www.zotero.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
+[![Tests Passing](https://img.shields.io/badge/tests-111%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
 
-[产品定位](#overview) · [安装与更新](#installation) · [快速开始](#quick-start) · [核心功能](#features) · [深度特性解析](#highlights) · [设置与使用](#settings) · [数据、同步与外部服务](#data) · [兼容性与验证范围](#compatibility) · [常见问题](#troubleshooting) · [开发与详细文档](#development) · [系列产品](#series) · [项目来源与许可](#license)
+[📦 下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.2/zotero-mindflow-13.0.2.xpi) · [📝 更新日志](docs/releases/v13.0.2.md) · [💬 问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
+
+[📖 产品定位](#overview) · [📦 安装与更新](#installation) · [🚀 快速开始](#quick-start) · [🛠️ 核心功能](#features) · [✨ 深度特性解析](#highlights) · [⚙️ 设置与使用](#settings) · [🔒 数据、同步与外部服务](#data) · [🧪 兼容性与验证范围](#compatibility) · [❓ 常见问题](#troubleshooting) · [💻 开发与详细文档](#development) · [🔗 系列产品](#series) · [📄 项目来源与许可](#license)
 
 ---
 
 <a id="overview"></a>
 
-## 产品定位
+## 📖 产品定位
 
 **Zotero MindFlow** 面向论文深度研读、开题综述、结构化提炼与课题知识组织。它打破了传统文献库条目与外置思维导图工具之间的割裂，深度内嵌于 Zotero 原生生态，直接在工作台与文献侧栏内以**自由画布（Canvas）**与**层级大纲（Outline）**组织文献材料、提取批注、标记任务，并可按需借力 AI 一键生成结构化研读草稿。
 
@@ -26,24 +31,39 @@
 
 <a id="installation"></a>
 
-## 安装与更新
+## 📦 安装与更新
 
-1. 从官方 Release 下载最新的正式发布包 [zotero-mindflow-13.0.1.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.1/zotero-mindflow-13.0.1.xpi)（**当前正式版 v13.0.1**，文件大小 531,498 字节，勿下载 Source code 源码压缩包）。
+### 规范安装参数
+
+| 规范指标 | 官方参数与要求 |
+|---|---|
+| **插件标识 (Add-on ID)** | `mindflow@groele.org` |
+| **当前正式版** | `v13.0.2` (Patch Release) |
+| **宿主兼容范围** | Zotero `10.0` 至 `12.*`（全面适配 10.x / 11.x / 12.x 原生界面与亮暗主题） |
+| **安装包文件名** | `zotero-mindflow-13.0.2.xpi` |
+| **发布文件大小** | `531,494 字节` |
+| **SHA-256 校验和** | `798986cc0f0980685ada9186515efc15b9a37543ebd3d3227d7d556117986a55` |
+| **在线更新源** | [zotero/update.json](zotero/update.json) |
+
+### 安装步骤
+
+1. 从官方 Release 下载最新的正式发布包 [zotero-mindflow-13.0.2.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.2/zotero-mindflow-13.0.2.xpi)（**当前正式版 v13.0.2**，请直接下载 XPI 文件，切勿下载 Source code 源码压缩包）。
 2. 在 Zotero 顶部菜单依次打开 **工具 → 插件／附加组件**（Tools → Plugins / Add-ons）。
-3. 点击附加组件管理器右上角的**齿轮设置图标**，选择 **从文件安装插件...**（Install Add-on From File...）。
-4. 选中已下载的 `zotero-mindflow-13.0.1.xpi` 文件完成载入，根据系统提示重启 Zotero。
+3. 点击附加组件管理器右上角的**齿轮设置图标**，选择 **从文件安装插件...**（Install Add-on From File...），或直接将下载好的 `zotero-mindflow-13.0.2.xpi` 拖入窗口。
+4. 选中已下载的 `zotero-mindflow-13.0.2.xpi` 文件完成载入，根据系统提示重启 Zotero。
 
 > [!TIP]
 > **更新与校验说明**  
-> - **在线更新通道**：更新清单由不可变资产源托管于 [zotero/update.json](zotero/update.json)，插件唯一标识为 `mindflow@groele.org`。  
-> - **文件校验和**：`9f184d7c33b1e3639a953050bc509d0a5fe938a36a3aa4b309cf1a4caaec4959` (SHA-256)。  
-> - 后续可在 Zotero 插件管理器中直接自动或手动检查更新；进行重大跨版本升级前，建议先在设置中导出工作区完整备份。
+> - **在线自动更新**：更新清单由不可变资产源托管于 [zotero/update.json](zotero/update.json)，后续可在 Zotero 插件管理器中直接自动或手动检查升级。  
+> - **文件校验和**：`798986cc0f0980685ada9186515efc15b9a37543ebd3d3227d7d556117986a55` (SHA-256)。  
+> - **下载重命名提示**：部分浏览器（如 Safari 或 Edge 某些配置）可能在下载后自动将扩展名改为 `.zip`。遇到此情况请将其重新命名为 `.xpi` 后再进行安装。  
+> - **数据安全建议**：跨大版本升级前，建议在 MindFlow 设置中先导出工作区完整备份。
 
 ---
 
 <a id="quick-start"></a>
 
-## 快速开始
+## 🚀 快速开始
 
 三步建立起专属文献的知识导图：
 
@@ -64,7 +84,7 @@ graph LR
 
 <a id="features"></a>
 
-## 核心功能
+## 🛠️ 核心功能
 
 | 特色能力 | 能解决什么问题 | 实际边界与使用提示 |
 |---|---|---|
@@ -80,7 +100,7 @@ graph LR
 
 <a id="highlights"></a>
 
-## 深度特性解析
+## ✨ 深度特性解析
 
 ### 1. 深度原生集成的文献侧栏（ItemPane）
 不同于传统浮动窗口，MindFlow 深度适配了 Zotero 10 / 11 / 12 的原生侧栏规范。在右侧文献信息窗中：
@@ -115,7 +135,7 @@ graph LR
 
 <a id="settings"></a>
 
-## 设置与使用
+## ⚙️ 设置与使用
 
 在 **Zotero → 设置 → Zotero MindFlow** 中可调优所有功能：
 
@@ -131,7 +151,7 @@ graph LR
 
 <a id="data"></a>
 
-## 数据、同步与外部服务
+## 🔒 数据、同步与外部服务
 
 - **工作区本地落盘**：导图实时保存在 Zotero 本地数据目录的 `mindflow/workspace` 中，采用原子化防写坏机制；本地保存成功表示本地工作区落盘，点击“归档”方可生成附件。
 - **Zotero 附件归档**：归档后的 `.mindflow` 文件作为子附件依附于目标文献条目，随 Zotero 原生附件同步机制（如 Zotero Storage 或 WebDAV）跨设备自动漫游。
@@ -143,11 +163,11 @@ graph LR
 
 <a id="compatibility"></a>
 
-## 兼容性与验证范围
+## 🧪 兼容性与验证范围
 
 | 指标 | 规范声明与实际验证 |
 |---|---|
-| **当前发布版本** | **v13.0.1** (Patch Release) |
+| **当前发布版本** | **v13.0.2** (Patch Release) |
 | **清单兼容声明范围** | Zotero `10.0` 至 `12.*` (`strict_min_version: 10.0`, `strict_max_version: 12.*`) |
 | **静态类型检查** | `npm run typecheck`（TypeScript 编译通过，**0** 错误） |
 | **前端核心单元测试** | `npm test`（**111 / 111** 项全数通过：45 项数据链 + 36 项核心逻辑 + 7 项预设 + 23 项数据完整性） |
@@ -158,7 +178,7 @@ graph LR
 
 <a id="troubleshooting"></a>
 
-## 常见问题
+## ❓ 常见问题
 
 <details>
 <summary><b>1. 为什么编辑了导图，在 Zotero 条目下看不到 <code>.mindflow</code> 附件？</b></summary>
@@ -187,7 +207,7 @@ graph LR
 
 <a id="development"></a>
 
-## 开发与详细文档
+## 💻 开发与详细文档
 
 普通学术用户安装 XPI 即可直接使用，无需任何开发环境。如需参与二次开发或本地构建：
 
@@ -212,7 +232,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [审查文档索引 / Audit documentation](docs/README.md)
-- [最新版本说明 / Release notes v13.0.1](docs/releases/v13.0.1.md)
+- [最新版本说明 / Release notes v13.0.2](docs/releases/v13.0.2.md)
 - [产品品牌定位 / Brand specifications](docs/brand/PRODUCT.md)
 - [发布标签与版本策略 / Release tag policy](docs/release-tag-policy.md)
 - [原详细功能指南与致谢 · Reference](docs/reference/README.md)
@@ -221,7 +241,7 @@ python scripts/package-xpi.py --verify-only
 
 <a id="series"></a>
 
-## 系列产品
+## 🔗 系列产品
 
 **Zotero Flow Series** 系列工具矩阵，助力学术全流程一体化连接：
 
@@ -241,7 +261,7 @@ python scripts/package-xpi.py --verify-only
 
 <a id="license"></a>
 
-## 项目来源与许可
+## 📄 项目来源与许可
 
 - **开发来源声明**：本插件作为独立维护的 Zotero Flow 生态组件发布，未基于任何单一第三方 Zotero 导图插件进行二次分支包装。`llm-for-zotero` 为可选的外部运行时环境，非本插件的源代码派生来源。
 - **开源许可证**：遵循 [MIT License](LICENSE) 协议发布。
