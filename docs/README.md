@@ -2,17 +2,18 @@
 
 [返回双语 README / Bilingual README](../README.md)
 
-当前正式发布 / Current release：[13.0.2 规范与文档精细化完善 / Audit refinement and card enhancement](releases/v13.0.2.md) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](releases/v13.0.1.md) · [13.0.0 大版本更新 / Major release](releases/v13.0.0.md)
+当前正式发布 / Current release：[13.0.3 全功能审计与规范校准 / Audit calibration and specification alignment](releases/v13.0.3.md) · [13.0.2 规范与文档完善 / Audit refinement and card enhancement](releases/v13.0.2.md) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](releases/v13.0.1.md) · [13.0.0 大版本更新 / Major release](releases/v13.0.0.md)
 
 ## 版本与证据 / Versions and evidence
 
 | 阶段 / Stage | 状态 / Status | 说明 / Description |
 | --- | --- | --- |
-| 13.0.2 / Add-on patch | 公开发布 / Public release | 全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新 / Full documentation & badges audit, enhanced installation card, updated audit documentation index |
+| 13.0.3 / Add-on patch | 公开发布 / Public release | 全功能特性与快捷键审计校准、设置面板与研读模板对齐、品牌体系规范化 / Full shortcut audit, settings & template alignment, brand restoration |
+| 13.0.2 / Add-on patch | 历史发布 / Historical release | 全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新 / Full documentation & badges audit, enhanced installation card, updated audit documentation index |
 | 13.0.1 / Add-on patch | 历史发布 / Historical release | 宿主生命周期样式卸载防御性修复、关于面板生态品牌对齐、AI 论文读取安全钳位 / Defensive unmount cleanup, About branding alignment, AI read page limit safety clamp |
 | 13.0.0 / Add-on major | 历史发布 / Historical release | 兼容版本上限跃升至 12.*、设置系统强类型校验清洗、Schema v2 备份门禁与研读预设随备份迁移、离线交互 HTML 导出微元对齐 / Bump max version to 12.*, settings sanitization, Schema v2 backup migration, interactive HTML export fidelity |
-| 12.7.1 / Add-on patch | 历史发布 / Historical release | 维护加固与安装包校验 / Maintenance hardening and package verification |
-| 12.7.0 / Add-on minor | 历史发布 / Historical release | 样式对齐与功能优化 / Styling alignment and enhancements |
+| 12.7.1 / Add-on patch | 历史发布 / Historical release | 文献侧栏 ItemPane 规范重构（Soft Functional Accents 色系、响应式窄栏换行） / ItemPane sidebar redesign with Soft Functional Accents and responsive wrapping |
+| 12.7.0 / Add-on minor | 历史发布 / Historical release | 宿主兼容上限提升至 12.*、底层侧栏防抖刷新机制与 PDF 异步回退加固 / Bump max version to 12.*, sidebar debounce refresh, and hardened PDF async fallback |
 | 12.2.0 / Add-on minor | 历史发布 / Historical release | 设置页改为三个常显分组，更新清单指向版本专属安装包 / Three always-visible settings groups and version-specific update-feed target |
 | 12.3.0 / Add-on minor | 历史版本 / Historical | 统一偏好页紧凑样式 / Unified compact preferences style |
 | 12.3.1 / Add-on patch | 已发布 / Published | 修正偏好页复选框尺寸并统一字体、间距与控件对齐 / Normalize checkbox size, typography, spacing, and control alignment |
@@ -34,11 +35,12 @@
 
 ## 中文索引
 
+- [13.0.3 发布记录](releases/v13.0.3.md)：全功能特性与快捷键审计校准、设置面板与研读模板对齐、品牌体系规范化。
 - [13.0.2 发布记录](releases/v13.0.2.md)：全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新。
 - [13.0.1 发布记录](releases/v13.0.1.md)：宿主侧样式卸载防御性清理、关于面板生态品牌对齐、AI 论文读取安全钳位。
 - [13.0.0 大版本发布记录](releases/v13.0.0.md)：兼容版本上限跃升至 12.*、设置系统强类型校验清洗、Schema v2 备份门禁与研读预设随备份迁移。
-- [12.7.1 发布记录](releases/v12.7.1.md)：维护加固与安装包校验。
-- [12.7.0 发布记录](releases/v12.7.0.md)：样式对齐与功能优化。
+- [12.7.1 发布记录](releases/v12.7.1.md)：文献侧栏 ItemPane 规范重构（Soft Functional Accents 色系、响应式自适应布局）。
+- [12.7.0 发布记录](releases/v12.7.0.md)：宿主兼容上限提升至 12.*、底层侧栏防抖刷新机制与 PDF 异步回退加固。
 - [12.3.2 发布记录](release-v12.3.2.md)：统一配色、折叠样式与原生控件。
 - [12.3.1 发布记录](release-v12.3.1.md)：复选框尺寸、字体与间距优化。
 - [12.3.0 发布记录](release-v12.3.0.md)：统一偏好页样式与可折叠一级分组。
@@ -74,11 +76,12 @@
 
 ## English index
 
+- [13.0.3 release record](releases/v13.0.3.md): full shortcut audit, settings & template alignment, brand restoration.
 - [13.0.2 release record](releases/v13.0.2.md): full documentation & badges audit, enhanced installation card, updated audit documentation index.
 - [13.0.1 release record](releases/v13.0.1.md): defensive unmount cleanup, About branding alignment, AI read page limit safety clamp.
 - [13.0.0 major release report](releases/v13.0.0.md): bump max version to 12.*, settings sanitization, Schema v2 backup migration.
-- [12.7.1 release report](releases/v12.7.1.md): maintenance hardening and package verification.
-- [12.7.0 release report](releases/v12.7.0.md): styling alignment and enhancements.
+- [12.7.1 release report](releases/v12.7.1.md): ItemPane sidebar redesign with Soft Functional Accents and responsive wrapping.
+- [12.7.0 release report](releases/v12.7.0.md): bump max version to 12.*, sidebar debounce refresh, and hardened PDF async fallback.
 - [12.3.2 release record](release-v12.3.2.md): unified colors, disclosure cards, and native controls.
 - [12.3.1 release record](release-v12.3.1.md): checkbox sizing, typography, and spacing refinements.
 - [12.3.0 release record](release-v12.3.0.md): unified preferences styling and collapsible top-level groups.
