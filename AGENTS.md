@@ -6,7 +6,7 @@
 
 - 用户可见名称：`Zotero MindFlow`；仓库：`groele/Zotero-MindFlow`；add-on ID：`mindflow@groele.org`（不得改动）。
 - 职责：知识组织，即把文献、批注与想法整理成可编辑导图。不宣传未实现的跨插件自动化。
-- 宿主：Zotero 10.x，当前 `strict_min_version` 为 `10.0`，`strict_max_version` 为 `10.0.*`。扩大范围前先在真实宿主验证，并分别报告“声明范围”与“实际验证范围”。
+- 宿主：Zotero 10.x 至 12.x，当前 `strict_min_version` 为 `10.0`，`strict_max_version` 声明为 `12.*`。分别报告“声明范围”与“实际验证范围”。
 
 ## 目录
 

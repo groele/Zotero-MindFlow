@@ -69,3 +69,6 @@ mindflow-item-pane-refresh = Refresh
 mindflow-item-pane-list-title = Maps for this paper
 mindflow-item-pane-list-empty = Create a map to open it quickly here.
 mindflow-item-pane-action-failed = The action failed. Please try again.
+mindflow-item-pane-linked-maps-title = Linked Maps
+mindflow-item-pane-quick-create-title = Quick Create Map
+mindflow-item-pane-template-create = Generate from Template

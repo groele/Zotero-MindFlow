@@ -83,6 +83,64 @@ function deepMerge(target: any, source: any): any {
   return output;
 }
 
+export function sanitizeSettings(settings: Partial<AppSettings>): AppSettings {
+  const merged = deepMerge(DEFAULT_SETTINGS, settings);
+
+  // Validate layout & visual enums
+  if (!['mindmap', 'logic-right', 'org-down'].includes(merged.defaultLayout)) {
+    merged.defaultLayout = 'mindmap';
+  }
+  if (!['dots', 'grid', 'blank'].includes(merged.canvasBackground)) {
+    merged.canvasBackground = 'dots';
+  }
+  if (!['bezier', 'straight', 'rounded'].includes(merged.curveStyle)) {
+    merged.curveStyle = 'bezier';
+  }
+  if (!['top', 'bottom'].includes(merged.toolbarPosition)) {
+    merged.toolbarPosition = 'top';
+  }
+  if (!['left', 'right'].includes(merged.workbenchDockPosition)) {
+    merged.workbenchDockPosition = 'left';
+  }
+  if (!['tab', 'window'].includes(merged.zoteroWindowMode)) {
+    merged.zoteroWindowMode = 'tab';
+  }
+  if (![1, 2, 3].includes(merged.defaultTaskPriority)) {
+    merged.defaultTaskPriority = 2;
+  }
+
+  // Validate and clamp numbers
+  if (!Number.isFinite(merged.zoomStep) || merged.zoomStep < 0.05 || merged.zoomStep > 0.5) {
+    merged.zoomStep = 0.15;
+  }
+  if (!Number.isSafeInteger(merged.maxSnapshotsPerDoc) || merged.maxSnapshotsPerDoc < 10 || merged.maxSnapshotsPerDoc > 50) {
+    merged.maxSnapshotsPerDoc = 20;
+  }
+  if (!Number.isFinite(merged.autoSnapshotIntervalMinutes) || merged.autoSnapshotIntervalMinutes < 1 || merged.autoSnapshotIntervalMinutes > 120) {
+    merged.autoSnapshotIntervalMinutes = 10;
+  }
+  if (!Number.isFinite(merged.aiMaxPdfPages) || merged.aiMaxPdfPages < 10) {
+    merged.aiMaxPdfPages = 120;
+  }
+
+  // Toolbar placement enums
+  for (const key of ['toolbarTemplatesPlacement', 'toolbarPresentationPlacement', 'toolbarExportPlacement'] as const) {
+    if (!['toolbar', 'more', 'hidden'].includes(merged[key])) merged[key] = 'more';
+  }
+
+  // Ensure boolean types
+  for (const boolKey of [
+    'rainbowBranches', 'soundEffects', 'autoExpandOnAddChild', 'autoSnapshotEnabled',
+    'zoteroIncludeAbstract', 'zoteroIncludeAnnotations', 'zoteroIncludeTags', 'showWelcomeOnStartup'
+  ] as const) {
+    if (typeof merged[boolKey] !== 'boolean') {
+      merged[boolKey] = Boolean(DEFAULT_SETTINGS[boolKey]);
+    }
+  }
+
+  return merged;
+}
+
 export class SettingsService {
   private static cachedSettings: AppSettings | null = null;
 
@@ -108,11 +166,9 @@ export class SettingsService {
       }
     }
 
-    const merged = deepMerge(DEFAULT_SETTINGS,
-      loadedSettings || (getZoteroInstance() ? legacyZoteroSettings() : {}));
-    for (const key of ['toolbarTemplatesPlacement', 'toolbarPresentationPlacement', 'toolbarExportPlacement']) {
-      if (!['toolbar', 'more', 'hidden'].includes(merged[key])) merged[key] = 'more';
-    }
+    const merged = sanitizeSettings(
+      loadedSettings || (getZoteroInstance() ? legacyZoteroSettings() : {})
+    );
     this.cachedSettings = merged;
     return structuredClone(merged);
   }
@@ -125,7 +181,7 @@ export class SettingsService {
     // read/merge/write in one uninterrupted turn, so another setting edit
     // cannot commit between reading the old settings and writing this patch.
     const current = this.readSettings();
-    const updated = deepMerge(current, partial);
+    const updated = sanitizeSettings(deepMerge(current, partial));
 
     safeStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updated));
     this.cachedSettings = updated;

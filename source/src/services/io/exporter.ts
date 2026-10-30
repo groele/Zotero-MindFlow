@@ -130,8 +130,8 @@ export function importFromMarkdown(mdContent: string): MindMapNode {
       cleanText = cleanText.replace(noteMatch[0], '').trim();
     }
 
-    // Parse link if any
-    const linkMatch = cleanText.match(/\[.*?\]\((https?:\/\/[^\s)]+)\)/);
+    // Parse link if any (supports web links and Zotero internal links)
+    const linkMatch = cleanText.match(/\[.*?\]\(((?:https?|zotero):\/\/[^\s)]+)\)/);
     if (linkMatch) {
       link = linkMatch[1];
       cleanText = cleanText.replace(linkMatch[0], '').trim();
@@ -381,10 +381,29 @@ function readingNodeSvg(n: LayoutNode): string {
     : n.shape === 'underline' && n.level > 0
       ? `<path d="M 0 ${n.height} H ${n.width}" fill="none" stroke="${stroke}" stroke-width="1.5" />`
       : `<rect width="${n.width}" height="${n.height}" rx="${rx}" fill="${fill}" stroke="${n.level === 0 ? 'none' : stroke}" stroke-width="1.5" />`;
+
+  let taskSvg = '';
+  let textIndent = 12;
+  if (n.node.task) {
+    textIndent = 32;
+    const taskMidY = startY + 4;
+    if (n.node.task.status === 'done') {
+      taskSvg = `<circle cx="18" cy="${taskMidY}" r="6.5" fill="#10b981" /><path d="M 15 ${taskMidY} L 17.5 ${taskMidY + 2.5} L 21.5 ${taskMidY - 2.5}" stroke="#ffffff" stroke-width="1.5" fill="none" />`;
+    } else if (n.node.task.status === 'doing') {
+      taskSvg = `<circle cx="18" cy="${taskMidY}" r="6" fill="none" stroke="#2563eb" stroke-width="2" />`;
+    } else {
+      taskSvg = `<circle cx="18" cy="${taskMidY}" r="6" fill="none" stroke="#94a3b8" stroke-width="1.5" />`;
+    }
+  }
+
+  const isTaskDone = n.node.task?.status === 'done';
+  const textDecor = isTaskDone ? ' text-decoration="line-through" opacity="0.75"' : '';
+
   return `<g transform="translate(${n.x}, ${n.y})"><title>${escapeXml(n.node.note || n.node.text)}</title>
     ${shape}
-    <text font-family="Microsoft YaHei, PingFang SC, sans-serif" font-size="14" font-weight="${n.level <= 1 ? 600 : 400}" fill="${escapeXml(safeColor(n.textColor, '#253e38'))}">
-    ${lines.map((line, index) => `<tspan x="12" y="${startY + index * 20}">${escapeXml(line)}</tspan>`).join('')}
+    ${taskSvg}
+    <text font-family="Microsoft YaHei, PingFang SC, sans-serif" font-size="14" font-weight="${n.level <= 1 ? 600 : 400}" fill="${escapeXml(safeColor(n.textColor, '#253e38'))}"${textDecor}>
+    ${lines.map((line, index) => `<tspan x="${textIndent}" y="${startY + index * 20}">${escapeXml(line)}</tspan>`).join('')}
     </text></g>`;
 }
 
@@ -435,7 +454,27 @@ export function exportToSVG(
     const image = isSafeNodeImage(n.node.image) ? n.node.image : null;
     const textY = image ? n.height - 12 : n.height / 2 + (fontSize / 3);
     if (image) svg += `    <image href="${escapeXml(image.dataUrl)}" x="${(n.width - image.width) / 2}" y="8" width="${image.width}" height="${imageDisplayHeight(image)}" preserveAspectRatio="xMidYMid meet" />\n`;
-    if (n.node.text) svg += `    <text x="${n.width / 2}" y="${textY}" text-anchor="middle" font-size="${fontSize}" font-weight="${fontWeight}" fill="${escapeXml(textColor)}" class="node-text">${escapeXml(n.node.text)}</text>\n`;
+
+    let taskSvg = '';
+    let textX = n.width / 2;
+    let textAnchor = 'middle';
+    if (n.node.task && !image) {
+      textAnchor = 'start';
+      textX = 28;
+      const centerY = n.height / 2;
+      if (n.node.task.status === 'done') {
+        taskSvg = `    <circle cx="16" cy="${centerY}" r="6.5" fill="#10b981" />\n    <path d="M 13 ${centerY} L 15.5 ${centerY + 2.5} L 19.5 ${centerY - 2.5}" stroke="#ffffff" stroke-width="1.5" fill="none" />\n`;
+      } else if (n.node.task.status === 'doing') {
+        taskSvg = `    <circle cx="16" cy="${centerY}" r="6" fill="none" stroke="#2563eb" stroke-width="2" />\n`;
+      } else {
+        taskSvg = `    <circle cx="16" cy="${centerY}" r="6" fill="none" stroke="#94a3b8" stroke-width="1.5" />\n`;
+      }
+    }
+
+    const isTaskDone = n.node.task?.status === 'done';
+    const textDecor = isTaskDone ? ' text-decoration="line-through" opacity="0.75"' : '';
+    if (taskSvg) svg += taskSvg;
+    if (n.node.text) svg += `    <text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${escapeXml(textColor)}" class="node-text"${textDecor}>${escapeXml(n.node.text)}</text>\n`;
     svg += `  </g>\n`;
   }
 
@@ -540,10 +579,30 @@ export async function exportToPNG(
         ctx.beginPath(); ctx.moveTo(0, n.height); ctx.lineTo(n.width, n.height);
         ctx.strokeStyle = n.borderColor; ctx.lineWidth = 1.5; ctx.stroke();
       }
+      let textIndent = 12;
+      if (n.node.task) {
+        textIndent = 32;
+        const centerY = (n.height - n.textLines.length * 20) / 2 + 15;
+        ctx.save();
+        if (n.node.task.status === 'done') {
+          ctx.fillStyle = '#10b981';
+          ctx.beginPath(); ctx.arc(18, centerY, 6.5, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(15, centerY); ctx.lineTo(17.5, centerY + 2.5); ctx.lineTo(21.5, centerY - 2.5); ctx.stroke();
+        } else if (n.node.task.status === 'doing') {
+          ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(18, centerY, 6, 0, Math.PI * 2); ctx.stroke();
+        } else {
+          ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(18, centerY, 6, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.restore();
+      }
       ctx.font = `${n.level <= 1 ? '600' : '400'} 14px "Microsoft YaHei", "PingFang SC", sans-serif`;
       ctx.fillStyle = n.textColor; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      if (n.node.task?.status === 'done') ctx.globalAlpha = 0.75;
       const firstY = (n.height - n.textLines.length * 20) / 2 + 10;
-      n.textLines.forEach((line, index) => ctx.fillText(line, 12, firstY + index * 20));
+      n.textLines.forEach((line, index) => ctx.fillText(line, textIndent, firstY + index * 20));
       ctx.restore(); continue;
     }
 
@@ -577,13 +636,36 @@ export async function exportToPNG(
       }
     }
 
-    // Text
+    // Task & Text
+    let textStartX = n.width / 2;
+    let align: CanvasTextAlign = 'center';
+    if (n.node.task && !nodeImage) {
+      align = 'left';
+      textStartX = 30;
+      const centerY = n.height / 2;
+      ctx.save();
+      if (n.node.task.status === 'done') {
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath(); ctx.arc(16, centerY, 6.5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(13, centerY); ctx.lineTo(15.5, centerY + 2.5); ctx.lineTo(19.5, centerY - 2.5); ctx.stroke();
+      } else if (n.node.task.status === 'doing') {
+        ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(16, centerY, 6, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(16, centerY, 6, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     const fontSize = n.level === 0 ? 16 : (n.level === 1 ? 14 : 12);
     ctx.font = `${n.level === 0 ? 'bold' : '500'} ${fontSize}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.fillStyle = n.level === 0 ? n.textColor : theme.nodeText;
-    ctx.textAlign = 'center';
+    ctx.textAlign = align;
     ctx.textBaseline = 'middle';
-    if (n.node.text) ctx.fillText(n.node.text, n.width / 2, nodeImage ? n.height - 15 : n.height / 2);
+    if (n.node.task?.status === 'done') ctx.globalAlpha = 0.75;
+    if (n.node.text) ctx.fillText(n.node.text, textStartX, nodeImage ? n.height - 15 : n.height / 2);
 
     ctx.restore();
   }
@@ -652,11 +734,30 @@ export function exportToInteractiveHTML(
     const image = isSafeNodeImage(n.node.image) ? n.node.image : null;
     const textY = image ? n.height - 12 : n.height / 2 + (fontSize / 3);
 
+    let taskSvg = '';
+    let textX = n.width / 2;
+    let textAnchor = 'middle';
+    if (n.node.task && !image) {
+      textAnchor = 'start';
+      textX = 30;
+      const centerY = n.height / 2;
+      if (n.node.task.status === 'done') {
+        taskSvg = `<circle cx="16" cy="${centerY}" r="6.5" fill="#10b981" /><path d="M 13 ${centerY} L 15.5 ${centerY + 2.5} L 19.5 ${centerY - 2.5}" stroke="#ffffff" stroke-width="1.5" fill="none" />`;
+      } else if (n.node.task.status === 'doing') {
+        taskSvg = `<circle cx="16" cy="${centerY}" r="6" fill="none" stroke="#2563eb" stroke-width="2" />`;
+      } else {
+        taskSvg = `<circle cx="16" cy="${centerY}" r="6" fill="none" stroke="#94a3b8" stroke-width="1.5" />`;
+      }
+    }
+    const isTaskDone = n.node.task?.status === 'done';
+    const textDecor = isTaskDone ? ' text-decoration="line-through" opacity="0.75"' : '';
+
     nodesSvg += `
     <g class="mind-node" transform="translate(${n.x}, ${n.y})">
       <rect width="${n.width}" height="${n.height}" rx="${rx}" fill="${escapeXml(fill)}" stroke="${escapeXml(stroke)}" stroke-width="1.5" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.08))" />
       ${image ? `<image href="${escapeXml(image.dataUrl)}" x="${(n.width - image.width) / 2}" y="8" width="${image.width}" height="${imageDisplayHeight(image)}" preserveAspectRatio="xMidYMid meet" />` : ''}
-      ${n.node.text ? `<text x="${n.width / 2}" y="${textY}" text-anchor="middle" font-size="${fontSize}" font-weight="${fontWeight}" fill="${escapeXml(textColor)}">${escapeXml(n.node.text)}</text>` : ''}
+      ${taskSvg}
+      ${n.node.text ? `<text x="${textX}" y="${textY}" text-anchor="${textAnchor}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${escapeXml(textColor)}"${textDecor}>${escapeXml(n.node.text)}</text>` : ''}
     </g>`;
   }
 

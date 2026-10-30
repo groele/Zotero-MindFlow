@@ -68,3 +68,6 @@ mindflow-item-pane-refresh = 刷新
 mindflow-item-pane-list-title = 当前文献导图
 mindflow-item-pane-list-empty = 新建导图后，可在这里快速打开。
 mindflow-item-pane-action-failed = 操作失败，请重试。
+mindflow-item-pane-linked-maps-title = 已关联导图
+mindflow-item-pane-quick-create-title = 快速新建导图
+mindflow-item-pane-template-create = 按所选模板生成导图

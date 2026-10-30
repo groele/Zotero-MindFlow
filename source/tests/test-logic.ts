@@ -4,14 +4,15 @@ import { cloneTree, replaceNodeText, replaceAllNodeText, expandAncestors, delete
 import { validRelationships, captureNodeDrafts, retargetDocumentLinks } from '../src/core/model/editorState';
 import { HistoryManager } from '../src/core/history/historyManager';
 import { InboxService } from '../src/services/storage/inboxService';
-import { SettingsService } from '../src/services/storage/settingsService';
+import { SettingsService, sanitizeSettings } from '../src/services/storage/settingsService';
 import { safeStorage } from '../src/services/storage/safeStorage';
-import { parseOPMLString } from '../src/services/io/exporter';
+import { parseOPMLString, importFromMarkdown, exportToInteractiveHTML } from '../src/services/io/exporter';
 import { BackupService } from '../src/services/storage/backupService';
 import { WebDAVService } from '../src/services/sync/webdavService';
 import type { MindMapNode, MindMapDocument } from '../src/core/model/types';
 import { saveStatusLabel } from '../src/core/model/saveStatus';
 import { shouldHandleCanvasShortcut } from '../src/core/keyboard/shortcuts';
+import { APP_VERSION } from '../src/core/version';
 
 let passed = 0, failed = 0;
 async function run(name: string, fn: () => unknown) {
@@ -259,6 +260,94 @@ await run('queued WebDAV upload freezes credentials, destination and document co
       assert.equal(call.auth, 'Basic ' + btoa('original:before'));
     }
   } finally { globalThis.fetch = original; }
+});
+await run('importFromMarkdown successfully parses and preserves zotero:// internal links', () => {
+  const md = `# 文献综述导图\n- 核心论点 [🔗](zotero://select/library/items/ABC12345)\n  - 实验证据 [🔗](https://doi.org/10.1000/182)`;
+  const parsed = importFromMarkdown(md);
+  assert.equal(parsed.text, '文献综述导图');
+  assert.equal(parsed.children.length, 1);
+  assert.equal(parsed.children[0].text, '核心论点');
+  assert.equal(parsed.children[0].link, 'zotero://select/library/items/ABC12345');
+  assert.equal(parsed.children[0].children.length, 1);
+  assert.equal(parsed.children[0].children[0].text, '实验证据');
+  assert.equal(parsed.children[0].children[0].link, 'https://doi.org/10.1000/182');
+});
+await run('SettingsService sanitizes invalid layout and out-of-range numerical settings', async () => {
+  const sanitized = sanitizeSettings({
+    defaultLayout: 'invalid-layout' as any,
+    maxSnapshotsPerDoc: -10,
+    zoomStep: 999,
+    canvasBackground: 'unknown-bg' as any,
+    toolbarPosition: 'floating' as any,
+  });
+  assert.equal(sanitized.defaultLayout, 'mindmap');
+  assert.equal(sanitized.maxSnapshotsPerDoc, 20);
+  assert.equal(sanitized.zoomStep, 0.15);
+  assert.equal(sanitized.canvasBackground, 'dots');
+  assert.equal(sanitized.toolbarPosition, 'top');
+});
+await run('BackupService rejects future major version backups and validates schemaVersion 2', async () => {
+  const futureBackup = {
+    version: '999.0.0',
+    exportedAt: Date.now(),
+    documents: [],
+  };
+  await assert.rejects(async () => {
+    await BackupService.previewFullWorkspaceData(futureBackup);
+  }, /更高版本/);
+
+  const invalidTimeBackup = {
+    version: APP_VERSION,
+    exportedAt: -1,
+    documents: [],
+  };
+  await assert.rejects(async () => {
+    await BackupService.previewFullWorkspaceData(invalidTimeBackup);
+  }, /时间戳/);
+
+  const validBackup = {
+    version: APP_VERSION,
+    schemaVersion: 2,
+    exportedAt: Date.now(),
+    documents: [],
+    researchPresets: [{
+      id: 'preset_test-1',
+      name: '测试预设',
+      templateId: 'paper-story',
+      customPrompt: '请重点提取结论',
+      presentation: null,
+    }],
+  };
+  const preview = await BackupService.previewFullWorkspaceData(validBackup);
+  assert.equal(preview.researchPresets, 1);
+  assert.equal(preview.documents, 0);
+});
+await run('exportToInteractiveHTML renders task status badge and completed line-through', () => {
+  let capturedBlob: Blob | null = null;
+  const mockNodes: any[] = [
+    {
+      id: 'node-done',
+      node: { id: 'node-done', text: '完成的任务', task: { status: 'done' }, children: [] },
+      x: 10, y: 10, width: 120, height: 40, level: 1, bgColor: '#fff', borderColor: '#ccc',
+      shape: 'rounded', children: [], textColor: '#000',
+    },
+    {
+      id: 'node-doing',
+      node: { id: 'node-doing', text: '进行中的任务', task: { status: 'doing' }, children: [] },
+      x: 10, y: 60, width: 120, height: 40, level: 1, bgColor: '#fff', borderColor: '#ccc',
+      shape: 'rounded', children: [], textColor: '#000',
+    },
+  ];
+  const theme: any = { background: '#ffffff', surface: '#ffffff', text: '#000', nodeText: '#000' };
+  exportToInteractiveHTML(
+    mockNodes,
+    [],
+    { minX: 0, maxX: 200, minY: 0, maxY: 200 },
+    theme,
+    'Task Test',
+    { download: (blob) => { capturedBlob = blob; } }
+  );
+  assert.ok(capturedBlob, 'Interactive HTML was generated');
 });
 console.log(`${passed} logic tests passed; ${failed} failed`);
 if (failed) process.exitCode = 1;

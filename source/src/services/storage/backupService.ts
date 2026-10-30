@@ -10,6 +10,8 @@ import { safeStorage } from './safeStorage';
 import { detachedMetadata } from '../zotero/documentIdentity';
 import { isZoteroWorkspace, zoteroWorkspaceStorage } from '../zotero/zoteroBridge';
 
+import { ResearchPresetService, validateResearchPresetConfig, type ResearchPreset } from '../zotero/researchPresets';
+
 export interface DocSnapshot {
   id: string;
   docId: string;
@@ -21,10 +23,12 @@ export interface DocSnapshot {
 
 export interface WorkspaceBackupData {
   version: string;
+  schemaVersion?: number;
   exportedAt: number;
   documents: MindMapDocument[];
   inboxItems: InboxItem[];
   snapshots: DocSnapshot[];
+  researchPresets?: ResearchPreset[];
 }
 
 export interface StorageQuotaInfo {
@@ -39,6 +43,7 @@ export interface WorkspaceRestorePreview {
   adding: string[];
   inboxItems: number;
   snapshots: number;
+  researchPresets?: number;
 }
 
 const SNAPSHOT_STORAGE_KEY = 'mindflow_snapshots_';
@@ -75,6 +80,21 @@ function validateWorkspaceData(value: unknown): WorkspaceBackupData {
     throw new Error('无效的 MindFlow 备份文件结构');
   }
 
+  // Version and timestamp verification (P2-01)
+  if (value.version !== undefined) {
+    if (typeof value.version !== 'string' || !value.version.trim()) {
+      throw new Error('备份文件缺少有效的版本标识');
+    }
+    const backupMajor = parseInt(value.version.replace(/^v/i, '').split('.')[0], 10);
+    const currentMajor = parseInt(APP_VERSION.replace(/^v/i, '').split('.')[0], 10);
+    if (Number.isFinite(backupMajor) && Number.isFinite(currentMajor) && backupMajor > currentMajor) {
+      throw new Error(`备份来自更高版本的 MindFlow (v${value.version})，当前版本 (v${APP_VERSION}) 无法保证兼容，请先升级插件后再恢复`);
+    }
+  }
+  if (value.exportedAt !== undefined && (!Number.isFinite(value.exportedAt) || (value.exportedAt as number) <= 0)) {
+    throw new Error('备份文件缺少有效的导出时间戳');
+  }
+
   const documentIds = new Set<string>();
   for (let i = 0; i < value.documents.length; i += 1) {
     const doc = validateMindMapDocument(value.documents[i], `第 ${i + 1} 篇导图`);
@@ -90,6 +110,21 @@ function validateWorkspaceData(value: unknown): WorkspaceBackupData {
     const snapshots = validateSnapshots(value.snapshots);
     for (const snapshot of snapshots) {
       if (!documentIds.has(snapshot.docId)) throw new Error('备份中包含脱离所属导图的版本快照');
+    }
+  }
+
+  if (value.researchPresets !== undefined) {
+    if (!Array.isArray(value.researchPresets)) {
+      throw new Error('备份中的研读预设数据不是列表');
+    }
+    const presetIds = new Set<string>();
+    for (const preset of value.researchPresets) {
+      if (!isRecord(preset) || typeof preset.id !== 'string' || !/^preset_[\w-]{1,100}$/.test(preset.id) ||
+          presetIds.has(preset.id) || typeof preset.name !== 'string' || !preset.name.trim() || preset.name.length > 60) {
+        throw new Error('备份包含格式无效的研读预设');
+      }
+      presetIds.add(preset.id);
+      validateResearchPresetConfig(preset);
     }
   }
 
@@ -144,6 +179,7 @@ export class BackupService {
       adding: data.documents.filter(doc => !existing.has(doc.id)).map(doc => doc.title),
       inboxItems: data.inboxItems?.length || 0,
       snapshots: data.snapshots?.length || 0,
+      researchPresets: data.researchPresets?.length || 0,
     };
   }
 
@@ -154,7 +190,8 @@ export class BackupService {
 
   public static describeRestorePreview(preview: WorkspaceRestorePreview): string {
     const names = preview.replacing.slice(0, 5).join('、');
-    return `备份包含 ${preview.documents} 篇导图（新增 ${preview.adding.length}、覆盖 ${preview.replacing.length}）、${preview.inboxItems} 条收集箱记录、${preview.snapshots} 个快照。${preview.replacing.length ? `\n将覆盖：${names}${preview.replacing.length > 5 ? '等' : ''}。覆盖前会创建本地恢复快照。` : ''}\n确认导入吗？`;
+    const presetMsg = preview.researchPresets ? `、${preview.researchPresets} 个研读预设` : '';
+    return `备份包含 ${preview.documents} 篇导图（新增 ${preview.adding.length}、覆盖 ${preview.replacing.length}）、${preview.inboxItems} 条收集箱记录、${preview.snapshots} 个快照${presetMsg}。${preview.replacing.length ? `\n将覆盖：${names}${preview.replacing.length > 5 ? '等' : ''}。覆盖前会创建本地恢复快照。` : ''}\n确认导入吗？`;
   }
   // 1. Create a version snapshot for a document
   public static async createSnapshot(doc: MindMapDocument): Promise<DocSnapshot> {
@@ -240,13 +277,21 @@ export class BackupService {
     }
 
     const inboxItems = await InboxService.getItems();
+    let researchPresets: ResearchPreset[] = [];
+    try {
+      researchPresets = ResearchPresetService.read().presets;
+    } catch {
+      researchPresets = [];
+    }
 
     return {
       version: APP_VERSION,
+      schemaVersion: 2,
       exportedAt: Date.now(),
       documents,
       inboxItems,
       snapshots: allSnapshots,
+      researchPresets,
     };
   }
 
@@ -323,6 +368,24 @@ export class BackupService {
       }
       for (const [docId, snapshots] of grouped) {
         await this.mutateSnapshots(docId, snapshots, undefined, snapshotLimit);
+      }
+
+      // Merge or restore researchPresets if present in backup (P2-08)
+      if (data.researchPresets && data.researchPresets.length > 0) {
+        stage = '研读预设';
+        try {
+          const store = ResearchPresetService.read();
+          const existingPresetIds = new Set(store.presets.map(p => p.id));
+          for (const preset of data.researchPresets) {
+            if (!existingPresetIds.has(preset.id) && store.presets.length < 30) {
+              store.presets.push(preset);
+              existingPresetIds.add(preset.id);
+            }
+          }
+          safeStorage.setItem('mindflow_research_presets_v1', JSON.stringify(store));
+        } catch {
+          // Preset merge failure does not invalidate document restores
+        }
       }
     } catch (error) {
       throw new Error(`备份恢复未全部完成：已保存 ${savedCount}/${data.documents.length} 篇导图；${stage}恢复失败。覆盖前快照已保留。${error instanceof Error ? error.message : error}`);

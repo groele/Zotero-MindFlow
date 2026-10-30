@@ -11,6 +11,7 @@
 
   const ADDON_ID = 'mindflow@groele.org';
   const CHROME_ROOT = 'chrome://mindflow/content/';
+  const T = (zh, en) => /^en/i.test(String(Zotero.locale || '')) ? en : zh;
   const ALLOWED_PREF_MESSAGES = {
     windowMode: (value) => value === 'tab' || value === 'window',
     includeAbstract: (value) => typeof value === 'boolean',
@@ -1343,7 +1344,7 @@
     },
 
     paneText(zh, en) {
-      return /^en/i.test(String(Zotero.locale || '')) ? en : zh;
+      return T(zh, en);
     },
 
     scheduleItemPaneRefresh(state, delay = 120) {
@@ -1672,6 +1673,7 @@
             templateBox.appendChild(templateDesc);
 
             const templateCreateBtn = createEl('button', 'mf-btn-template-create', T('按所选模板生成导图', 'Generate map from template'));
+            templateCreateBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-template-create');
             templateCreateBtn.type = 'button';
             templateCreateBtn.addEventListener('click', async (e) => {
               e.preventDefault(); e.stopPropagation();
@@ -1871,7 +1873,7 @@
 
                 const cardActions = createEl('div', 'mf-map-card-actions');
 
-                const openBtn = createEl('button', 'mf-card-btn mf-card-btn-primary', '打开');
+                const openBtn = createEl('button', 'mf-card-btn mf-card-btn-primary', T('打开', 'Open'));
                 openBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-card-open');
                 openBtn.type = 'button';
                 openBtn.title = T('在工作台中打开并编辑此思维导图', 'Open and edit this map in the workspace');
@@ -1889,7 +1891,7 @@
                 });
                 cardActions.appendChild(openBtn);
 
-                const exportBtn = createEl('button', 'mf-card-btn', '导出大纲');
+                const exportBtn = createEl('button', 'mf-card-btn', T('导出大纲', 'Export Outline'));
                 exportBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-card-export');
                 exportBtn.type = 'button';
                 exportBtn.title = T('将思维导图结构一键导出为 Zotero 文献子笔记', 'Export the map outline as a Zotero child note');
@@ -1907,7 +1909,7 @@
                 });
                 cardActions.appendChild(exportBtn);
 
-                const locateBtn = createEl('button', 'mf-card-btn', '定位附件');
+                const locateBtn = createEl('button', 'mf-card-btn', T('定位附件', 'Locate Attachment'));
                 locateBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-card-locate');
                 locateBtn.type = 'button';
                 locateBtn.title = T('在文献库列表中定位并选中此思维导图附件', 'Select this map attachment in the item list');
@@ -1957,12 +1959,15 @@
           throw new Error('未找到关联的文献主条目');
         }
 
-        const safeTitle = escapeHtml(docData.title || attachment.getField?.('title') || '思维导图');
+        const defaultTitle = T('思维导图', 'Mind Map');
+        const safeTitle = escapeHtml(docData.title || attachment.getField?.('title') || defaultTitle);
         const outlineHtml = this.renderNodeToHtml(docData.root);
+        const noteHeader = T('🧠 MindFlow 导图大纲', '🧠 MindFlow Map Outline');
+        const exportTimeLabel = T('导出时间', 'Exported at');
         const noteHtml = `
           <div data-mindflow-document-id="${escapeHtml(docData.id || '')}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            <h3 style="color: #4072e5; margin-bottom: 4px;">🧠 MindFlow 导图大纲: ${safeTitle}</h3>
-            <p style="color: #64748b; font-size: 11px; margin-top: 0;">导出时间: ${new Date().toLocaleString()}</p>
+            <h3 style="color: #4072e5; margin-bottom: 4px;">${noteHeader}: ${safeTitle}</h3>
+            <p style="color: #64748b; font-size: 11px; margin-top: 0;">${exportTimeLabel}: ${new Date().toLocaleString()}</p>
             <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 8px 0;" />
             <ul style="padding-left: 20px; line-height: 1.6;">
               ${outlineHtml}
@@ -1994,8 +1999,11 @@
           await targetNote.saveTx();
         }
 
-        const alertTitle = '大纲笔记已生成';
-        const alertMsg = `已将《${docData.title || '思维导图'}》大纲笔记保存至文献条目下。`;
+        const alertTitle = T('大纲笔记已生成', 'Outline Note Created');
+        const alertMsg = T(
+          `已将《${docData.title || '思维导图'}》大纲笔记保存至文献条目下。`,
+          `Saved outline note for "${docData.title || 'Mind Map'}" to the item.`
+        );
         try {
           const pw = targetWindow?.ProgressWindow || Zotero.ProgressWindow;
           if (pw) {
@@ -4341,16 +4349,19 @@
 
           if (shouldCreateNote && savedAttachment) {
             try {
+              const noteHeader = T('MindFlow 导图大纲', 'MindFlow Map Outline');
+              const lastArchivedLabel = T('最后归档', 'Last archived');
+              const attachmentNotice = T('已挂载 .mindflow 源文件附件；跨设备可用性取决于 Zotero 文件同步设置', 'Mounted .mindflow source attachment; cross-device availability depends on Zotero sync settings');
               const noteHtml = `
                 <div data-mindflow-document-id="${escapeHtml(doc.id || '')}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                  <h3 style="color: #0284c7;">MindFlow 导图大纲: ${safeTitleHtml}</h3>
-                  <p style="color: #64748b; font-size: 11px;">最后归档: ${new Date().toLocaleString()}</p>
+                  <h3 style="color: #0284c7;">${noteHeader}: ${safeTitleHtml}</h3>
+                  <p style="color: #64748b; font-size: 11px;">${lastArchivedLabel}: ${new Date().toLocaleString()}</p>
                   <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 8px 0;" />
                   <ul>
                     ${this.renderNodeToHtml(doc.root)}
                   </ul>
                   <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 8px 0;" />
-                  <p style="font-size: 11px; color: #94a3b8;">已挂载 .mindflow 源文件附件；跨设备可用性取决于 Zotero 文件同步设置</p>
+                  <p style="font-size: 11px; color: #94a3b8;">${attachmentNotice}</p>
                 </div>
               `.trim();
 
@@ -4425,13 +4436,14 @@
       if (!node) return '';
       const indent = '  '.repeat(level);
 
-      const hasAbstractChild = level === 1 && Array.isArray(node.children) && node.children.some(c => c && c.text && c.text.includes('摘要'));
+      const isAbstractText = (str) => typeof str === 'string' && /摘要|abstract|summary/i.test(str);
+      const hasAbstractChild = level === 1 && Array.isArray(node.children) && node.children.some(c => c && isAbstractText(c.text));
       const isRedundantRootAbstract = hasAbstractChild && (
-        (node.note && (node.note.startsWith('【文献摘要】') || node.note.includes('文献摘要'))) ||
+        (node.note && (/(?:【文献摘要】|文献摘要|abstract|summary)/i.test(node.note))) ||
         (Array.isArray(node.children) && node.children.some(c => c && c.note && (c.note === node.note || node.note?.includes(c.note))))
       );
 
-      const isDuplicateAbstractChild = Boolean(parentNode && parentNode.text && parentNode.text.includes('摘要') && (
+      const isDuplicateAbstractChild = Boolean(parentNode && isAbstractText(parentNode.text) && (
         (node.note && parentNode.note && (node.note === parentNode.note || parentNode.note.includes(node.note))) ||
         (node.text && parentNode.note && parentNode.note.startsWith(node.text.replace(/\.\.\.$/, '')))
       ));
@@ -4440,9 +4452,26 @@
         return '';
       }
 
-      let html = `${indent}<li><strong>${escapeHtml(node.text)}</strong>`;
+      const linkLabel = T('链接', 'Link');
+      let taskPrefix = '';
+      let textStyle = '';
+      if (node.task) {
+        if (node.task.status === 'done') {
+          taskPrefix = '<span style="color: #10b981; font-weight: bold; margin-right: 4px;">☑</span>';
+          textStyle = 'text-decoration: line-through; opacity: 0.75;';
+        } else if (node.task.status === 'doing') {
+          taskPrefix = '<span style="color: #2563eb; font-weight: bold; margin-right: 4px;">⏳</span>';
+        } else {
+          taskPrefix = '<span style="color: #94a3b8; font-weight: bold; margin-right: 4px;">☐</span>';
+        }
+      }
+      let tagsHtml = '';
+      if (Array.isArray(node.tags) && node.tags.length > 0 && level > 1) {
+        tagsHtml = ' ' + node.tags.map(t => `<span style="display: inline-block; font-size: 11px; padding: 0 4px; border-radius: 3px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; margin-left: 3px;">#${escapeHtml(t)}</span>`).join('');
+      }
+      let html = `${indent}<li>${taskPrefix}<strong style="${textStyle}">${escapeHtml(node.text)}</strong>${tagsHtml}`;
       if (node.link) {
-        html += ` <a href="${escapeHtml(node.link)}" style="color: #0284c7; text-decoration: none;">[链接]</a>`;
+        html += ` <a href="${escapeHtml(node.link)}" style="color: #0284c7; text-decoration: none;">[${linkLabel}]</a>`;
       }
       if (node.note && !isRedundantRootAbstract && !isDuplicateAbstractChild) {
         html += `<br/><small style="color: #64748b; line-height: 1.5; display: inline-block; margin-top: 3px;">${escapeHtml(node.note)}</small>`;
