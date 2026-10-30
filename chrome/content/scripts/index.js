@@ -1829,6 +1829,92 @@
               padding-top: 6px;
             }
           }
+
+          /* Match the host pane: simple rows, muted controls and a clear action grid. */
+          .mf-pane-wrap {
+            gap: 10px;
+            font: inherit;
+            line-height: 1.5;
+            color-scheme: inherit;
+          }
+          .mf-pane-wrap .mf-header-card,
+          .mf-pane-wrap .mf-template-box {
+            padding: 0;
+            border: 0 !important;
+            border-radius: 0;
+            background: transparent !important;
+          }
+          .mf-pane-wrap .mf-header-card { gap: 5px; }
+          .mf-pane-wrap .mf-template-row { gap: 10px; flex-wrap: nowrap; align-items: center; }
+          .mf-pane-wrap .mf-template-label { padding: 0; font-weight: 400; }
+          .mf-pane-wrap .mf-template-select { flex: 1 1 0; width: 0; min-width: 0; }
+          .mf-pane-wrap .mf-btn-primary,
+          .mf-pane-wrap .mf-btn-template-create,
+          .mf-pane-wrap .mf-tool-btn {
+            min-width: 0;
+            min-height: 30px;
+            padding: 6px 8px;
+            border: 1px solid color-mix(in srgb, var(--accent-blue, #3b78b4) 20%, transparent) !important;
+            border-radius: 5px !important;
+            background: color-mix(in srgb, var(--accent-blue, #3b78b4) 8%, transparent) !important;
+            color: var(--accent-blue, #3b78b4) !important;
+            box-shadow: none;
+            font: inherit;
+            white-space: normal;
+            overflow-wrap: anywhere;
+          }
+          .mf-pane-wrap .mf-hint-text { margin: 0; padding: 0; font-size: .92em; }
+          .mf-pane-wrap .mindflow-pane-actions { gap: 7px; padding-top: 10px; }
+          .mf-pane-wrap .mf-tool-btn-pdf { grid-column: 1 / -1; }
+          .mf-pane-wrap .mf-map-card { min-width: 0; }
+          .mf-pane-wrap {
+            --mf-line: color-mix(in srgb, currentColor 12%, transparent);
+            --mf-blue: light-dark(#315f94, #a8c9ef);
+            --mf-green: light-dark(#316d58, #a0d3bb);
+            --mf-amber: light-dark(#7a5d2c, #e3c58d);
+          }
+          .mf-pane-wrap .mf-status-badge {
+            padding: 0;
+            border-radius: 0;
+            background: transparent;
+            color: var(--fill-primary, CanvasText);
+            font: inherit;
+            font-weight: 600;
+          }
+          .mf-pane-wrap .mf-header-meta,
+          .mf-pane-wrap .mf-template-label,
+          .mf-pane-wrap .mf-hint-text { color: var(--fill-secondary, GrayText); font-size: .92em; }
+          .mf-pane-wrap .mf-target-title { font: inherit; overflow-wrap: anywhere; }
+          .mf-pane-wrap .mf-btn-primary {
+            align-self: flex-start;
+            width: auto;
+            min-height: 28px;
+            --mf-tone: var(--mf-green);
+          }
+          .mf-pane-wrap .mf-btn-template-create { --mf-tone: var(--mf-green); }
+          .mf-pane-wrap .mf-tool-btn { --mf-tone: var(--mf-blue); }
+          .mf-pane-wrap .mf-tool-btn[data-mindflow-action="ai"],
+          .mf-pane-wrap .mf-tool-btn[data-mindflow-action="pdf"] { --mf-tone: var(--mf-green); }
+          .mf-pane-wrap .mf-tool-btn[data-mindflow-action="import"] { --mf-tone: var(--mf-amber); }
+          .mf-pane-wrap :is(.mf-btn-primary, .mf-btn-template-create, .mf-tool-btn) {
+            color: var(--mf-tone, var(--mf-blue)) !important;
+            background: color-mix(in srgb, var(--mf-tone, var(--mf-blue)) 9%, transparent) !important;
+            border-color: color-mix(in srgb, var(--mf-tone, var(--mf-blue)) 20%, transparent) !important;
+          }
+          .mf-pane-wrap :is(.mf-btn-primary, .mf-btn-template-create, .mf-tool-btn):hover:not(:disabled) {
+            background: color-mix(in srgb, var(--mf-tone, var(--mf-blue)) 16%, transparent) !important;
+            border-color: color-mix(in srgb, var(--mf-tone, var(--mf-blue)) 32%, transparent) !important;
+          }
+          .mf-pane-wrap .mindflow-pane-actions { border-top: 1px solid var(--mf-line); }
+          .mf-pane-wrap .mf-create-section { border-top: 1px solid var(--mf-line); padding-top: 10px; }
+          .mf-pane-wrap .mf-create-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 9px; }
+          .mf-pane-wrap .mf-create-actions .mf-btn-primary { width: 100%; }
+          .mf-pane-wrap .mf-create-actions .mf-tool-btn { width: 100%; }
+          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn-pdf { grid-column: auto; }
+          .mf-pane-wrap .mf-map-card { background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--mf-line) !important; border-radius: 0; padding: 8px 0; }
+          @container (max-width: 210px) {
+            .mf-pane-wrap .mf-create-actions { grid-template-columns: minmax(0, 1fr); }
+          }
         `;
         (doc.head || doc.documentElement)?.appendChild(style);
       } catch (e) {
@@ -2138,7 +2224,8 @@
             const headerTop = createEl('div', 'mf-header-top');
 
             const statusBadge = createEl('span', `mf-status-badge ${totalMaps > 0 ? 'mf-status-active' : 'mf-status-empty'}`);
-            statusBadge.textContent = totalMaps > 0 ? `🧠 已有关联导图 (${totalMaps})` : '💡 尚未创建导图';
+            statusBadge.textContent = '当前文献';
+            statusBadge.setAttribute('data-l10n-id', 'mindflow-item-pane-current-item');
             headerTop.appendChild(statusBadge);
 
             const selectedPDF = item?.isPDFAttachment?.() || /\.pdf$/i.test(item?.attachmentFilename || '') ? item : null;
@@ -2147,7 +2234,8 @@
               return att && !att.deleted && (att.isPDFAttachment?.() || att.attachmentContentType === 'application/pdf' || /\.pdf$/i.test(att.attachmentFilename || ''));
             })));
 
-            const metaIndicator = createEl('span', 'mf-header-meta', hasPDF ? '📄 PDF 就绪' : '⚠️ 无 PDF');
+            const metaIndicator = createEl('span', 'mf-header-meta', hasPDF ? 'PDF 就绪' : '无 PDF');
+            metaIndicator.setAttribute('data-l10n-id', hasPDF ? 'mindflow-item-pane-pdf-ready' : 'mindflow-item-pane-pdf-missing');
             headerTop.appendChild(metaIndicator);
             headerCard.appendChild(headerTop);
 
@@ -2157,22 +2245,30 @@
             headerCard.appendChild(targetTitleEl);
             wrapper.appendChild(headerCard);
 
+            if (totalMaps === 0) {
+              const emptyState = createEl('div', 'mf-empty-state');
+              const emptyTitle = createEl('div', 'mf-empty-title', '暂无关联导图');
+              emptyTitle.setAttribute('data-l10n-id', 'mindflow-item-pane-no-map');
+              const emptyHint = createEl('div', 'mf-hint-text', '先选择模板，再创建这篇文献的导图。');
+              emptyHint.setAttribute('data-l10n-id', 'mindflow-item-pane-choose-template-hint');
+              emptyState.appendChild(emptyTitle);
+              emptyState.appendChild(emptyHint);
+              wrapper.appendChild(emptyState);
+            }
+
             // 2. Primary Action Button
             const primaryBtn = createEl('button', 'mf-btn-primary');
             primaryBtn.type = 'button';
-            primaryBtn.textContent = totalMaps > 0 ? '🧠 打开思维导图工作台' : '＋ 一键生成文献思维导图';
+            primaryBtn.textContent = totalMaps > 0 ? '按模板新增' : '生成导图';
+            primaryBtn.setAttribute('data-l10n-id', totalMaps > 0 ? 'mindflow-item-pane-add-from-template' : 'mindflow-item-pane-generate-map');
             primaryBtn.addEventListener('click', async (e) => {
               e.preventDefault(); e.stopPropagation();
               if (primaryBtn.disabled) return;
               primaryBtn.disabled = true;
               try {
-                if (totalMaps > 0 && maps[0]) {
-                  await this.openMindflowAttachment(maps[0], win);
-                } else {
-                  const currentTarget = lastPaneTarget || target;
-                  if (!currentTarget) return;
-                  await this.openMindFlow({ mode: 'create_from_selection', items: [currentTarget], forceNew: false }, win);
-                }
+                const currentTarget = lastPaneTarget || target;
+                if (!currentTarget) return;
+                await this.openMindFlow({ mode: 'create_from_selection', items: [currentTarget], template: templateSelect.value || 'imrad', forceNew: totalMaps > 0 }, win);
                 state?.refresh?.();
               } catch (err) {
                 Zotero.logError?.('[MindFlow] Sidebar primary action failed: ' + err);
@@ -2180,20 +2276,16 @@
                 primaryBtn.disabled = false;
               }
             });
-            wrapper.appendChild(primaryBtn);
-
-            const hintText = createEl('div', 'mf-hint-text');
-            hintText.textContent = totalMaps > 0
-              ? `已关联 ${totalMaps} 份导图源文件，点击直接进入工作台编辑。`
-              : '根据当前文献元数据与 PDF 快速构建树状导图，双向同步笔记。';
-            wrapper.appendChild(hintText);
-
             // 3. Academic Template Box
             const templateBox = createEl('div', 'mf-template-box');
             const templateRow = createEl('div', 'mf-template-row');
-            templateRow.appendChild(createEl('span', 'mf-template-label', '📚 模板:'));
+            const templateLabel = createEl('span', 'mf-template-label', '导图模板');
+            templateLabel.setAttribute('data-l10n-id', 'mindflow-item-pane-template-label');
+            templateRow.appendChild(templateLabel);
 
             const templateSelect = createEl('select', 'mf-template-select');
+            templateSelect.setAttribute('aria-label', '导图模板');
+            templateSelect.setAttribute('data-l10n-id', 'mindflow-item-pane-template-select');
             const templates = [
               { id: 'imrad', name: '经典论文框架 (IMRaD 结构)' },
               { id: 'review', name: '文献对比与综述导图' },
@@ -2209,34 +2301,12 @@
             templateRow.appendChild(templateSelect);
             templateBox.appendChild(templateRow);
 
-            const templateBtn = createEl('button', 'mf-btn-template-create', '⚡ 按此模板创建导图');
-            templateBtn.type = 'button';
-            templateBtn.addEventListener('click', async (e) => {
-              e.preventDefault(); e.stopPropagation();
-              if (templateBtn.disabled) return;
-              templateBtn.disabled = true;
-              try {
-                const chosenTemplate = templateSelect.value || 'imrad';
-                await this.openMindFlow({
-                  mode: 'create_from_selection',
-                  items: [target],
-                  template: chosenTemplate,
-                  forceNew: totalMaps > 0,
-                }, win);
-                state?.refresh?.();
-              } catch (err) {
-                Zotero.logError?.('[MindFlow] Sidebar template create failed: ' + err);
-              } finally {
-                templateBtn.disabled = false;
-              }
-            });
-            templateBox.appendChild(templateBtn);
-            wrapper.appendChild(templateBox);
 
             // 4. Action Buttons Grid (2 Columns, matching TaskFlow td-action-grid)
             const toolsGrid = createEl('div', 'mindflow-pane-actions');
 
-            const toolAi = createEl('button', 'mf-tool-btn', '✨ AI 论文精读');
+            const toolAi = createEl('button', 'mf-tool-btn', 'AI 论文精读');
+            toolAi.setAttribute('data-l10n-id', 'mindflow-item-pane-action-ai');
             toolAi.type = 'button';
             toolAi.disabled = false;
             toolAi.setAttribute?.('data-mindflow-action', 'ai');
@@ -2259,7 +2329,8 @@
             toolsGrid.appendChild(toolAi);
             lastPaneActions.push({ id: 'ai', button: toolAi, hasPDF: true });
 
-            const toolSubwin = createEl('button', 'mf-tool-btn', '🗗 伴读独立窗口');
+            const toolSubwin = createEl('button', 'mf-tool-btn', '伴读窗口');
+            toolSubwin.setAttribute('data-l10n-id', 'mindflow-item-pane-action-companion');
             toolSubwin.type = 'button';
             toolSubwin.setAttribute?.('data-mindflow-action', 'workspace');
             toolSubwin.title = '打开轻量独立窗口，适合与 PDF 左右分屏伴读对照';
@@ -2275,9 +2346,9 @@
                 Zotero.logError?.('[MindFlow] Open standalone window failed: ' + err);
               }
             });
-            toolsGrid.appendChild(toolSubwin);
 
-            const toolImport = createEl('button', 'mf-tool-btn', '📥 导入外部导图');
+            const toolImport = createEl('button', 'mf-tool-btn', '导入导图');
+            toolImport.setAttribute('data-l10n-id', 'mindflow-item-pane-action-import');
             toolImport.type = 'button';
             toolImport.disabled = false;
             toolImport.setAttribute?.('data-mindflow-action', 'import');
@@ -2288,7 +2359,8 @@
             });
             toolsGrid.appendChild(toolImport);
 
-            const toolBlank = createEl('button', 'mf-tool-btn', '📄 独立空白导图');
+            const toolBlank = createEl('button', 'mf-tool-btn', '独立空白导图');
+            toolBlank.setAttribute('data-l10n-id', 'mindflow-item-pane-action-blank');
             toolBlank.type = 'button';
             toolBlank.disabled = false;
             toolBlank.setAttribute?.('data-mindflow-action', 'blank');
@@ -2300,7 +2372,8 @@
             toolsGrid.appendChild(toolBlank);
 
             if (hasPDF) {
-              const toolPdf = createEl('button', 'mf-tool-btn mf-tool-btn-pdf', '📖 打开伴读 PDF');
+              const toolPdf = createEl('button', 'mf-tool-btn mf-tool-btn-pdf', '打开 PDF');
+              toolPdf.setAttribute('data-l10n-id', 'mindflow-item-pane-action-pdf');
               toolPdf.type = 'button';
               toolPdf.disabled = false;
               toolPdf.setAttribute?.('data-mindflow-action', 'pdf');
@@ -2425,22 +2498,15 @@
                 mapsList.appendChild(card);
               }
               mapsSection.appendChild(mapsList);
-              const addMapBtn = createEl('button', 'mf-btn-template-create', '＋ 新增思维导图');
-              addMapBtn.type = 'button';
-              addMapBtn.addEventListener('click', async (e = {}) => {
-                e.preventDefault?.(); e.stopPropagation?.();
-                await this.openMindFlow({ mode: 'create_from_selection', items: [lastPaneTarget || target], forceNew: true }, win);
-              });
-              mapsSection.appendChild(addMapBtn);
               wrapper.appendChild(mapsSection);
-              mapsSection.removeChild?.(addMapBtn);
-              wrapper.appendChild(addMapBtn);
-            } else {
-              const emptyGuide = createEl('div', 'mf-empty-guide');
-              emptyGuide.appendChild(createEl('div', 'mf-empty-title', '思维导图 + 划线互联'));
-              emptyGuide.appendChild(createEl('div', 'mf-empty-desc', '基于文献标题、摘要及 PDF 快速构建树状导图，阅读划线实时同步，节点可一键导出为 Zotero 大纲笔记。'));
-              wrapper.appendChild(emptyGuide);
             }
+            const createSection = createEl('div', 'mf-create-section');
+            createSection.appendChild(templateBox);
+            const createActions = createEl('div', 'mf-create-actions');
+            createActions.appendChild(primaryBtn);
+            createActions.appendChild(toolSubwin);
+            createSection.appendChild(createActions);
+            wrapper.appendChild(createSection);
             wrapper.appendChild(toolsGrid);
             body.appendChild(wrapper);
           },

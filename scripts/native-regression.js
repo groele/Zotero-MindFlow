@@ -304,8 +304,8 @@
         for (const id of ['ai','workspace','import','blank']) { action(id).click(); await Zotero.Promise.delay(20); }
         panel.querySelector('.mf-btn-primary').click();
         await Zotero.Promise.delay(20);
-        check(calls.map(c => c.mode).join(',') === 'ai_analyze,open_attachment,import_file,create_blank,open_attachment', 'sidebar action routing mismatch');
-        check(calls[0].items[0].id === a.id && calls[1].parentID === a.id && calls[4].parentID === a.id, 'sidebar used stale paper');
+        check(calls.map(c => c.mode).join(',') === 'ai_analyze,open_attachment,import_file,create_blank,create_from_selection', 'sidebar action routing mismatch');
+        check(calls[0].items[0].id === a.id && calls[1].parentID === a.id && calls[4].items[0].id === a.id && calls[4].forceNew, 'sidebar used stale paper or failed to create a new map');
         check(!calls[3].items && calls[3].forceNew, 'standalone map became linked');
       } finally { hostRuntime.openMindFlow = open; hostRuntime.openMindflowAttachment = openAttachment; }
       const originalWidth = panel.style.width;

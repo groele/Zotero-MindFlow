@@ -19,6 +19,21 @@ mindflow-item-pane-count =
        *[other] { $count } MindFlow maps for this item
     }
 mindflow-item-pane-empty-selection = No literature item is selected. You can create a blank map.
+mindflow-item-pane-current-item = Current item
+mindflow-item-pane-no-map = No linked maps
+mindflow-item-pane-choose-template-hint = Choose a template to create a map for this item.
+mindflow-item-pane-add-from-template = Add from template
+mindflow-item-pane-generate-map = Create map
+mindflow-item-pane-pdf-ready = PDF available
+mindflow-item-pane-pdf-missing = No PDF
+mindflow-item-pane-template-label = Map template
+mindflow-item-pane-template-select =
+    .aria-label = Map template
+mindflow-item-pane-action-ai = AI reading
+mindflow-item-pane-action-companion = Companion window
+mindflow-item-pane-action-import = Import map
+mindflow-item-pane-action-blank = Standalone map
+mindflow-item-pane-action-pdf = Open PDF
 mindflow-item-pane-open =
     .title = Open map: { $title }
 mindflow-item-pane-open-button = Open

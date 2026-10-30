@@ -1125,8 +1125,9 @@ test('item pane section resolves parent for literature item and sibling PDF, dis
   if (card['click']) card['click']({ preventDefault() {}, stopPropagation() {} });
   assert.equal(openedAttachment?.id, mapAtt.id);
 
-  // Verify "+ 新增思维导图" button is present
-  const addBtn = container.children.find(c => c.textContent?.includes('新增思维导图'));
+  // The template creation action remains available when maps already exist.
+  const allNodes = node => [node, ...node.children.flatMap(allNodes)];
+  const addBtn = allNodes(container).find(c => c.className === 'mf-btn-primary');
   assert.ok(addBtn, 'Add mind map button must be present');
 
   // Verify clicking "+ 新增思维导图" invokes openMindFlow with parent paper
@@ -1151,7 +1152,8 @@ test('item pane refresh follows the newly selected item and stops observing afte
   body.replaceChildren = function (...children) { renderCount += 1; return originalReplaceChildren.apply(this, children); };
   section.onRender({ body, item: first });
   section.onItemChange({ item: second, setEnabled() {} });
-  const create = body.children[0].children.find(node => node.localName === 'button');
+  const all = node => [node, ...node.children.flatMap(all)];
+  const create = all(body).find(node => node.className === 'mf-btn-primary');
   let options = null;
   f.host.openMindFlow = value => { options = value; };
   create.click({ preventDefault() {}, stopPropagation() {} });
@@ -1231,6 +1233,25 @@ test('sidebar quick actions follow the selected PDF parent and keep standalone i
   await action('ai').click();
   assert.equal(opened.length, 4, 'disabled AI action must not open another paper');
   assert.equal(action('import').disabled, false);
+});
+
+test('sidebar creates the first map with the selected template', async () => {
+  const f = fixture(), paper = f.paper('TEMPLATE01');
+  f.host.registerItemPaneSection();
+  const config = f.Zotero.ItemPaneManager.sections.get(f.host.itemPaneSectionID);
+  const body = f.doc.createElement('div');
+  config.onRender({ body, item: paper });
+  const all = node => [node, ...node.children.flatMap(all)];
+  const select = all(body).find(node => node.className === 'mf-template-select');
+  const primary = all(body).find(node => node.className === 'mf-btn-primary');
+  assert.ok(select && primary);
+  select.value = 'review';
+  let opened;
+  f.host.openMindFlow = async options => { opened = options; };
+  await primary.click({ preventDefault() {}, stopPropagation() {} });
+  assert.equal(opened.mode, 'create_from_selection');
+  assert.equal(opened.template, 'review');
+  assert.equal(opened.items[0].id, paper.id);
 });
 
 test('sidebar errors are visible and repeated renders register only one refresh per body', async () => {

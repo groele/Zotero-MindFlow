@@ -18,6 +18,21 @@ mindflow-item-pane-count =
        *[other] 已有 { $count } 份 MindFlow 导图
     }
 mindflow-item-pane-empty-selection = 当前没有选中的文献，可直接新建空白导图。
+mindflow-item-pane-current-item = 当前文献
+mindflow-item-pane-no-map = 暂无关联导图
+mindflow-item-pane-choose-template-hint = 先选择模板，再创建这篇文献的导图。
+mindflow-item-pane-add-from-template = 按模板新增
+mindflow-item-pane-generate-map = 生成导图
+mindflow-item-pane-pdf-ready = PDF 就绪
+mindflow-item-pane-pdf-missing = 无 PDF
+mindflow-item-pane-template-label = 导图模板
+mindflow-item-pane-template-select =
+    .aria-label = 导图模板
+mindflow-item-pane-action-ai = AI 论文精读
+mindflow-item-pane-action-companion = 伴读窗口
+mindflow-item-pane-action-import = 导入导图
+mindflow-item-pane-action-blank = 独立空白导图
+mindflow-item-pane-action-pdf = 打开 PDF
 mindflow-item-pane-open =
     .title = 打开导图：{ $title }
 mindflow-item-pane-open-button = 打开
