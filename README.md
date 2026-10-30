@@ -8,7 +8,7 @@
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![当前正式版](https://img.shields.io/badge/version-13.0.0-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.0) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.0/zotero-mindflow-13.0.0.xpi) · [更新日志](docs/releases/v13.0.0.md) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
+[![当前正式版](https://img.shields.io/badge/version-13.0.1-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.1) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.1/zotero-mindflow-13.0.1.xpi) · [更新日志](docs/releases/v13.0.1.md) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
 
 [产品定位](#overview) · [安装与更新](#installation) · [快速开始](#quick-start) · [核心功能](#features) · [深度特性解析](#highlights) · [设置与使用](#settings) · [数据、同步与外部服务](#data) · [兼容性与验证范围](#compatibility) · [常见问题](#troubleshooting) · [开发与详细文档](#development) · [系列产品](#series) · [项目来源与许可](#license)
 
@@ -28,15 +28,15 @@
 
 ## 安装与更新
 
-1. 从官方 Release 下载最新的正式发布包 [zotero-mindflow-13.0.0.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.0/zotero-mindflow-13.0.0.xpi)（**当前正式版 v13.0.0**，文件大小 531,514 字节，勿下载 Source code 源码压缩包）。
+1. 从官方 Release 下载最新的正式发布包 [zotero-mindflow-13.0.1.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.1/zotero-mindflow-13.0.1.xpi)（**当前正式版 v13.0.1**，文件大小 531,498 字节，勿下载 Source code 源码压缩包）。
 2. 在 Zotero 顶部菜单依次打开 **工具 → 插件／附加组件**（Tools → Plugins / Add-ons）。
 3. 点击附加组件管理器右上角的**齿轮设置图标**，选择 **从文件安装插件...**（Install Add-on From File...）。
-4. 选中已下载的 `zotero-mindflow-13.0.0.xpi` 文件完成载入，根据系统提示重启 Zotero。
+4. 选中已下载的 `zotero-mindflow-13.0.1.xpi` 文件完成载入，根据系统提示重启 Zotero。
 
 > [!TIP]
 > **更新与校验说明**  
 > - **在线更新通道**：更新清单由不可变资产源托管于 [zotero/update.json](zotero/update.json)，插件唯一标识为 `mindflow@groele.org`。  
-> - **文件校验和**：`8b754377d2f8937dddad46d8aa0f5feb65a4f9e8267a5927f6842625de82a39b` (SHA-256)。  
+> - **文件校验和**：`9f184d7c33b1e3639a953050bc509d0a5fe938a36a3aa4b309cf1a4caaec4959` (SHA-256)。  
 > - 后续可在 Zotero 插件管理器中直接自动或手动检查更新；进行重大跨版本升级前，建议先在设置中导出工作区完整备份。
 
 ---
@@ -147,7 +147,7 @@ graph LR
 
 | 指标 | 规范声明与实际验证 |
 |---|---|
-| **当前发布版本** | **v13.0.0** (Major Release) |
+| **当前发布版本** | **v13.0.1** (Patch Release) |
 | **清单兼容声明范围** | Zotero `10.0` 至 `12.*` (`strict_min_version: 10.0`, `strict_max_version: 12.*`) |
 | **静态类型检查** | `npm run typecheck`（TypeScript 编译通过，**0** 错误） |
 | **前端核心单元测试** | `npm test`（**111 / 111** 项全数通过：45 项数据链 + 36 项核心逻辑 + 7 项预设 + 23 项数据完整性） |
@@ -212,7 +212,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [审查文档索引 / Audit documentation](docs/README.md)
-- [最新版本说明 / Release notes v13.0.0](docs/releases/v13.0.0.md)
+- [最新版本说明 / Release notes v13.0.1](docs/releases/v13.0.1.md)
 - [产品品牌定位 / Brand specifications](docs/brand/PRODUCT.md)
 - [发布标签与版本策略 / Release tag policy](docs/release-tag-policy.md)
 - [原详细功能指南与致谢 · Reference](docs/reference/README.md)

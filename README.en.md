@@ -8,7 +8,7 @@ Organize papers, annotations, and ideas into editable maps.
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Current release](https://img.shields.io/badge/version-13.0.0-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.0) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.0/zotero-mindflow-13.0.0.xpi) · [Release Notes](docs/releases/v13.0.0.md) · [Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
+[![Current release](https://img.shields.io/badge/version-13.0.1-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.1) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.1/zotero-mindflow-13.0.1.xpi) · [Release Notes](docs/releases/v13.0.1.md) · [Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
 
 [Overview](#overview) · [Installation and updates](#installation) · [Quick start](#quick-start) · [Key features](#features) · [In-depth highlights](#highlights) · [Settings](#settings) · [Data, sync, and services](#data) · [Compatibility and validation](#compatibility) · [Troubleshooting](#troubleshooting) · [Development and documentation](#development) · [The Flow series](#series) · [Origin and license](#license)
 
@@ -28,15 +28,15 @@ As an integral pillar of the **Zotero Flow** series, MindFlow operates completel
 
 ## Installation and updates
 
-1. Download the official release package [zotero-mindflow-13.0.0.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.0/zotero-mindflow-13.0.0.xpi) (**current stable release v13.0.0**, 531,514 bytes; do not install the Source code ZIP).
+1. Download the official release package [zotero-mindflow-13.0.1.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.1/zotero-mindflow-13.0.1.xpi) (**current stable release v13.0.1**, 531,498 bytes; do not install the Source code ZIP).
 2. In Zotero, navigate to **Tools → Plugins / Add-ons** from the top menu.
 3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**.
-4. Choose the downloaded `zotero-mindflow-13.0.0.xpi` file and restart Zotero when prompted.
+4. Choose the downloaded `zotero-mindflow-13.0.1.xpi` file and restart Zotero when prompted.
 
 > [!TIP]
 > **Update Feeds and Verification**  
 > - **Online Update Manifest**: Hosted as an immutable asset feed at [zotero/update.json](zotero/update.json) with Add-on ID `mindflow@groele.org`.  
-> - **SHA-256 Checksum**: `8b754377d2f8937dddad46d8aa0f5feb65a4f9e8267a5927f6842625de82a39b`.  
+> - **SHA-256 Checksum**: `9f184d7c33b1e3639a953050bc509d0a5fe938a36a3aa4b309cf1a4caaec4959`.  
 > - Subsequent updates can be detected and applied directly through the Zotero Add-on Manager. Backing up the workspace before major version upgrades is always recommended.
 
 ---
@@ -147,7 +147,7 @@ Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**:
 
 | Dimension | Specification & Verification Status |
 |---|---|
-| **Current Published Release** | **v13.0.0** (Major Release) |
+| **Current Published Release** | **v13.0.1** (Patch Release) |
 | **Declared Manifest Range** | Zotero `10.0` through `12.*` (`strict_min_version: 10.0`, `strict_max_version: 12.*`) |
 | **TypeScript Static Check** | `npm run typecheck` (PASS, **0** errors) |
 | **Frontend Unit Suite** | `npm test` (**111 / 111** tests PASS: 45 data pipelines + 36 core logic + 7 presets + 23 data integrity) |
@@ -212,7 +212,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [Audit Documentation Index](docs/README.md)
-- [Release Notes v13.0.0](docs/releases/v13.0.0.md)
+- [Release Notes v13.0.1](docs/releases/v13.0.1.md)
 - [Brand & Product Specifications](docs/brand/PRODUCT.md)
 - [Release Tag Policy](docs/release-tag-policy.md)
 - [Historical Reference Guide & Acknowledgments](docs/reference/README.md)

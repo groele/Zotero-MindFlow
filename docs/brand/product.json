@@ -17,6 +17,6 @@
   "repository": "https://github.com/groele/Zotero-MindFlow",
   "addonID": "mindflow@groele.org",
   "version": "13.0.1",
-  "releaseStatus": "unreleased",
+  "releaseStatus": "released",
   "license": "MIT"
 }
