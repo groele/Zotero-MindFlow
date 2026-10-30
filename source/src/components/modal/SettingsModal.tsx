@@ -709,7 +709,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       </button>
                     </div>
                     <p className="mt-1.5 text-[10px] leading-relaxed text-amber-700 dark:text-amber-300">
-                      连接凭据保存在此浏览器的扩展存储中；Chrome 不提供应用层加密。MindFlow 仅允许 HTTPS，且不会把凭据写进导出备份。
+                      连接凭据保存在宿主存储中；宿主环境不提供应用层加密。MindFlow 仅允许 HTTPS，且不会把凭据写进导出备份。
                     </p>
                   </div>
 

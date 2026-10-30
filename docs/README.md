@@ -2,30 +2,32 @@
 
 [返回双语 README / Bilingual README](../README.md)
 
-当前正式发布 / Current release：[13.0.3 全功能审计与规范校准 / Audit calibration and specification alignment](releases/v13.0.3.md) · [13.0.2 规范与文档完善 / Audit refinement and card enhancement](releases/v13.0.2.md) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](releases/v13.0.1.md) · [13.0.0 大版本更新 / Major release](releases/v13.0.0.md)
+当前正式发布 / Current release：[13.0.4 快捷键面板与时序校准 / In-app shortcuts modal and matrix calibration](releases/v13.0.4.md) · [13.0.3 全功能审计与规范校准 / Audit calibration and specification alignment](releases/v13.0.3.md) · [13.0.2 规范与文档完善 / Audit refinement and card enhancement](releases/v13.0.2.md) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](releases/v13.0.1.md) · [13.0.0 大版本更新 / Major release](releases/v13.0.0.md)
 
 ## 版本与证据 / Versions and evidence
 
 | 阶段 / Stage | 状态 / Status | 说明 / Description |
 | --- | --- | --- |
-| 13.0.3 / Add-on patch | 公开发布 / Public release | 全功能特性与快捷键审计校准、设置面板与研读模板对齐、品牌体系规范化 / Full shortcut audit, settings & template alignment, brand restoration |
+| 13.0.4 / Add-on patch | 当前发布 / Current release | 全局快捷键面板与设置文案优化、文档索引时序与版本表校准 / In-app shortcuts modal & settings copy refinement, audit documentation chronology and matrix calibration |
+| 13.0.3 / Add-on patch | 历史发布 / Historical release | 全功能特性与快捷键审计校准、设置面板与研读模板对齐、品牌体系规范化 / Full shortcut audit, settings & template alignment, brand restoration |
 | 13.0.2 / Add-on patch | 历史发布 / Historical release | 全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新 / Full documentation & badges audit, enhanced installation card, updated audit documentation index |
 | 13.0.1 / Add-on patch | 历史发布 / Historical release | 宿主生命周期样式卸载防御性修复、关于面板生态品牌对齐、AI 论文读取安全钳位 / Defensive unmount cleanup, About branding alignment, AI read page limit safety clamp |
 | 13.0.0 / Add-on major | 历史发布 / Historical release | 兼容版本上限跃升至 12.*、设置系统强类型校验清洗、Schema v2 备份门禁与研读预设随备份迁移、离线交互 HTML 导出微元对齐 / Bump max version to 12.*, settings sanitization, Schema v2 backup migration, interactive HTML export fidelity |
 | 12.7.1 / Add-on patch | 历史发布 / Historical release | 文献侧栏 ItemPane 规范重构（Soft Functional Accents 色系、响应式窄栏换行） / ItemPane sidebar redesign with Soft Functional Accents and responsive wrapping |
 | 12.7.0 / Add-on minor | 历史发布 / Historical release | 宿主兼容上限提升至 12.*、底层侧栏防抖刷新机制与 PDF 异步回退加固 / Bump max version to 12.*, sidebar debounce refresh, and hardened PDF async fallback |
+| 12.3.2 / Add-on patch | 历史发布 / Historical release | 统一配色、折叠样式与原生控件 / Unified colors, disclosure cards, and native controls |
+| 12.3.1 / Add-on patch | 历史发布 / Historical release | 修正偏好页复选框尺寸并统一字体、间距与控件对齐 / Normalize checkbox size, typography, spacing, and control alignment |
+| 12.3.0 / Add-on minor | 历史发布 / Historical release | 统一偏好页紧凑样式与单层折叠卡片 / Unified compact preferences style and disclosure cards |
 | 12.2.0 / Add-on minor | 历史发布 / Historical release | 设置页改为三个常显分组，更新清单指向版本专属安装包 / Three always-visible settings groups and version-specific update-feed target |
-| 12.3.0 / Add-on minor | 历史版本 / Historical | 统一偏好页紧凑样式 / Unified compact preferences style |
-| 12.3.1 / Add-on patch | 已发布 / Published | 修正偏好页复选框尺寸并统一字体、间距与控件对齐 / Normalize checkbox size, typography, spacing, and control alignment |
-| 12.3.2 / Add-on patch | 版本记录 / Release record | 统一配色、折叠样式与原生控件 / Unified colors, disclosure cards, and native controls |
-| 12.0.0 / Add-on major | 公开发布 / Public release | 全新品牌视觉系统（Zotero MindFlow & Fluid Origami Wing 流体折纸旋翼标识系统），覆盖工具栏、原生标签页、应用内工作台与欢迎看板 / Major brand rebrand and Fluid Origami Wing visual identity across toolbar, native tabs, in-app canvas, and welcome modal |
+| 12.0.0 / Add-on major | 历史发布 / Historical release | 全新品牌视觉系统（Zotero MindFlow & Fluid Origami Wing 流体折纸旋翼标识系统），覆盖工具栏、原生标签页、应用内工作台与欢迎看板 / Major brand rebrand and Fluid Origami Wing visual identity across toolbar, native tabs, in-app canvas, and welcome modal |
 | 11.2.0 / Add-on minor | 历史发布 / Historical release | 可保存的论文研究提示词与呈现预设、AI 导图工作流改进 / Reusable research prompt and presentation presets with AI mind-map workflow improvements |
 | 11.1.2 / Add-on patch | 历史发布 / Historical release | 修复折叠偏好覆盖、空状态无提示及动态元素命名空间 / Fix restored collapse state, empty-state hint, and dynamic element namespace |
 | 11.1.1 / Add-on patch | 历史发布 / Historical release | 首次打开时自动展开侧栏便捷操作 / Auto-expand item-pane quick actions on first open |
 | 11.1.0 / Add-on minor | 历史发布 / Historical release | Zotero 文献侧栏便捷操作与 AI 研读工作流 / Zotero item-pane quick actions and AI reading workflow |
-| 11.0.0 / Add-on major | 公开发布 / Public release | 文档与存储校验加固、任务状态快捷操作、侧栏展开和快速新建 / Document and storage validation, task status controls, expandable sidebar and quick create |
-| 10.0.7 / V10 | 公开发布 / Public release | WebDAV 路径与多级目录加固，清理旧模块 / WebDAV path and nested folder hardening; legacy module cleanup |
+| 11.0.0 / Add-on major | 历史发布 / Historical release | 文档与存储校验加固、任务状态快捷操作、侧栏展开和快速新建 / Document and storage validation, task status controls, expandable sidebar and quick create |
+| 10.0.7 / V10 | 历史发布 / Historical release | WebDAV 路径与多级目录加固，清理旧模块 / WebDAV path and nested folder hardening; legacy module cleanup |
 | 10.0.6 | 历史发布 / Historical release | 附件重开身份、WebDAV、备份队列与工作区恢复加固 / Attachment reopen identity, WebDAV, backup queue, and workspace restore hardening |
+| 10.0.5 | 历史发布 / Historical release | 备份恢复版本校验、快照完整性与回滚输入保护 / Guarded backup restoration, snapshot validation, and protected editor input during rollback |
 | 10.0.4 | 历史发布 / Historical release | 移除文献列表右键菜单项保持整洁 / Removed literature context menu items |
 | 10.0.3 | 历史发布 / Historical release | 29项操作逻辑审查修复、工具栏图标优化与数据链路加固 / 29 workflow fixes, compact toolbar icon & data-chain hardening |
 | 10.0.2 | 审查与验证 / Audit & verification | 操作逻辑详细审查与修复基准 / Workflow audit and fixes |
@@ -35,6 +37,7 @@
 
 ## 中文索引
 
+- [13.0.4 发布记录](releases/v13.0.4.md)：全局快捷键面板与设置文案优化、文档索引时序与版本表校准。
 - [13.0.3 发布记录](releases/v13.0.3.md)：全功能特性与快捷键审计校准、设置面板与研读模板对齐、品牌体系规范化。
 - [13.0.2 发布记录](releases/v13.0.2.md)：全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新。
 - [13.0.1 发布记录](releases/v13.0.1.md)：宿主侧样式卸载防御性清理、关于面板生态品牌对齐、AI 论文读取安全钳位。
@@ -61,8 +64,7 @@
 - [2026-10-07 深度逻辑审查与修复](深度逻辑审查与修复-20261007.md)：备份版本竞争、快照校验、冲突链接与恢复输入保护。
 
 - [10.0.3 发布记录](release-v10.0.3.md)：公开 10.0.3 的修复与加固范围、测试验证与包校验。
-- [10.0.2 操作逻辑详细审查](操作逻辑审查与修复-10.0.2.md)：29 项问题与加固、基线失败、逐项修复及验证边界。
-- [10.0.2 证据](操作逻辑审查与修复-10.0.2.md)：包含 [包校验](logic-audit-package-10.0.2.json)、[原生结果](logic-audit-native-10.0.2.json) 本地逻辑修复证据。
+- [10.0.2 操作逻辑详细审查与证据](操作逻辑审查与修复-10.0.2.md)：29 项问题与加固、基线失败、逐项修复及验证边界，包含 [包校验](logic-audit-package-10.0.2.json) 与 [原生结果](logic-audit-native-10.0.2.json) 本地逻辑修复证据。
 - [V10 发布记录](release-v10.md)：公开 10.0.0 的安装、修复范围与验证边界。
 - [首轮审查与修复清单](审查与修复清单.md)：5.0.1 阶段的 42 项问题与改进。
 - [全流程逻辑复审](全流程逻辑复审-5.0.2.md)：5.0.2 阶段新增的 28 项问题、身份链路与流程矩阵。
@@ -76,6 +78,7 @@
 
 ## English index
 
+- [13.0.4 release record](releases/v13.0.4.md): in-app shortcuts modal & settings copy refinement, audit documentation chronology and matrix calibration.
 - [13.0.3 release record](releases/v13.0.3.md): full shortcut audit, settings & template alignment, brand restoration.
 - [13.0.2 release record](releases/v13.0.2.md): full documentation & badges audit, enhanced installation card, updated audit documentation index.
 - [13.0.1 release record](releases/v13.0.1.md): defensive unmount cleanup, About branding alignment, AI read page limit safety clamp.
@@ -98,8 +101,7 @@
 - [10.0.7 release report](release-v10.0.7.md): WebDAV folders, upload preflight, settings concurrency, and unused module cleanup.
 
 - [10.0.3 release report](release-v10.0.3.md): installation, fixes, and validation for public 10.0.3.
-- [10.0.2 detailed workflow audit](操作逻辑审查与修复-10.0.2.md): 29 issues and hardening items, baseline failures, fixes, and verification limits.
-- [10.0.2 evidence](操作逻辑审查与修复-10.0.2.md): including [package verification](logic-audit-package-10.0.2.json) and [native results](logic-audit-native-10.0.2.json).
+- [10.0.2 detailed workflow audit and evidence](操作逻辑审查与修复-10.0.2.md): 29 issues and hardening items, baseline failures, fixes, and verification limits, including [package verification](logic-audit-package-10.0.2.json) and [native results](logic-audit-native-10.0.2.json).
 - [V10 release report](release-v10.md): installation, fixes, and validation boundaries for public 10.0.0.
 - [Initial audit and repair checklist](审查与修复清单.md): 42 issues and improvements from the 5.0.1 stage.
 - [Full workflow re-audit](全流程逻辑复审-5.0.2.md): 28 additional issues, identity chain, and workflow matrix from 5.0.2.
@@ -110,4 +112,3 @@
 - [5.0.1 native baseline](baseline-5.0.1-native-results.json): historical failure evidence for immediate-close saving.
 
 Detailed audit reports are currently in Chinese. Historical versions, hashes, and unpublished status refer to their respective stages. Use [GitHub Releases](https://github.com/groele/Zotero-MindFlow/releases) to identify public installation assets; a local validation report does not imply publication.
-

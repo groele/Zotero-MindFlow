@@ -221,7 +221,7 @@ export class StorageService {
       index.unshift(summary);
     }
 
-    // A single Chrome Storage write prevents the document and its index entry
+    // A single atomic storage write prevents the document and its index entry
     // from diverging when quota or I/O errors occur between separate writes.
     await setItems({
       [STORAGE_KEYS.DOC_PREFIX + savedDoc.id]: JSON.stringify(savedDoc),
