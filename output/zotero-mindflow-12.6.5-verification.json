@@ -1,0 +1,15 @@
+{
+  "version": "12.6.5",
+  "file": "zotero-mindflow-12.6.5.xpi",
+  "size": 528122,
+  "sha256": "5c061b3c093833008d377a4d7c0c6775ca973c2dd472c8813370a5f5574004d1",
+  "entries": 61,
+  "payloadVerifiedAgainstWorkspace": true,
+  "updateFeedsVerified": [
+    "update.json",
+    "zotero/update.json"
+  ],
+  "testHarnessIncluded": false,
+  "reproducibleZipMetadata": true,
+  "textLineEndings": "LF"
+}

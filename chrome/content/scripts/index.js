@@ -1157,6 +1157,7 @@
           .mf-pane-wrap {
             display: flex;
             contain: inline-size;
+            container-type: inline-size;
             flex-direction: column;
             gap: 8px;
             padding: 6px 2px 10px 2px;
@@ -1778,9 +1779,23 @@
 
           .mf-empty-guide {
             gap: 7px;
-            padding: 12px 10px;
+            align-items: flex-start;
+            text-align: left;
+            padding: 9px 10px;
             background: color-mix(in srgb, currentColor 2%, transparent);
             border-color: color-mix(in srgb, currentColor 18%, transparent);
+          }
+
+          .mindflow-pane-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            padding-top: 9px;
+            border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+          }
+
+          .mf-empty-icon {
+            display: none;
           }
 
           .mf-btn-primary:focus-visible,
@@ -1792,8 +1807,12 @@
             outline-offset: 2px;
           }
 
-          @container (max-width: 340px) {
+          @container (max-width: 210px) {
             .mf-tools-grid {
+              grid-template-columns: minmax(0, 1fr);
+            }
+
+            .mindflow-pane-actions {
               grid-template-columns: minmax(0, 1fr);
             }
 
@@ -2294,8 +2313,6 @@
               lastPaneActions.push({ id: 'pdf', button: toolPdf, hasPDF: true });
             }
 
-            wrapper.appendChild(toolsGrid);
-
             // 5. Maps Section or Empty Guide
             if (totalMaps > 0) {
               const mapsSection = createEl('div', 'mf-maps-section');
@@ -2420,29 +2437,11 @@
               wrapper.appendChild(addMapBtn);
             } else {
               const emptyGuide = createEl('div', 'mf-empty-guide');
-              emptyGuide.appendChild(createEl('div', 'mf-empty-icon', '💡'));
               emptyGuide.appendChild(createEl('div', 'mf-empty-title', '思维导图 + 划线互联'));
               emptyGuide.appendChild(createEl('div', 'mf-empty-desc', '基于文献标题、摘要及 PDF 快速构建树状导图，阅读划线实时同步，节点可一键导出为 Zotero 大纲笔记。'));
-
-              const emptyCreateBtn = createEl('button', 'mf-btn-template-create', '⚡ 立即为此文献生成思维导图');
-              emptyCreateBtn.type = 'button';
-              emptyCreateBtn.title = '根据当前文献元数据一键生成思维导图';
-              emptyCreateBtn.addEventListener('click', async (e) => {
-                e.preventDefault(); e.stopPropagation();
-                if (emptyCreateBtn.disabled) return;
-                emptyCreateBtn.disabled = true;
-                try {
-                  await this.openMindFlow({ mode: 'create_from_selection', items: [target], forceNew: false }, win);
-                  state?.refresh?.();
-                } catch (err) {
-                  Zotero.logError?.('[MindFlow] Empty guide create failed: ' + err);
-                } finally {
-                  emptyCreateBtn.disabled = false;
-                }
-              });
-              emptyGuide.appendChild(emptyCreateBtn);
               wrapper.appendChild(emptyGuide);
             }
+            wrapper.appendChild(toolsGrid);
             body.appendChild(wrapper);
           },
         });
