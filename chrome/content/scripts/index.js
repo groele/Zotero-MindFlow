@@ -1681,6 +1681,135 @@
           .mf-header-meta, .mf-hint-text, .mf-empty-desc, .mf-map-card-meta {
             color: var(--fill-secondary, GrayText);
           }
+
+          /* Calm, compact controls that sit naturally beside Zotero's native pane. */
+          .mf-pane-wrap {
+            gap: 7px;
+            padding: 5px 3px 9px;
+            font-family: system-ui, "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+            font-size: 13px;
+          }
+
+          .mf-header-card,
+          .mf-template-box,
+          .mf-map-card,
+          .mf-empty-guide {
+            border-radius: 9px;
+          }
+
+          .mf-header-card,
+          .mf-template-box,
+          .mf-map-card {
+            padding: 9px 10px;
+          }
+
+          .mf-header-card {
+            gap: 5px;
+            background: color-mix(in srgb, currentColor 2%, transparent);
+            border-color: color-mix(in srgb, currentColor 12%, transparent);
+          }
+
+          .mf-status-badge,
+          .mf-header-meta,
+          .mf-map-card-meta {
+            font-size: 11px;
+          }
+
+          .mf-target-title,
+          .mf-map-name,
+          .mf-empty-title {
+            font-size: 13px;
+            line-height: 1.4;
+          }
+
+          .mf-btn-primary {
+            min-height: 36px;
+            border-color: var(--accent-blue, #3b78b4);
+            border-radius: 7px;
+            background: var(--accent-blue, #3b78b4);
+            font-size: 13px;
+            box-shadow: none;
+          }
+
+          .mf-hint-text,
+          .mf-empty-desc {
+            font-size: 12px;
+            line-height: 1.5;
+          }
+
+          .mf-template-label,
+          .mf-template-select,
+          .mf-btn-template-create,
+          .mf-tool-btn,
+          .mf-card-btn {
+            font: inherit;
+            font-size: 12px;
+          }
+
+          .mf-template-select {
+            min-height: 30px;
+            height: auto;
+            border-radius: 6px;
+            border-color: color-mix(in srgb, currentColor 18%, transparent);
+          }
+
+          .mf-btn-template-create,
+          .mf-tool-btn,
+          .mf-card-btn {
+            min-height: 30px;
+            border-radius: 7px;
+            border-color: color-mix(in srgb, currentColor 18%, transparent) !important;
+            box-shadow: none;
+          }
+
+          .mf-tool-btn:hover:not(:disabled),
+          .mf-btn-template-create:hover:not(:disabled),
+          .mf-card-btn:hover:not(:disabled) {
+            background: color-mix(in srgb, currentColor 4%, transparent) !important;
+            border-color: var(--accent-blue, #3b78b4) !important;
+            color: var(--accent-blue, #3b78b4) !important;
+          }
+
+          .mf-tool-btn-pdf {
+            background: color-mix(in srgb, var(--accent-blue, #3b78b4) 7%, transparent) !important;
+            border-color: color-mix(in srgb, var(--accent-blue, #3b78b4) 24%, transparent) !important;
+            color: var(--accent-blue, #3b78b4) !important;
+          }
+
+          .mf-empty-guide {
+            gap: 7px;
+            padding: 12px 10px;
+            background: color-mix(in srgb, currentColor 2%, transparent);
+            border-color: color-mix(in srgb, currentColor 18%, transparent);
+          }
+
+          .mf-btn-primary:focus-visible,
+          .mf-btn-template-create:focus-visible,
+          .mf-tool-btn:focus-visible,
+          .mf-card-btn:focus-visible,
+          .mf-template-select:focus-visible {
+            outline: 2px solid var(--accent-blue, #3b78b4);
+            outline-offset: 2px;
+          }
+
+          @container (max-width: 340px) {
+            .mf-tools-grid {
+              grid-template-columns: minmax(0, 1fr);
+            }
+
+            .mf-tool-btn-pdf {
+              grid-column: auto;
+            }
+
+            .mf-template-row {
+              align-items: flex-start;
+              flex-wrap: wrap;
+            }
+
+            .mf-template-label {
+              padding-top: 6px;
+            }
+          }
         `;
         (doc.head || doc.documentElement)?.appendChild(style);
       } catch (e) {
