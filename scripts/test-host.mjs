@@ -1233,6 +1233,11 @@ test('sidebar quick actions follow the selected PDF parent and keep standalone i
   await action('ai').click();
   assert.equal(opened.length, 4, 'disabled AI action must not open another paper');
   assert.equal(action('import').disabled, false);
+  await action('workbench').click();
+  assert.equal(opened[4].mode, 'open');
+  assert.equal(opened[4].targetMode, 'tab');
+  assert.equal(opened[4].items, undefined, 'workbench must not bind the selected paper');
+  assert.equal(opened[4].forceNew, undefined, 'workbench must not create another document');
 });
 
 test('sidebar creates the first map with the selected template', async () => {

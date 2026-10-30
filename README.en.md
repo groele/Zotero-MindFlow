@@ -9,7 +9,7 @@ Organize papers, annotations, and ideas into editable maps.
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Current release](https://img.shields.io/badge/version-12.6.7-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.7) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.7/zotero-mindflow-12.6.7.xpi) · [Report an issue](https://github.com/groele/Zotero-MindFlow/issues)
+[![Current release](https://img.shields.io/badge/version-12.6.8-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.8) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.8/zotero-mindflow-12.6.8.xpi) · [Report an issue](https://github.com/groele/Zotero-MindFlow/issues)
 
 [Overview](#overview) · [Installation and updates](#installation) · [Quick start](#quick-start) · [Key features](#features) · [Settings](#settings) · [Data, sync, and services](#data) · [Compatibility and validation](#compatibility) · [Troubleshooting](#troubleshooting) · [Development and documentation](#development) · [The Flow series](#series) · [Origin and license](#license)
 
@@ -25,7 +25,7 @@ Install this add-on independently and combine it with other Flow products as nee
 
 ## Installation and updates
 
-1. Download [zotero-mindflow-12.6.7.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.7/zotero-mindflow-12.6.7.xpi) (current release **12.6.7**), not the Source code ZIP.
+1. Download [zotero-mindflow-12.6.8.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.8/zotero-mindflow-12.6.8.xpi) (current release **12.6.8**), not the Source code ZIP.
 2. In Zotero, open **Tools → Plugins/Add-ons**, then choose **Install Add-on From File** from the gear menu.
 3. Select the XPI, complete installation, and restart if requested.
 
@@ -76,11 +76,11 @@ Configure window mode, welcome page, material imports, outline notes, and worksp
 
 | Item | Scope |
 |---|---|
-| Current published version | 12.6.7 |
+| Current published version | 12.6.8 |
 | Declared Zotero range | `10.0` through `10.0.*` |
 | Evidence boundary | The current manifest limits support to Zotero 10.0.x. The 12.3.4 settings pane was checked in Windows Zotero 10.0.7, including sequential navigation and MetaFlow card palette comparison; live AI, WebDAV, and cross-device workflows were not rerun. |
 
-Add-on and Zotero versions are separate. Version 12.6.7 passed 88 host simulations, the production build, XPI payload and update-feed checks, and 51 isolated Zotero 10.0.7 native checks, including connected sidebar validation after refresh. Native theme and narrow-pane visual acceptance, main-profile installation, and automatic updates remain unverified. See the [release notes](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.7).
+Add-on and Zotero versions are separate. Version 12.6.8 passed 88 host simulations, the production build, XPI payload and update-feed checks, and 51 isolated Zotero 10.0.7 native checks, including connected sidebar validation after refresh. Native theme and narrow-pane visual acceptance, main-profile installation, and automatic updates remain unverified. See the [release notes](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.8).
 
 <a id="troubleshooting"></a>
 

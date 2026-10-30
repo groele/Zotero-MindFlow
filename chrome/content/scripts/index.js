@@ -1195,8 +1195,8 @@
             color: inherit; background: transparent;
           }
           .mf-pane-wrap .mf-create-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 9px; }
-          .mf-pane-wrap .mindflow-pane-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding-top: 12px; border-top: 1px solid var(--mf-line); }
-          .mf-pane-wrap .mindflow-pane-actions > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+          .mf-pane-wrap .mindflow-pane-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; border-top: 1px solid var(--mf-line); padding-top: 10px; }
+          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn-pdf { grid-column: 1 / -1; }
           .mf-pane-wrap :is(.mf-btn-primary, .mf-tool-btn, .mf-card-btn, .mf-btn-template-create) {
             --mf-tone: var(--mf-blue);
             display: inline-flex; align-items: center; justify-content: center;
@@ -1689,6 +1689,26 @@
               await this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
             });
             toolsGrid.appendChild(toolBlank);
+
+            const toolWorkbench = createEl('button', 'mf-tool-btn', '导图工作台');
+            toolWorkbench.type = 'button';
+            toolWorkbench.setAttribute('data-l10n-id', 'mindflow-item-pane-action-workbench');
+            toolWorkbench.setAttribute('data-mindflow-action', 'workbench');
+            toolWorkbench.title = '进入 MindFlow 总工作台，查看和管理已有导图';
+            toolWorkbench.addEventListener('click', async (e = {}) => {
+              e.preventDefault?.(); e.stopPropagation?.();
+              if (toolWorkbench.disabled) return;
+              toolWorkbench.disabled = true;
+              try {
+                await this.openMindFlow({ mode: 'open', targetMode: 'tab' }, win);
+              } catch (error) {
+                Zotero.logError?.('[MindFlow] Open workbench failed: ' + error);
+                actionStatus.textContent = '操作失败，请重试。';
+              } finally {
+                toolWorkbench.disabled = false;
+              }
+            });
+            toolsGrid.appendChild(toolWorkbench);
 
             if (hasPDF) {
               const toolPdf = createEl('button', 'mf-tool-btn mf-tool-btn-pdf', '打开 PDF');

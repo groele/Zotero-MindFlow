@@ -295,7 +295,7 @@
       check(collapsible?.empty === false && collapsible.open === true, 'MindFlow quick actions did not become visible on first open');
       await win.document.l10n.translateFragment(panel);
       const action = id => panel.querySelector(`[data-mindflow-action="${id}"]`);
-      check(['ai','workspace','import','blank'].every(id => action(id)) && panel.querySelector('.mf-btn-primary') && panel.querySelector('.mf-btn-refresh'), 'missing sidebar action');
+      check(['ai','workspace','import','blank','workbench'].every(id => action(id)) && panel.querySelector('.mf-btn-primary') && panel.querySelector('.mf-btn-refresh'), 'missing sidebar action');
       check(!action('pdf'), 'paper without PDF exposes a PDF shortcut');
       const open = hostRuntime.openMindFlow, openAttachment = hostRuntime.openMindflowAttachment, calls = [];
       hostRuntime.openMindFlow = options => calls.push(options);
@@ -307,6 +307,10 @@
         check(calls.map(c => c.mode).join(',') === 'ai_analyze,open_attachment,import_file,create_blank,create_from_selection', 'sidebar action routing mismatch');
         check(calls[0].items[0].id === a.id && calls[1].parentID === a.id && calls[4].items[0].id === a.id && calls[4].forceNew, 'sidebar used stale paper or failed to create a new map');
         check(!calls[3].items && calls[3].forceNew, 'standalone map became linked');
+        panel = await waitFor(() => [...win.document.querySelectorAll('.mf-pane-wrap')].find(n => n.isConnected && n.querySelector('.mf-template-select') && n.getBoundingClientRect().width > 0), 'sidebar before workbench action');
+        action('workbench').click();
+        await Zotero.Promise.delay(20);
+        check(calls[5]?.mode === 'open' && calls[5]?.targetMode === 'tab' && !calls[5]?.items && !calls[5]?.forceNew, 'workbench created or linked a document');
       } finally { hostRuntime.openMindFlow = open; hostRuntime.openMindflowAttachment = openAttachment; }
       panel = await waitFor(() => [...win.document.querySelectorAll('.mf-pane-wrap')].find(n => n.isConnected && n.querySelector('.mf-template-select') && n.getBoundingClientRect().width > 0), 'sidebar after action refresh');
       const originalWidth = panel.style.width;
@@ -344,9 +348,14 @@
           await win.ZoteroPane.itemsView.selectItems([item.id]);
           let panel = await waitFor(() => [...win.document.querySelectorAll('.mf-pane-wrap')].find(n => n.isConnected && n.querySelector('.mf-target-title')?.textContent === item.getField('title') && n.getBoundingClientRect().width > 0), 'visual fixture ' + name);
           for (const width of [320, 240]) {
-            panel.style.width = width + 'px';
-            panel.scrollIntoView({ block: 'end' });
-            await Zotero.Promise.delay(150);
+            panel = await waitFor(async () => {
+              const candidate = [...win.document.querySelectorAll('.mf-pane-wrap')].find(n => n.isConnected && n.querySelector('.mf-target-title')?.textContent === item.getField('title') && n.getBoundingClientRect().width > 0);
+              if (!candidate) return null;
+              candidate.style.width = width + 'px';
+              candidate.scrollIntoView({ block: 'end' });
+              await Zotero.Promise.delay(150);
+              return candidate.isConnected && candidate.getBoundingClientRect().height > 0 ? candidate : null;
+            }, 'stable visual fixture ' + name + ' at ' + width);
             const rect = panel.getBoundingClientRect();
             check(rect.width > 0 && rect.height > 0 && panel.isConnected, 'visual fixture detached');
             check(panel.scrollWidth <= panel.clientWidth + 1, 'visual fixture overflow');
