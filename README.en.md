@@ -9,7 +9,7 @@ Organize papers, annotations, and ideas into editable maps.
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Current release](https://img.shields.io/badge/version-12.6.10-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.10) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.10/zotero-mindflow-12.6.10.xpi) · [Report an issue](https://github.com/groele/Zotero-MindFlow/issues)
+[![Current release](https://img.shields.io/badge/version-12.7.0-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.7.0) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.7.0/zotero-mindflow-12.7.0.xpi) · [Report an issue](https://github.com/groele/Zotero-MindFlow/issues)
 
 [Overview](#overview) · [Installation and updates](#installation) · [Quick start](#quick-start) · [Key features](#features) · [Settings](#settings) · [Data, sync, and services](#data) · [Compatibility and validation](#compatibility) · [Troubleshooting](#troubleshooting) · [Development and documentation](#development) · [The Flow series](#series) · [Origin and license](#license)
 
@@ -25,7 +25,7 @@ Install this add-on independently and combine it with other Flow products as nee
 
 ## Installation and updates
 
-1. Download [zotero-mindflow-12.6.10.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.10/zotero-mindflow-12.6.10.xpi) (current release **12.6.10**), not the Source code ZIP.
+1. Download [zotero-mindflow-12.7.0.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.7.0/zotero-mindflow-12.7.0.xpi) (current release **12.7.0**), not the Source code ZIP.
 2. In Zotero, open **Tools → Plugins/Add-ons**, then choose **Install Add-on From File** from the gear menu.
 3. Select the XPI, complete installation, and restart if requested.
 
