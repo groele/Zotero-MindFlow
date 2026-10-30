@@ -1301,7 +1301,20 @@ test('sidebar errors are visible and repeated renders register only one refresh 
   let count = 0;
   const replace = body.replaceChildren;
   body.replaceChildren = function (...children) { count++; return replace.apply(this, children); };
+  const queued = [];
+  const mainWin = f.Zotero.getMainWindow();
+  mainWin.setTimeout = fn => queued.push(fn);
+  mainWin.clearTimeout = () => {};
   f.Zotero.Notifier.trigger('modify', 'item', [paper.id]);
+  f.Zotero.Notifier.trigger('modify', 'item', [paper.id]);
+  f.Zotero.Notifier.trigger('redraw', 'item', [paper.id]);
+  assert.equal(count, 0, 'refresh is debounced');
+  assert.equal(queued.length, 1, 'bursts coalesce into one timer');
+  queued[0]();
+  assert.equal(count, 0, 'unchanged content skips the rebuild');
+  paper.title = 'Changed title';
+  f.Zotero.Notifier.trigger('modify', 'item', [paper.id]);
+  queued[1]();
   assert.equal(count, 1);
 });
 
