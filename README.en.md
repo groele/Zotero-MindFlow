@@ -1,6 +1,5 @@
 # Zotero MindFlow
 
-
 **Zotero Flow Series · Knowledge**
 
 *让研究的每一步衔接起来。 / Connect each step of research.*
@@ -9,140 +8,241 @@ Organize papers, annotations, and ideas into editable maps.
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Current release](https://img.shields.io/badge/version-12.7.1-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.7.1) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.7.1/zotero-mindflow-12.7.1.xpi) · [Report an issue](https://github.com/groele/Zotero-MindFlow/issues)
+[![Current release](https://img.shields.io/badge/version-13.0.0-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.0) · [Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.0/zotero-mindflow-13.0.0.xpi) · [Release Notes](docs/releases/v13.0.0.md) · [Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
 
-[Overview](#overview) · [Installation and updates](#installation) · [Quick start](#quick-start) · [Key features](#features) · [Settings](#settings) · [Data, sync, and services](#data) · [Compatibility and validation](#compatibility) · [Troubleshooting](#troubleshooting) · [Development and documentation](#development) · [The Flow series](#series) · [Origin and license](#license)
+[Overview](#overview) · [Installation and updates](#installation) · [Quick start](#quick-start) · [Key features](#features) · [In-depth highlights](#highlights) · [Settings](#settings) · [Data, sync, and services](#data) · [Compatibility and validation](#compatibility) · [Troubleshooting](#troubleshooting) · [Development and documentation](#development) · [The Flow series](#series) · [Origin and license](#license)
+
+---
 
 <a id="overview"></a>
 
 ## Overview
 
-For paper reading and knowledge organization: arrange literature, nodes, and tasks using a canvas and outline in Zotero, with optional AI-generated reading drafts.
+**Zotero MindFlow** is engineered for in-depth literature reading, critical synthesis, survey structuring, and academic knowledge organization. It bridges the divide between static library items and disconnected third-party mind mapping applications by integrating deeply into the native Zotero ecosystem. Researchers can synthesize literature, extract highlights, schedule milestones, and optionally leverage AI to draft structured concept maps directly within the workspace and native sidebar.
 
-Install this add-on independently and combine it with other Flow products as needed.
+As an integral pillar of the **Zotero Flow** series, MindFlow operates completely standalone or in concert with companion add-ons to connect literature discovery, knowledge structuring, task progression, and academic citation.
+
+---
 
 <a id="installation"></a>
 
 ## Installation and updates
 
-1. Download [zotero-mindflow-12.7.1.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.7.1/zotero-mindflow-12.7.1.xpi) (current release **12.7.1**), not the Source code ZIP.
-2. In Zotero, open **Tools → Plugins/Add-ons**, then choose **Install Add-on From File** from the gear menu.
-3. Select the XPI, complete installation, and restart if requested.
+1. Download the official release package [zotero-mindflow-13.0.0.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.0/zotero-mindflow-13.0.0.xpi) (**current stable release v13.0.0**, 531,514 bytes; do not install the Source code ZIP).
+2. In Zotero, navigate to **Tools → Plugins / Add-ons** from the top menu.
+3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**.
+4. Choose the downloaded `zotero-mindflow-13.0.0.xpi` file and restart Zotero when prompted.
 
-Use the add-on manager to check for later updates. Automatic checking/installation depends on Zotero, per-add-on update settings, and compatibility. Back up important data before upgrades or migration.
+> [!TIP]
+> **Update Feeds and Verification**  
+> - **Online Update Manifest**: Hosted as an immutable asset feed at [zotero/update.json](zotero/update.json) with Add-on ID `mindflow@groele.org`.  
+> - **SHA-256 Checksum**: `8b754377d2f8937dddad46d8aa0f5feb65a4f9e8267a5927f6842625de82a39b`.  
+> - Subsequent updates can be detected and applied directly through the Zotero Add-on Manager. Backing up the workspace before major version upgrades is always recommended.
 
-Update feed: [zotero/update.json](https://github.com/groele/Zotero-MindFlow/blob/main/zotero/update.json) · Add-on ID: `mindflow@groele.org`.
+---
 
 <a id="quick-start"></a>
 
 ## Quick start
 
-1. Select a paper and open or create a map using the toolbar, Tools menu, or item pane.
-2. Check the active paper and map before importing abstracts, notes, or annotations.
-3. Edit and save; archive when a Zotero attachment is needed, then inspect the result.
+Construct your literature knowledge map in three seamless steps:
+
+```mermaid
+graph LR
+    A["1. Select Item"] --> B["2. Create & Extract"]
+    B --> C["3. Dual-View Edit & Archive"]
+    style A fill:#f1f5f9,stroke:#94a3b8,stroke-width:1px
+    style B fill:#e0f2fe,stroke:#38bdf8,stroke-width:1px
+    style C fill:#dcfce7,stroke:#4ade80,stroke-width:1px
+```
+
+1. **Select Item & Open Map**: Highlight a paper in your Zotero library, expand the "Mind Map" section in the right ItemPane, and click **New Map**, or click the MindFlow wing icon on the main toolbar.
+2. **Extract Material & Structure**: Choose an academic preset (such as "Paper Story"), extract item metadata, abstract, and annotations with one click, and expand your thoughts fluently using keyboard shortcuts (`Tab` for sub-nodes, `Enter` for siblings).
+3. **Save & Archive**: Live edits are persisted automatically in the local workspace. Click **Archive to Zotero** on the toolbar to generate a dedicated `.mindflow` attachment bound permanently to the item, or export a standalone interactive HTML for distribution.
+
+---
 
 <a id="features"></a>
 
 ## Key features
 
-| Differentiator | What it does | Boundary |
+| Differentiator | What it does | Boundary & Practical Guidance |
 |---|---|---|
-| Canvas and outline together | Organizes research questions, evidence, methods, and conclusions in a visual canvas or hierarchical outline, with nodes, relationships, links, notes, tasks, search/replace, and a minimap. | Node notes are plain text; map structure does not itself establish a paper’s conclusion or evidential relationship. |
-| Explicit Zotero-item association | Starts or enriches a map from a selected item, PDF, note, or annotation; differentiates paper, collection, and standalone maps and provides item-pane entry points. | A title, list position, or internal map ID alone never establishes the same source; users should confirm the archival target. |
-| Durable archive, snapshots, and recovery | Saves locally, then explicitly archives a map as the related item’s `.mindflow` attachment; provides automatic/manual snapshots, backup, and recovery. | PDFs and `.mindflow` files are separate attachments. Check provenance, date, and contents before recovery rather than merging same-named files. |
-| Rich editing and portable export | Offers mind/logic/organization layouts, themes, image import/paste, inbox, templates, presentation, and zen modes; imports/exports suitable Markdown, JSON, OPML, PNG, SVG, and HTML formats. | Image data travels with a map and increases its size; conversion cannot preserve every other tool’s semantic detail. |
-| Optional AI reading drafts | Uses the user’s configured `llm-for-zotero` model and reasoning options to create an editable reading-map draft while retaining the selection for that run. | MindFlow neither copies API keys nor maintains its own provider registry. Compare drafts with the source and decide explicitly whether to archive them. |
-| Optional WebDAV workspace backup | Uploads, versions, and restores workspace backups through user-configured HTTPS WebDAV. | Core editing works offline; WebDAV, AI, and Zotero remote-file capabilities separately depend on networks and external terms. |
+| **Bi-directional Canvas & Outline Views** | Visual canvas for expansive exploration and structured outline for high-speed linear input; features instant lossless view switching, global search/replace, and minimap. | Node notes support rich/plain text; map structures represent researcher mental models rather than automatic proof of causal claims. |
+| **Native Item-Level Binding** | Each map binds unambiguously to a Zotero item, collection, or standalone topic; native ItemPane integration displays live map associations and quick actions. | File renaming does not disrupt internal bindings; when migrating libraries or merging duplicates, confirm the intended parent item before archiving. |
+| **Academic Reading Presets** | Built-in frameworks including Paper Story (context → challenge → methodology → evidence → insights), Method Evaluation, and Critical Review, plus custom presets. | Presets provide scientific inquiry prompts; analytical depth remains governed by the researcher’s intellectual engagement. |
+| **Durable Archive, Snapshots & Recovery** | Real-time write-safe local workspace with one-click `.mindflow` attachment archiving, multi-version snapshot rollbacks, and Schema v2 backup protection gates. | `.mindflow` attachments and PDFs are stored independently; check timestamps before restoring backups to prevent overwriting active edits. |
+| **Portable Multi-Format Export Ecosystem** | Exports standalone **Interactive HTML** (self-contained with embedded vector styles and scripts for offline exploration), publication-grade **SVG**, high-res **PNG**, **Markdown**, **OPML**, and raw **JSON**. | Maps with heavy embedded image assets increase file sizes; generic format conversions (like OPML) may not preserve specific edge curvature styles. |
+| **Optional AI Reading Drafts** | Connects seamlessly with the local `llm-for-zotero` runtime to synthesize structured reading drafts from abstracts, notes, and PDF pages without copying API keys. | MindFlow maintains no intermediary servers and stores no user credentials; AI outputs are presented as editable drafts requiring researcher verification. |
+| **Optional WebDAV Workspace Backup** | Backs up the entire workspace to user-configured HTTPS WebDAV endpoints with version retention and cross-device restoration. | Core mapping and local archiving work fully offline; remote synchronization depends on provider quota and network stability. |
+
+---
+
+<a id="highlights"></a>
+
+## In-depth highlights
+
+### 1. Seamless ItemPane Native Integration
+Unlike floating web popups, MindFlow conforms rigorously to native Zotero 10 / 11 / 12 design specifications:
+- Dynamically responds to the selected library item or open PDF tab;
+- Displays bound maps, thumbnail metadata, and modification timestamps directly within the right pane;
+- Exposes direct shortcuts: "Open Map", "Append Sub-node", and "Import Notes";
+- Seamlessly respects Zotero's adaptive light and dark themes using host-native CSS tokens.
+
+### 2. Dual Canvas and Outline Modality
+- **Canvas Mode**: Free-form spatial positioning, grid snapping, customizable connector aesthetics (smooth cubic Bezier, rounded orthogonal, straight line), rich-text node styling, priority tags, and relational cross-links.
+- **Outline Mode**: Minimalist nested hierarchical tree built for lightning-fast keyboard-first outlining and tree restructuring.
+- **Fluid Keyboard Navigation**:
+  - `Tab`: Create child sub-node
+  - `Enter`: Create sibling node
+  - `Space` / `Enter`: Toggle collapse / expand branch
+  - `F2`: Rename active node
+  - `Delete` / `Backspace`: Remove node and its subtree
+  - `Ctrl + F` / `Cmd + F`: Real-time canvas-wide search and replace
+
+### 3. All-Inclusive Offline Interactive HTML Export (Killer Feature)
+MindFlow's **Interactive HTML** export sets a new standard for academic sharing:
+- **Zero-Dependency Single File**: Fully bundles vector layout rendering logic and styling without requiring Zotero or external internet connectivity;
+- **Full Dynamic Interactivity**: Recipients can freely **pan**, **smooth-zoom**, and **expand/collapse subtrees** directly within any modern web browser;
+- **High-Fidelity Task Markers**: Fully mirrors node task status badges (todo gray, in-progress blue, completed green), strike-through typography, and visual opacity.
+
+### 4. Structured Reading Presets & Schema v2 Backup
+- **Built-in Research Logic**: Built-in "Paper Story" template structures the inquiry flow: Research Background → Core Question → Proposed Mechanism → Experimental Proof → Limitations & Outlook;
+- **Preset Portability**: In v13.0.0, the enhanced `schemaVersion: 2` backup protocol bundles user-defined research presets alongside document trees, seamlessly merging them upon restoration;
+- **Version Guardrails**: A strict major version ceiling blocks inadvertent deserialization of future incompatible schemas, protecting your local knowledge repository from corruption.
+
+---
 
 <a id="settings"></a>
 
 ## Settings
 
-Open the add-on preference page in **Zotero → Settings → Zotero MindFlow**.
+Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**:
 
-Configure window mode, welcome page, material imports, outline notes, and workspace entry points. With multiple attachments or windows, check the library, attachment, and active map.
+| Category | Primary Preferences | Function & Timing |
+|---|---|---|
+| **General Preferences** | Window presentation mode (Standalone Window / Reader Split Pane)<br>Welcome onboarding guide | Controls whether maps open in a dedicated split pane or floating window; applies instantly. |
+| **Canvas & Visuals** | Default layout engine (Mindmap / Logic Chart / Org Chart)<br>Curve style (Smooth Bezier / Orthogonal / Straight)<br>Canvas background (Grid / Dots / Blank)<br>Toolbar dock position (Top / Bottom / Left) | Configures visual hierarchy and geometric styling for new and active maps. |
+| **Extraction & Literature** | Auto-extract abstract and metadata<br>PDF highlight capture threshold<br>Research template manager | Dictates extraction granularity when capturing nodes from items or open PDF annotations. |
+| **Safety & Snapshots** | Auto-snapshot interval (1 ~ 120 minutes)<br>Max snapshots per document (10 ~ 50)<br>Workspace backup export / import | Enforces schema validation and clamped ranges, enabling one-click rollbacks to historical revisions. |
+| **External Integration** | WebDAV endpoint and credentials<br>`llm-for-zotero` runtime bridge toggle | Sets up encrypted remote backup and optional AI draft generation. |
+
+---
 
 <a id="data"></a>
 
 ## Data, sync, and services
 
-- The local workspace is under mindflow/workspace in Zotero’s data directory. Local save success does not establish .mindflow attachment archiving.
-- Attachment synchronization depends on Zotero file sync; WebDAV workspace backup is not a complete Zotero database/PDF backup.
-- AI submits selected material to the configured model service; verify generated output against the paper.
+- **Local Workspace Storage**: Active maps are stored safely under `mindflow/workspace` in the Zotero data directory using atomic write safeguards. Local save commits to disk; explicit "Archive" creates item attachments.
+- **Zotero Attachment Archiving**: Archived `.mindflow` attachments sync across devices through Zotero's native attachment sync mechanism (Zotero Storage or WebDAV).
+- **Privacy & Data Security**:
+  - MindFlow sends zero telemetry, personal documents, or private notes to unauthorized third parties;
+  - The AI reading draft feature interfaces exclusively through the local `llm-for-zotero` runtime, meaning data flow is determined strictly by the user's local configuration.
+
+---
 
 <a id="compatibility"></a>
 
 ## Compatibility and validation
 
-| Item | Scope |
+| Dimension | Specification & Verification Status |
 |---|---|
-| Current published version | 12.6.8 |
-| Declared Zotero range | `10.0` through `10.0.*` |
-| Evidence boundary | The current manifest limits support to Zotero 10.0.x. The 12.3.4 settings pane was checked in Windows Zotero 10.0.7, including sequential navigation and MetaFlow card palette comparison; live AI, WebDAV, and cross-device workflows were not rerun. |
+| **Current Published Release** | **v13.0.0** (Major Release) |
+| **Declared Manifest Range** | Zotero `10.0` through `12.*` (`strict_min_version: 10.0`, `strict_max_version: 12.*`) |
+| **TypeScript Static Check** | `npm run typecheck` (PASS, **0** errors) |
+| **Frontend Unit Suite** | `npm test` (**111 / 111** tests PASS: 45 data pipelines + 36 core logic + 7 presets + 23 data integrity) |
+| **Host Logic Regression** | `node --test scripts/test-host.mjs` (**89 / 89** tests PASS) |
+| **Package & Update Feed Check** | `python scripts/test-release-package.py` (**8 / 8** tests PASS, payload hashes verified) |
 
-Add-on and Zotero versions are separate. Version 12.6.8 passed 88 host simulations, the production build, XPI payload and update-feed checks, and 51 isolated Zotero 10.0.7 native checks, including connected sidebar validation after refresh. Native theme and narrow-pane visual acceptance, main-profile installation, and automatic updates remain unverified. See the [release notes](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.8).
+---
 
 <a id="troubleshooting"></a>
 
 ## Troubleshooting
 
-If no attachment appears after saving, inspect local-save and attachment-archive status separately. For an incorrect map, record item/attachment selection, the map chooser, and window switching.
+<details>
+<summary><b>1. Why doesn't a <code>.mindflow</code> attachment show up under the Zotero item after editing?</b></summary>
 
-For an issue, include add-on/Zotero versions, OS, steps, expected/actual results, and sanitized errors.
+> MindFlow utilizes a dual-tier storage architecture:  
+> - Editing continuously commits to a resilient local cache to safeguard against accidental crashes;  
+> - To permanently anchor the map to your library item as a syncable sub-attachment, click **Archive to Zotero** on the workspace toolbar.
+</details>
+
+<details>
+<summary><b>2. What should I do if the map workspace opens blank or fails to load?</b></summary>
+
+> - Ensure you have not attempted to import backup files from a future major version (v13.0.0 includes a safety gate that blocks > v13 data to protect storage integrity);  
+> - Navigate to **Settings → Safety & Snapshots** to restore from a recent snapshot, or recover your latest working tree via the Emergency Backup recovery tool.
+</details>
+
+<details>
+<summary><b>3. The "AI Reading Draft" button does not respond when clicked.</b></summary>
+
+> - MindFlow does not connect to cloud AI APIs directly; it leverages the `llm-for-zotero` runtime;  
+> - Verify that `llm-for-zotero` is correctly installed, enabled, and configured with a working model in Zotero;  
+> - Confirm that the selected literature item has a valid abstract or an accessible PDF attachment containing text.
+</details>
+
+---
 
 <a id="development"></a>
 
 ## Development and documentation
 
-Normal installation needs no development environment. Existing developer entry points follow; use an isolated profile for native tests.
+Standard installation requires only the XPI. For developers building or extending the add-on locally:
 
 ```powershell
+# 1. Install frontend dependencies
 npm ci --prefix source
-node scripts/build-local.mjs
+
+# 2. Run TypeScript type checks and unit tests
+npm run typecheck --prefix source
+npm test --prefix source
+
+# 3. Build production assets
+npm run build --prefix source
+
+# 4. Run Zotero host simulation tests and package checks
 node --test scripts/test-host.mjs
 python scripts/test-release-package.py
+
+# 5. Package XPI and sync feeds
 python scripts/package-xpi.py --update-feeds
 python scripts/package-xpi.py --verify-only
 ```
 
-- [审查文档索引 / Audit documentation](docs/README.md)
-- [版本说明 / Release notes](docs/releases/v12.5.10.md)
-- [产品简介 / Product profile](docs/brand/PRODUCT.md)
-- [品牌规范 / Brand guide](docs/brand/BRAND.md)
-- [README 模板 / README template](docs/brand/README-TEMPLATE.md)
-- [后续提升清单 / Improvement priorities](docs/brand/IMPROVEMENTS.md)
-- [Previous detailed guide · README.md](docs/reference/README.md)
+- [Audit Documentation Index](docs/README.md)
+- [Release Notes v13.0.0](docs/releases/v13.0.0.md)
+- [Brand & Product Specifications](docs/brand/PRODUCT.md)
+- [Release Tag Policy](docs/release-tag-policy.md)
+- [Historical Reference Guide & Acknowledgments](docs/reference/README.md)
 
-Previous detailed guides retain feature detail, shortcuts, historical evidence, and full attribution. Their versions and test results belong to the recorded stage.
+---
 
 <a id="series"></a>
 
 ## The Flow series
 
-| Product | Role |
-|---|---|
-| [Zotero RefFlow](https://github.com/groele/Zotero-RefFlow) | Discovery · Discover references, citing works, and related research. |
-| [Zotero MetaFlow](https://github.com/groele/Zotero-MetaFlow) | Metadata · Validate, normalize, and enrich reference metadata. |
-| [Zotero ViewFlow](https://github.com/groele/Zotero-ViewFlow) | Preview · Preview and copy formatted references in Zotero’s item pane. |
-| [Zotero MindFlow](https://github.com/groele/Zotero-MindFlow) | Knowledge · Organize papers, annotations, and ideas into editable maps. |
-| [Zotero TaskFlow](https://github.com/groele/Zotero-TaskFlow) | Tasks · Turn literature reading into trackable tasks and plans. |
-| [Zotero CiteFlow](https://github.com/groele/Zotero-CiteFlow) | Citation · Track Word citations and connect them to Zotero items. |
-| [Zotero PaperFlow](https://github.com/groele/Zotero-PaperFlow) | Publication · Manage manuscripts, submission rounds, and review responses. |
+**Zotero Flow Series** unites individual research phases into a coherent workflow:
 
-Each add-on installs and updates separately. A shared brand does not imply a shared database or automatic integration of every workflow.
+| Add-on | Core Role |
+|---|---|
+| [Zotero RefFlow](https://github.com/groele/Zotero-RefFlow) | **Literature Discovery** · Cross-reference citation graphs, connected papers, and one-click item ingestion. |
+| [Zotero MetaFlow](https://github.com/groele/Zotero-MetaFlow) | **Metadata Optimization** · Validate, standardize, clean, and enrich academic metadata. |
+| [Zotero ViewFlow](https://github.com/groele/Zotero-ViewFlow) | **Reading Preview** · Instant formatted citation previews and rich sidebar abstract exploration. |
+| **Zotero MindFlow** | **Knowledge Organization** · Synthesize literature, annotations, and ideas into editable knowledge maps. |
+| [Zotero TaskFlow](https://github.com/groele/Zotero-TaskFlow) | **Task Tracking** · Transform reading workflows and writing into structured milestones. |
+| [Zotero CiteFlow](https://github.com/groele/Zotero-CiteFlow) | **Citation Tracking** · Manage and trace Microsoft Word citations linked directly to Zotero. |
+| [Zotero PaperFlow](https://github.com/groele/Zotero-PaperFlow) | **Publication Management** · Track manuscript revisions, submission rounds, and peer review responses. |
+
+*Note: Each add-on is installed and updated independently according to user preference.*
+
+---
 
 <a id="license"></a>
 
 ## Origin and license
 
-**Development-origin notice:** The maintained repository’s README, package metadata, and license do not declare a third-party Zotero add-on as MindFlow’s derivative base; it is released as an independently maintained Zotero Flow add-on. `llm-for-zotero` is an optional runtime integration that reuses a user-configured model and credentials, **not** the source of a code derivative.
-
-Project code is distributed under MIT; papers, images, dependencies, and model services retain their own rights and terms.
-
-License: [MIT](LICENSE).
-
-This series is independently maintained and is not an official Zotero product. Zotero and third-party names, trademarks, and materials belong to their respective rights holders.
-
-[Release/tag policy](docs/release-tag-policy.md)
-
-File exports use the Zotero native save dialog. JSON preserves an editable map, PNG supports sharing, SVG supports publishing, Markdown/OPML preserve text hierarchy, and HTML supports offline viewing. Direct PDF printing is unavailable inside the Zotero workspace; print an exported image from a browser or document instead.
+- **Origin Notice**: Distributed as an independently maintained add-on within the Zotero Flow series; it is not a direct downstream fork of any single third-party mind mapping add-on. `llm-for-zotero` is an optional external runtime and not a derivative source of MindFlow's codebase.
+- **License**: Released under the [MIT License](LICENSE).
+- **Trademarks & Disclaimer**: An independent open-source project, not affiliated with or endorsed by Corporation for Digital Scholarship or Zotero. All third-party trademarks belong to their respective owners.

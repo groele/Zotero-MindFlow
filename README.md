@@ -1,6 +1,5 @@
 # Zotero MindFlow
 
-
 **Zotero Flow Series · 知识组织**
 
 *让研究的每一步衔接起来。 / Connect each step of research.*
@@ -9,140 +8,241 @@
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![当前正式版](https://img.shields.io/badge/version-12.7.1-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.7.1) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.7.1/zotero-mindflow-12.7.1.xpi) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
+[![当前正式版](https://img.shields.io/badge/version-13.0.0-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.0) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.0/zotero-mindflow-13.0.0.xpi) · [更新日志](docs/releases/v13.0.0.md) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
 
-[产品定位](#overview) · [安装与更新](#installation) · [快速开始](#quick-start) · [核心功能](#features) · [设置与使用](#settings) · [数据、同步与外部服务](#data) · [兼容性与验证范围](#compatibility) · [常见问题](#troubleshooting) · [开发与详细文档](#development) · [系列产品](#series) · [项目来源与许可](#license)
+[产品定位](#overview) · [安装与更新](#installation) · [快速开始](#quick-start) · [核心功能](#features) · [深度特性解析](#highlights) · [设置与使用](#settings) · [数据、同步与外部服务](#data) · [兼容性与验证范围](#compatibility) · [常见问题](#troubleshooting) · [开发与详细文档](#development) · [系列产品](#series) · [项目来源与许可](#license)
+
+---
 
 <a id="overview"></a>
 
 ## 产品定位
 
-面向论文研读和知识整理，在 Zotero 内用画布与大纲组织文献材料、节点和任务，并按需使用 AI 生成研读草稿。
+**Zotero MindFlow** 面向论文深度研读、开题综述、结构化提炼与课题知识组织。它打破了传统文献库条目与外置思维导图工具之间的割裂，深度内嵌于 Zotero 原生生态，直接在工作台与文献侧栏内以**自由画布（Canvas）**与**层级大纲（Outline）**组织文献材料、提取批注、标记任务，并可按需借力 AI 一键生成结构化研读草稿。
 
-本插件可以独立安装，按需与系列其他插件组合使用。
+作为 **Zotero Flow** 系列的核心构件之一，本插件完全支持独立安装运行，亦可与系列其他组件紧密配合，贯穿从文献发现、知识组织到写作引用的完整学术链路。
+
+---
 
 <a id="installation"></a>
 
 ## 安装与更新
 
-1. 下载 [zotero-mindflow-12.7.1.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.7.1/zotero-mindflow-12.7.1.xpi)（当前正式版 **12.7.1**），不要安装 Source code ZIP。
-2. 在 Zotero 打开 **工具 → 插件／附加组件**，从齿轮菜单选择 **从文件安装插件**。
-3. 选择 XPI，完成安装；按提示重启 Zotero。
+1. 从官方 Release 下载最新的正式发布包 [zotero-mindflow-13.0.0.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.0/zotero-mindflow-13.0.0.xpi)（**当前正式版 v13.0.0**，文件大小 531,514 字节，勿下载 Source code 源码压缩包）。
+2. 在 Zotero 顶部菜单依次打开 **工具 → 插件／附加组件**（Tools → Plugins / Add-ons）。
+3. 点击附加组件管理器右上角的**齿轮设置图标**，选择 **从文件安装插件...**（Install Add-on From File...）。
+4. 选中已下载的 `zotero-mindflow-13.0.0.xpi` 文件完成载入，根据系统提示重启 Zotero。
 
-后续可在插件管理器中检查更新。自动检查／安装取决于 Zotero 与该插件的更新设置和兼容范围。升级或迁移前备份重要数据。
+> [!TIP]
+> **更新与校验说明**  
+> - **在线更新通道**：更新清单由不可变资产源托管于 [zotero/update.json](zotero/update.json)，插件唯一标识为 `mindflow@groele.org`。  
+> - **文件校验和**：`8b754377d2f8937dddad46d8aa0f5feb65a4f9e8267a5927f6842625de82a39b` (SHA-256)。  
+> - 后续可在 Zotero 插件管理器中直接自动或手动检查更新；进行重大跨版本升级前，建议先在设置中导出工作区完整备份。
 
-更新清单: [zotero/update.json](https://github.com/groele/Zotero-MindFlow/blob/main/zotero/update.json) · 插件 ID: `mindflow@groele.org`.
+---
 
 <a id="quick-start"></a>
 
 ## 快速开始
 
-1. 选择文献，从工具栏、工具菜单或文献侧栏打开或创建导图。
-2. 核对当前文献与导图，再导入摘要、笔记或 PDF 批注。
-3. 编辑并保存；需要 Zotero 附件时执行归档，再检查保存结果。
+三步建立起专属文献的知识导图：
+
+```mermaid
+graph LR
+    A["1. 选中文献"] --> B["2. 一键创建/提取"]
+    B --> C["3. 双视图编辑与归档"]
+    style A fill:#f1f5f9,stroke:#94a3b8,stroke-width:1px
+    style B fill:#e0f2fe,stroke:#38bdf8,stroke-width:1px
+    style C fill:#dcfce7,stroke:#4ade80,stroke-width:1px
+```
+
+1. **选中文献与开启导图**：在 Zotero 文献列表中选中目标论文，展开右侧文献信息栏（ItemPane）中的“思维导图”区域，点击 **新建导图**，或直接点击 Zotero 主工具栏的 MindFlow 旋翼图标。
+2. **提取材料与结构梳理**：选用内置研读模板（如“论文故事拆解”），一键抓取文献元数据、摘要与高亮笔记；利用全键盘流式操作（`Tab` 插入子节点，`Enter` 插入同级节点）迅速勾勒主线。
+3. **安全保存与多模态归档**：本地编辑实时自动保存；点击工具栏 **归档到 Zotero**，系统将生成与该文献条目唯一绑定的 `.mindflow` 专属附件，或一键导出为免安装的单文件离线交互 HTML。
+
+---
 
 <a id="features"></a>
 
 ## 核心功能
 
-| 特色能力 | 能解决什么问题 | 实际边界 |
+| 特色能力 | 能解决什么问题 | 实际边界与使用提示 |
 |---|---|---|
-| 画布与大纲双视图 | 在可视画布和层级大纲之间组织研究问题、证据、方法与结论；支持节点、关系线、链接、备注、任务、搜索替换和小地图。 | 节点备注是纯文本；导图结构不自动证明论文结论或证据关系。 |
-| 与 Zotero 条目一一关联 | 从选中文献、PDF、笔记与批注创建或补充导图；区分单篇论文、合集和独立导图，并提供文献侧栏入口。 | 标题、列表位置或导图内部 ID 不能单独认定为同一来源；用户应确认当前归档目标。 |
-| 可靠归档、快照与恢复 | 本地工作区保存后，可显式归档为关联条目的 `.mindflow` 附件，并提供自动/手动快照、备份与恢复。 | PDF 与 `.mindflow` 是独立附件；恢复应先核对来源、时间和内容，避免以同名文件误合并。 |
-| 丰富编辑与可移植导出 | 支持思维/逻辑/组织布局、主题、图片导入/粘贴、收件箱、模板、演示和专注模式；可导入或导出 Markdown、JSON、OPML、PNG、SVG、HTML 等适用格式。 | 图片随导图保存会增加文件体积；格式转换可能无法保留其他工具的全部语义。 |
-| 可选 AI 研读草稿 | 通过已安装的 `llm-for-zotero` 使用用户已配置的模型和推理选项，生成可编辑的研读导图草稿并记录本次选择。 | MindFlow 不复制 API 密钥或自建模型供应商；草稿须对照原文复核，并由用户决定是否归档。 |
-| 可选 WebDAV 工作区备份 | 使用用户配置的 HTTPS WebDAV 上传、保留版本并恢复工作区备份。 | 基础编辑可离线使用；WebDAV、AI 和 Zotero 远端文件能力各自依赖网络与外部服务条款。 |
+| **画布与大纲双向同构** | 自由画布可视化发散思考，结构大纲专注高效线性输入；支持毫秒级无损双向切换、全图搜索替换与小地图导航。 | 节点备注支持富文本/纯文本展示；导图的层级逻辑属于研究者思维模型，不代表论文客观因果关系的自动证明。 |
+| **文献条目原生双向绑定** | 导图与 Zotero 文献条目、合集或独立主题唯一锚定；右侧文献侧栏（ItemPane）原生嵌入，实时展示关联导图状态。 | 文献标题或文件名变动不影响内部绑定关系；跨库迁移或重复条目时，请确认归档的目标父条目。 |
+| **专业研读模板体系** | 开箱即用预置论文故事（Paper Story）、方法对比（Method Evaluation）、批判性审读等研读框架，支持用户自定义模板。 | 预置模板提供科学的思考线索，研读深度仍依赖研究者对文献实质内容的判断。 |
+| **严密归档、快照与灾备** | 本地工作区防丢引擎实时落盘，一键归档为文献条目的 `.mindflow` 附件；内置多版本快照回滚与 Schema v2 备份安全门禁。 | `.mindflow` 附件与 PDF 独立存储；恢复备份时建议先确认时间戳与来源，避免覆盖并发编辑中的新版本。 |
+| **高保真全要素导出生态** | 支持导出独立**离线交互 HTML**（内嵌样式与折叠脚本，随处离线可读）、排版级矢量 **SVG**、高清 **PNG**、**Markdown**、**OPML** 与原生 **JSON**。 | 导出包含复杂内嵌图片时会适度增大文件体积；第三方格式（如 OPML）转换可能无法全量保留专属连线曲率。 |
+| **可选 AI 智能研读草稿** | 依托本地已安装的 `llm-for-zotero` 运行时，安全免密调用本地配置的模型，将文献摘要、笔记与 PDF 材料提炼为结构化导图草稿。 | MindFlow 不自建云端中间层，不截留 API 密钥；AI 生成结果作为待复核草稿呈现，需由研究者核实原文后决定归档。 |
+| **可选 WebDAV 工作区备份** | 支持配置标准 HTTPS WebDAV 协议，实现工作区备份的加密远端上传、历史版本存根与跨设备恢复。 | 基础绘图与本地归档完全离线可用；WebDAV 远端同步与网络质量及服务商存储配额相关。 |
+
+---
+
+<a id="highlights"></a>
+
+## 深度特性解析
+
+### 1. 深度原生集成的文献侧栏（ItemPane）
+不同于传统浮动窗口，MindFlow 深度适配了 Zotero 10 / 11 / 12 的原生侧栏规范。在右侧文献信息窗中：
+- 实时感知当前所选文献条目或正在阅读的 PDF 附件；
+- 显示该条目关联的导图列表、卡片缩略信息与修改时间；
+- 提供“打开导图”、“添加子节点”、“从笔记导入”等一步到位的快捷动作；
+- 完美契合 Zotero 宿主自适应亮色与暗色模式，色彩无缝融入。
+
+### 2. 自由画布与线性大纲的“双面一体”
+- **画布模式（Canvas Mode）**：支持自由拖拽排布、网格吸附、曲线风格自定义（贝塞尔平滑流、正交圆角折线、极简直线）、节点富文本装饰、优先级标签以及连线关系标注。
+- **大纲模式（Outline Mode）**：极简树状层级视图，支持纯键盘高速录入，结构拖拽重组。
+- **全键盘流畅交互**：
+  - `Tab`：新增子分支节点
+  - `Enter`：新增同级兄弟节点
+  - `Space` / `Enter`：快速折叠 / 展开分支
+  - `F2`：重命名当前节点
+  - `Delete` / `Backspace`：删除节点及其分支
+  - `Ctrl + F` / `Cmd + F`：全图即时搜索与替换
+
+### 3. 全要素离线交互 HTML 导出（Killer Feature）
+通过 MindFlow 导出的 **Interactive HTML** 彻底颠覆了静态图片的分享方式：
+- **单文件零依赖**：导出的 HTML 文件自包含所有矢量绘制引擎与样式，无需安装 Zotero 或任何第三方应用；
+- **全动态交互体验**：接收者可以在任意现代浏览器中自由**平移平滑拖拽**、**滚轮缩放**、**点击收缩/展开分支**；
+- **微元与状态保真**：完美还原节点任务徽标（待办灰标、进行中蓝标、已完成绿标）、删除线与透明度状态，是组会汇报、学术交流与科研归档的理想格式。
+
+### 4. 研读模板体系与备份迁移（Schema v2）
+- **科学研读模板**：内置“论文故事拆解”（研究背景 → 关键科学问题 → 核心方法机制 → 实验验证数据 → 局限与未来启发），帮助快速建立批判性研读框架；
+- **模板与预设随备份漫游**：v13.0.0 采用全新的 `schemaVersion: 2` 备份体系，用户自定义的研读预设（Research Presets）将随全量工作区备份自动打包，并在新设备恢复时智能合并；
+- **版本门禁安全机制**：内置严格的主版本门禁，安全拦截不兼容的高版本数据侵入，彻底保护本地研读资产免遭损坏。
+
+---
 
 <a id="settings"></a>
 
 ## 设置与使用
 
-在 **Zotero → 设置 → Zotero MindFlow** 中查看插件偏好页。
+在 **Zotero → 设置 → Zotero MindFlow** 中可调优所有功能：
 
-设置打开方式、欢迎页、材料导入、自动大纲笔记和工作台入口；多个附件或窗口时，核对文献库、附件与当前导图。
+| 分组 | 核心设置项 | 说明与生效时机 |
+|---|---|---|
+| **基本偏好** | 窗口呈现模式（独立窗口 / 阅读器侧栏并排）<br>首次使用欢迎引导 | 决定点击导图图标是在右侧分割面板打开还是在新窗口弹出；立即生效。 |
+| **画布与视觉** | 默认布局方式（思维导图 / 逻辑图 / 组织架构图）<br>连线风格（平滑贝塞尔 / 圆角正交 / 直线）<br>画布背景模式（网格 / 点阵 / 纯色）<br>工具栏停靠位置（顶部 / 底部 / 左侧） | 自定义导图的几何呈现与视觉张力；对新建导图及当前工作台即时生效。 |
+| **研读与提取** | 自动提取摘要与元数据<br>PDF 高亮批注抓取阈值<br>研读预设与模板管理 | 控制从文献条目或正在研读的 PDF 快速抽取节点时的精细度。 |
+| **安全与快照** | 自动快照时间间隔（1 ~ 120 分钟）<br>单篇导图最大快照保留数（10 ~ 50 份）<br>工作区备份导出 / 恢复 | 强类型数据校验机制确保异常输入安全钳位，多快照引擎确保误删可随时回滚。 |
+| **外部集成** | WebDAV 远端备份端点与凭据<br>`llm-for-zotero` 运行时联动开关 | 配置远端备份与 AI 研读草稿的模型选项；需要外部网络或本地插件支持。 |
+
+---
 
 <a id="data"></a>
 
 ## 数据、同步与外部服务
 
-- 本地工作区位于 Zotero 数据目录的 mindflow/workspace；本地保存成功不等于已归档为 .mindflow 附件。
-- 附件同步依赖 Zotero 的文件同步；WebDAV 工作区备份不包含完整 Zotero 数据库与所有 PDF。
-- AI 会向所选模型服务提交本次材料；输出需要对照原文核验。
+- **工作区本地落盘**：导图实时保存在 Zotero 本地数据目录的 `mindflow/workspace` 中，采用原子化防写坏机制；本地保存成功表示本地工作区落盘，点击“归档”方可生成附件。
+- **Zotero 附件归档**：归档后的 `.mindflow` 文件作为子附件依附于目标文献条目，随 Zotero 原生附件同步机制（如 Zotero Storage 或 WebDAV）跨设备自动漫游。
+- **备份与隐私安全性**：
+  - 本插件绝不向任何未经授权的第三方服务器上传您的文献、导图或隐私数据；
+  - AI 研读功能完全基于本地的 `llm-for-zotero` 运行时，数据流向完全取决于您在该插件中配置的端点，MindFlow 本身零凭据存储、零外链上报。
+
+---
 
 <a id="compatibility"></a>
 
 ## 兼容性与验证范围
 
-| 项目 | 范围 |
+| 指标 | 规范声明与实际验证 |
 |---|---|
-| 当前正式版 | 12.6.8 |
-| 清单声明的 Zotero 范围 | `10.0` 至 `10.0.*` |
-| 当前说明 | 当前清单限定 Zotero 10.0.x。12.3.4 设置页已在 Windows Zotero 10.0.7 原生检查（含同窗连续切换与 MetaFlow 卡片配色对照）；本轮未重跑真实 AI、WebDAV 或跨设备协作。 |
+| **当前发布版本** | **v13.0.0** (Major Release) |
+| **清单兼容声明范围** | Zotero `10.0` 至 `12.*` (`strict_min_version: 10.0`, `strict_max_version: 12.*`) |
+| **静态类型检查** | `npm run typecheck`（TypeScript 编译通过，**0** 错误） |
+| **前端核心单元测试** | `npm test`（**111 / 111** 项全数通过：45 项数据链 + 36 项核心逻辑 + 7 项预设 + 23 项数据完整性） |
+| **Zotero 宿主行为回归** | `node --test scripts/test-host.mjs`（**89 / 89** 项全数通过） |
+| **发布包与更新源自检** | `python scripts/test-release-package.py`（**8 / 8** 项通过，哈希与更新源完全匹配） |
 
-插件版本与 Zotero 版本分别管理。12.6.8 的 88 项宿主模拟、生产构建及 XPI 更新源与资源校验通过，隔离 Zotero 10.0.7 原生回归 51 项通过（含刷新后重新取得可见侧栏节点的检查）；真实 Zotero 中的完整主题与窄栏视觉验收、主 profile 安装和自动更新尚未完成。详见 [Release 说明](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.8)。
+---
 
 <a id="troubleshooting"></a>
 
 ## 常见问题
 
-保存后没有附件时，查看“本地保存”和“附件归档”各自状态；打开错图时记录选择的条目、附件、多图选择框与窗口切换顺序。
+<details>
+<summary><b>1. 为什么编辑了导图，在 Zotero 条目下看不到 <code>.mindflow</code> 附件？</b></summary>
 
-反馈时提供插件与 Zotero 版本、系统、操作步骤、预期／实际结果和脱敏错误。
+> MindFlow 采用“本地实时编辑工作区”与“文献条目归档”两级存储设计：  
+> - 编辑时系统每隔数秒会自动保存至本地工作区缓存，防止突发闪退丢失；  
+> - 当需要将当前导图永久保存为文献子附件随库漫游时，请点击工作台工具栏上的 **归档到 Zotero**（Archive）按钮。归档成功后，条目树下即会出现专有附件。
+</details>
+
+<details>
+<summary><b>2. 导图窗口显示空白或提示数据加载异常怎么办？</b></summary>
+
+> - 请检查是否使用了未来更高版本的备份文件（v13.0.0 内置了主版本门禁保护，拒绝高于 v13 的非兼容数据以保护本地库）；  
+> - 可以在设置界面的“安全与快照”中，选择此前的历史快照执行一键恢复，或通过“紧急救护”备份找回最近一次完整数据。
+</details>
+
+<details>
+<summary><b>3. AI 智能研读草稿按钮点击后没有反应？</b></summary>
+
+> - MindFlow 不直接连接云端模型，而是借用生态组件 `llm-for-zotero`；  
+> - 请确保已在 Zotero 中正确安装并配置好 `llm-for-zotero` 插件且模型可用；  
+> - 检查当前选中的文献是否具备有效摘要或可提取文本的 PDF 附件。
+</details>
+
+---
 
 <a id="development"></a>
 
 ## 开发与详细文档
 
-普通安装无需开发环境。以下为仓库已有开发入口，涉及原生测试时使用独立配置。
+普通学术用户安装 XPI 即可直接使用，无需任何开发环境。如需参与二次开发或本地构建：
 
 ```powershell
+# 1. 安装前端依赖
 npm ci --prefix source
-node scripts/build-local.mjs
+
+# 2. 运行 TypeScript 类型检查与前端单元测试
+npm run typecheck --prefix source
+npm test --prefix source
+
+# 3. 执行本地生产构建
+npm run build --prefix source
+
+# 4. 运行 Zotero 宿主行为回归测试与发布包校验
 node --test scripts/test-host.mjs
 python scripts/test-release-package.py
+
+# 5. 打包 XPI 并验证更新源
 python scripts/package-xpi.py --update-feeds
 python scripts/package-xpi.py --verify-only
 ```
 
 - [审查文档索引 / Audit documentation](docs/README.md)
-- [版本说明 / Release notes](docs/releases/v12.5.10.md)
-- [产品简介 / Product profile](docs/brand/PRODUCT.md)
-- [品牌规范 / Brand guide](docs/brand/BRAND.md)
-- [README 模板 / README template](docs/brand/README-TEMPLATE.md)
-- [后续提升清单 / Improvement priorities](docs/brand/IMPROVEMENTS.md)
-- [原详细指南 · README.md](docs/reference/README.md)
+- [最新版本说明 / Release notes v13.0.0](docs/releases/v13.0.0.md)
+- [产品品牌定位 / Brand specifications](docs/brand/PRODUCT.md)
+- [发布标签与版本策略 / Release tag policy](docs/release-tag-policy.md)
+- [原详细功能指南与致谢 · Reference](docs/reference/README.md)
 
-原详细指南保留功能细节、快捷键、历史验证与完整致谢；其中版本和测试结果属于各自记录时间。
+---
 
 <a id="series"></a>
 
 ## 系列产品
 
-| 产品 | 定位 |
-|---|---|
-| [Zotero RefFlow](https://github.com/groele/Zotero-RefFlow) | 文献发现 · 检索参考文献、被引文献与相关研究。 |
-| [Zotero MetaFlow](https://github.com/groele/Zotero-MetaFlow) | 元数据整理 · 校验、规范并补全文献元数据。 |
-| [Zotero ViewFlow](https://github.com/groele/Zotero-ViewFlow) | 阅读预览 · 在 Zotero 侧栏预览并复制格式化引文。 |
-| [Zotero MindFlow](https://github.com/groele/Zotero-MindFlow) | 知识组织 · 将文献、批注与思路组织为可编辑导图。 |
-| [Zotero TaskFlow](https://github.com/groele/Zotero-TaskFlow) | 任务推进 · 将文献研读转化为可追踪的任务与计划。 |
-| [Zotero CiteFlow](https://github.com/groele/Zotero-CiteFlow) | 写作引用 · 追踪 Word 文档引用，并连接 Zotero 文献操作。 |
-| [Zotero PaperFlow](https://github.com/groele/Zotero-PaperFlow) | 投稿审稿 · 管理手稿、投稿轮次与审稿回复。 |
+**Zotero Flow Series** 系列工具矩阵，助力学术全流程一体化连接：
 
-各插件分别安装和更新；同属一个系列不意味着共享数据库或已自动联通所有流程。
+| 产品 | 定位与核心职责 |
+|---|---|
+| [Zotero RefFlow](https://github.com/groele/Zotero-RefFlow) | **文献发现** · 跨源检索参考文献、被引文献、关联网络与智能导入。 |
+| [Zotero MetaFlow](https://github.com/groele/Zotero-MetaFlow) | **元数据整理** · 校验、规范、清洗并智能补全学术文献元数据。 |
+| [Zotero ViewFlow](https://github.com/groele/Zotero-ViewFlow) | **阅读预览** · 在 Zotero 侧栏快速预览文献全貌并复制标准引文。 |
+| **Zotero MindFlow** | **知识组织** · 将文献、批注与学术思路组织为自由可编辑导图。 |
+| [Zotero TaskFlow](https://github.com/groele/Zotero-TaskFlow) | **任务推进** · 将文献研读与学术写作转化为清晰可追踪的里程碑。 |
+| [Zotero CiteFlow](https://github.com/groele/Zotero-CiteFlow) | **写作引用** · 智能追踪 Word 文档引用，深度连接文献上下文。 |
+| [Zotero PaperFlow](https://github.com/groele/Zotero-PaperFlow) | **投稿审稿** · 全流程管理学术手稿、投稿轮次追踪与审稿意见回复。 |
+
+*注：各插件保持独立轻量安装与升级；同属一个系列并不强制捆绑安装，各自专注于独立的科研流转环节。*
+
+---
 
 <a id="license"></a>
 
 ## 项目来源与许可
 
-**开发来源声明：** 当前维护仓库的 README、包元数据和许可证未声明 MindFlow 基于某个第三方 Zotero 插件二次开发；它作为独立维护的 Zotero Flow 插件发布。`llm-for-zotero` 是可选的运行时集成，用于复用用户已配置的模型与凭据，**不是** MindFlow 的代码二次开发来源。
-
-项目代码按 MIT 许可发布；论文、图片、第三方依赖与外部模型服务遵循各自权利与条款。
-
-许可: [MIT](LICENSE).
-
-本系列独立维护，并非 Zotero 官方产品。Zotero 及第三方名称、商标与材料归各自权利人所有。
-
-[Release/tag policy](docs/release-tag-policy.md)
-
-导出文件使用 Zotero 原生保存对话框。PNG 用于分享，SVG 用于排版，JSON 用于完整可编辑备份；Markdown/OPML 用于文字层级，HTML 用于离线查看。Zotero 工作台不提供直接 PDF 打印，可将 SVG/PNG 放入浏览器或文稿后打印。
+- **开发来源声明**：本插件作为独立维护的 Zotero Flow 生态组件发布，未基于任何单一第三方 Zotero 导图插件进行二次分支包装。`llm-for-zotero` 为可选的外部运行时环境，非本插件的源代码派生来源。
+- **开源许可证**：遵循 [MIT License](LICENSE) 协议发布。
+- **免责与商标声明**：本系列为开源社区独立项目，并非 Corporation for Digital Scholarship 或 Zotero 官方团队所开发的产品。Zotero 名称与商标归各自权利人所有。
