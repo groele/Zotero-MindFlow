@@ -1141,8 +1141,9 @@
             --mf-green: light-dark(#316d58, #a0d3bb);
             --mf-amber: light-dark(#7a5d2c, #e3c58d);
             --mf-line: color-mix(in srgb, currentColor 12%, transparent);
+            --mf-hover: color-mix(in srgb, currentColor 4%, transparent);
             --mf-muted: var(--fill-secondary, GrayText);
-            display: flex; flex-direction: column; gap: 12px;
+            display: flex; flex-direction: column; gap: 10px;
             contain: inline-size; container-type: inline-size;
             width: 100%; min-width: 0; max-width: 100%;
             padding: 6px 2px 12px; box-sizing: border-box;
@@ -1151,71 +1152,99 @@
           }
           .mf-pane-wrap * { box-sizing: border-box; }
           .mf-pane-wrap :is(button, select) { font: inherit; min-width: 0; max-width: 100%; }
-          .mf-pane-wrap button { cursor: pointer; }
+          .mf-pane-wrap button { cursor: pointer; border-radius: 5px; }
           .mf-pane-wrap button:disabled { opacity: .55; cursor: default; }
           .mf-pane-wrap :is(button, select):focus-visible { outline: 2px solid var(--color-accent, Highlight); outline-offset: 2px; }
           .mf-pane-wrap .mf-action-status { font-size: 13px; line-height: 1.6; color: var(--mf-muted); }
           .mf-pane-wrap .mf-action-status:empty { display: none; }
-          .mf-pane-wrap .mf-header-card { display: flex; flex-direction: column; gap: 5px; }
-          .mf-pane-wrap .mf-header-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-          .mf-pane-wrap .mf-status-badge { color: var(--mf-muted); font-size: 13px; font-weight: 400; }
-          .mf-pane-wrap .mf-header-meta { color: var(--mf-muted); font-size: 13px; flex-shrink: 0; }
+          .mf-pane-wrap .mf-header-card { display: flex; flex-direction: column; gap: 4px; padding: 0 0 2px; }
+          .mf-pane-wrap .mf-header-top { display: flex; align-items: center; justify-content: space-between; }
+          .mf-pane-wrap .mf-status-badge { font-weight: 600; font-size: 14px; color: var(--fill-primary, CanvasText); }
+          .mf-pane-wrap .mf-header-meta { color: var(--mf-muted); font-size: 12px; flex-shrink: 0; }
           .mf-pane-wrap .mf-target-title {
             display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
-            overflow: hidden; overflow-wrap: anywhere; line-height: 1.5; font-weight: 500;
+            overflow: hidden; overflow-wrap: anywhere; line-height: 1.4; font-size: 12px; color: var(--mf-muted);
           }
-          .mf-pane-wrap .mf-empty-state { display: flex; flex-direction: column; gap: 4px; padding: 2px 0; }
-          .mf-pane-wrap .mf-empty-title { font-weight: 500; }
-          .mf-pane-wrap :is(.mf-hint-text, .mf-template-label, .mf-map-card-meta) { color: var(--mf-muted); font-size: 13px; line-height: 1.6; }
-          .mf-pane-wrap .mf-create-section { border-top: 1px solid var(--mf-line); padding-top: 12px; }
-          .mf-pane-wrap .mf-template-row { display: flex; align-items: center; gap: 10px; }
+          .mf-pane-wrap .mf-empty-state { display: flex; flex-direction: column; gap: 4px; }
+          .mf-pane-wrap .mf-empty-title { font-weight: 600; font-size: 14px; color: var(--fill-primary, CanvasText); }
+          .mf-pane-wrap .mf-section-title { font-weight: 600; font-size: 14px; color: var(--fill-primary, CanvasText); margin: 2px 0 0; }
+          .mf-pane-wrap :is(.mf-hint-text, .mf-add-hint, .mf-map-card-meta) { color: var(--mf-muted); font-size: 12px; line-height: 1.5; }
+          .mf-pane-wrap .mf-create-section { display: flex; flex-direction: column; gap: 8px; }
+          .mf-pane-wrap .mf-template-box { display: flex; flex-direction: column; gap: 6px; }
+          .mf-pane-wrap .mf-template-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--mf-muted); }
           .mf-pane-wrap .mf-template-label { flex-shrink: 0; }
           .mf-pane-wrap .mf-template-select {
             flex: 1 1 0; width: 0; min-height: 30px; padding: 4px 6px;
-            border: 1px solid var(--mf-line); border-radius: 5px;
-            color: inherit; background: transparent;
+            border: 1px solid var(--mf-line); border-radius: 4px;
+            color: var(--fill-primary, CanvasText); background: transparent; font-size: 13px;
           }
-          .mf-pane-wrap .mf-create-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 9px; }
-          .mf-pane-wrap .mindflow-pane-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; border-top: 1px solid var(--mf-line); padding-top: 10px; }
-          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn-pdf { grid-column: 1 / -1; }
-          .mf-pane-wrap :is(.mf-btn-primary, .mf-tool-btn, .mf-card-btn, .mf-btn-template-create) {
+          .mf-pane-wrap :is(.mf-btn-primary, .mf-btn-template-create, .mf-tool-btn, .mf-card-btn) {
             --mf-tone: var(--mf-blue);
             display: inline-flex; align-items: center; justify-content: center;
-            min-height: 30px; padding: 5px 8px; border-radius: 5px;
+            min-height: 32px; padding: 6px 10px; border-radius: 5px;
             border: 1px solid color-mix(in srgb, var(--mf-tone) 20%, transparent);
-            background: color-mix(in srgb, var(--mf-tone) 8%, transparent);
+            background: color-mix(in srgb, var(--mf-tone) 9%, transparent);
             color: var(--mf-tone); text-align: center; white-space: normal;
-            overflow-wrap: anywhere; text-decoration: none; font-weight: 400;
+            overflow-wrap: anywhere; text-decoration: none; font-weight: 500; font-size: 13px;
+            transition: background .15s, border-color .15s;
           }
-          .mf-pane-wrap .mf-tool-btn { --mf-tone: currentColor; font-size: 14px; }
-          .mf-pane-wrap .mf-create-actions :is(.mf-btn-primary, .mf-tool-btn) { width: 100%; min-height: 32px; }
-          .mf-pane-wrap :is(.mf-btn-primary, .mf-tool-btn, .mf-card-btn, .mf-btn-template-create):hover:not(:disabled) {
-            background: color-mix(in srgb, var(--mf-tone) 14%, transparent);
-            border-color: color-mix(in srgb, var(--mf-tone) 30%, transparent);
+          .mf-pane-wrap :is(.mf-btn-primary, .mf-btn-template-create, .mf-tool-btn, .mf-card-btn):hover:not(:disabled) {
+            background: color-mix(in srgb, var(--mf-tone) 16%, transparent);
+            border-color: color-mix(in srgb, var(--mf-tone) 32%, transparent);
           }
-          .mf-pane-wrap :is(.mf-btn-primary, .mf-tool-btn, .mf-card-btn, .mf-btn-template-create):active:not(:disabled) { background: color-mix(in srgb, var(--mf-tone) 20%, transparent); }
-          /* Single emphasized action: solid accent only while the item has no map yet. Declared after the
-             generic hover rules (same specificity) so hover never turns white text onto a pale background. */
-          .mf-pane-wrap:not([data-has-maps]) .mf-btn-primary { --mf-tone: var(--accent-blue, AccentColor); font-weight: 600; font-size: 14px; background: var(--accent-blue, AccentColor); border-color: var(--accent-blue, AccentColor); color: var(--accent-white, #fff) !important; }
-          .mf-pane-wrap:not([data-has-maps]) .mf-btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent-blue, AccentColor) 88%, black); border-color: transparent; }
-          .mf-pane-wrap:not([data-has-maps]) .mf-btn-primary:active:not(:disabled) { background: color-mix(in srgb, var(--accent-blue, AccentColor) 76%, black); }
-          .mf-pane-wrap[data-has-maps] .mf-btn-primary { --mf-tone: currentColor; font-size: 14px; }
-          .mf-pane-wrap .mf-maps-section { display: flex; flex-direction: column; gap: 4px; }
-          .mf-pane-wrap .mf-maps-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-          .mf-pane-wrap .mf-maps-title { font-weight: 500; }
-          .mf-pane-wrap .mf-btn-refresh { background: transparent; color: var(--mf-muted); border: 0; border-radius: 4px; min-width: 26px; min-height: 26px; padding: 2px 5px; }
-          .mf-pane-wrap .mf-btn-refresh:hover { background: color-mix(in srgb, currentColor 5%, transparent); }
-          .mf-pane-wrap .mf-maps-list { display: flex; flex-direction: column; max-height: 280px; overflow-y: auto; min-width: 0; scrollbar-width: thin; padding: 2px; }
-          .mf-pane-wrap .mf-map-card { display: flex; flex-direction: column; gap: 5px; padding: 9px 0; border-bottom: 1px solid var(--mf-line); min-width: 0; }
-          .mf-pane-wrap .mf-map-card:last-child { border-bottom: 0; }
-          .mf-pane-wrap .mf-map-card-top { min-width: 0; display: flex; align-items: center; }
-          .mf-pane-wrap .mf-map-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-          .mf-pane-wrap .mf-map-card-meta { font-size: 13px; }
+          .mf-pane-wrap :is(.mf-btn-primary, .mf-btn-template-create, .mf-tool-btn, .mf-card-btn):active:not(:disabled) {
+            background: color-mix(in srgb, var(--mf-tone) 22%, transparent);
+          }
+          .mf-pane-wrap .mf-btn-primary { width: 100%; min-height: 34px; font-size: 13px; font-weight: 500; }
+          .mf-pane-wrap .mf-btn-template-create {
+            --mf-tone: var(--mf-green);
+            width: 100%; min-height: 34px; font-size: 13px; font-weight: 500;
+          }
+          .mf-pane-wrap .mf-divider { height: 1px; border: 0; background: var(--mf-line); margin: 2px 0; }
+          .mf-pane-wrap .mindflow-pane-actions {
+            display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 7px; padding-top: 4px;
+          }
+          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn {
+            padding: 7px 9px; text-align: center; min-height: 32px; font-size: 13px;
+          }
+          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn[data-mindflow-action="workbench"],
+          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn[data-mindflow-action="workspace"] {
+            --mf-tone: var(--mf-blue);
+          }
+          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn[data-mindflow-action="ai"],
+          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn[data-mindflow-action="pdf"] {
+            --mf-tone: var(--mf-green);
+          }
+          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn[data-mindflow-action="import"],
+          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn[data-mindflow-action="blank"] {
+            --mf-tone: var(--mf-amber);
+          }
+          .mf-pane-wrap .mf-maps-section { display: flex; flex-direction: column; gap: 6px; }
+          .mf-pane-wrap .mf-maps-header { display: flex; align-items: center; justify-content: space-between; }
+          .mf-pane-wrap .mf-maps-title { font-weight: 600; font-size: 14px; }
+          .mf-pane-wrap .mf-btn-refresh {
+            background: transparent; color: var(--mf-muted); border: 0; border-radius: 4px;
+            min-width: 24px; min-height: 24px; padding: 2px 5px; font-size: 14px;
+          }
+          .mf-pane-wrap .mf-btn-refresh:hover { background: var(--mf-hover); }
+          .mf-pane-wrap .mf-maps-list { display: flex; flex-direction: column; max-height: 280px; overflow-y: auto; gap: 6px; }
+          .mf-pane-wrap .mf-map-card {
+            display: flex; flex-direction: column; gap: 6px; padding: 8px 10px;
+            border: 1px solid var(--mf-line); border-radius: 5px;
+            background: color-mix(in srgb, currentColor 2%, transparent);
+          }
+          .mf-pane-wrap .mf-map-card:hover { border-color: color-mix(in srgb, currentColor 24%, transparent); }
+          .mf-pane-wrap .mf-map-card-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+          .mf-pane-wrap .mf-map-name { font-weight: 500; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .mf-pane-wrap .mf-map-card-meta { font-size: 12px; color: var(--mf-muted); }
           .mf-pane-wrap .mf-map-card-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 2px; }
-          .mf-pane-wrap .mf-card-btn { min-height: 28px; padding: 4px 6px; font-size: 13px; background: transparent; color: inherit; border-color: var(--mf-line); }
-          .mf-pane-wrap .mf-card-btn-primary { background: color-mix(in srgb, var(--mf-blue) 8%, transparent); color: var(--mf-blue); border-color: color-mix(in srgb, var(--mf-blue) 20%, transparent); }
+          .mf-pane-wrap .mf-card-btn { min-height: 26px; padding: 3px 6px; font-size: 12px; }
+          .mf-pane-wrap .mf-card-btn[data-l10n-id="mindflow-item-pane-card-open"] { --mf-tone: var(--mf-blue); }
+          .mf-pane-wrap .mf-card-btn[data-l10n-id="mindflow-item-pane-card-export"] { --mf-tone: var(--mf-amber); }
+          .mf-pane-wrap .mf-card-btn[data-l10n-id="mindflow-item-pane-card-locate"] { --mf-tone: var(--mf-green); }
           @container (max-width: 210px) {
-            .mf-pane-wrap .mf-create-actions, .mf-pane-wrap .mindflow-pane-actions { grid-template-columns: minmax(0, 1fr); }
+            .mf-pane-wrap .mindflow-pane-actions { grid-template-columns: minmax(0, 1fr); }
             .mf-pane-wrap .mf-map-card-actions { grid-template-columns: minmax(0, 1fr); }
           }
         `;
@@ -1557,13 +1586,13 @@
             actionStatus.setAttribute?.('role', 'status');
             wrapper.appendChild(actionStatus);
 
-            // 1. Header Card with Status Badge
+            // 1. Header Card with Status Badge (Matching TaskFlow top status)
             const headerCard = createEl('div', 'mf-header-card');
             const headerTop = createEl('div', 'mf-header-top');
 
             const statusBadge = createEl('span', `mf-status-badge ${totalMaps > 0 ? 'mf-status-active' : 'mf-status-empty'}`);
-            statusBadge.textContent = '当前文献';
-            statusBadge.setAttribute('data-l10n-id', 'mindflow-item-pane-current-item');
+            statusBadge.textContent = totalMaps > 0 ? `${T('已关联导图', 'Linked maps')} (${totalMaps})` : T('暂无导图', 'No maps yet');
+            statusBadge.setAttribute('data-l10n-id', totalMaps > 0 ? 'mindflow-item-pane-linked-maps-title' : 'mindflow-item-pane-no-map');
             headerTop.appendChild(statusBadge);
 
             const selectedPDF = item?.isPDFAttachment?.() || /\.pdf$/i.test(item?.attachmentFilename || '') ? item : null;
@@ -1572,7 +1601,7 @@
               return att && !att.deleted && (att.isPDFAttachment?.() || att.attachmentContentType === 'application/pdf' || /\.pdf$/i.test(att.attachmentFilename || ''));
             })));
 
-            const metaIndicator = createEl('span', 'mf-header-meta', hasPDF ? 'PDF 就绪' : '无 PDF');
+            const metaIndicator = createEl('span', 'mf-header-meta', hasPDF ? T('PDF 就绪', 'PDF ready') : T('无 PDF', 'No PDF'));
             metaIndicator.setAttribute('data-l10n-id', hasPDF ? 'mindflow-item-pane-pdf-ready' : 'mindflow-item-pane-pdf-missing');
             headerTop.appendChild(metaIndicator);
             headerCard.appendChild(headerTop);
@@ -1583,21 +1612,10 @@
             headerCard.appendChild(targetTitleEl);
             wrapper.appendChild(headerCard);
 
-            if (totalMaps === 0) {
-              const emptyState = createEl('div', 'mf-empty-state');
-              const emptyTitle = createEl('div', 'mf-empty-title', '暂无关联导图');
-              emptyTitle.setAttribute('data-l10n-id', 'mindflow-item-pane-no-map');
-              const emptyHint = createEl('div', 'mf-hint-text', '先选择模板，再创建这篇文献的导图。');
-              emptyHint.setAttribute('data-l10n-id', 'mindflow-item-pane-choose-template-hint');
-              emptyState.appendChild(emptyTitle);
-              emptyState.appendChild(emptyHint);
-              wrapper.appendChild(emptyState);
-            }
-
-            // 2. Primary Action Button
+            // 2. Primary Action Button (Matching TaskFlow top capsule "+ 添加到论文研读")
             const primaryBtn = createEl('button', 'mf-btn-primary');
             primaryBtn.type = 'button';
-            primaryBtn.textContent = totalMaps > 0 ? '按模板新增' : '生成导图';
+            primaryBtn.textContent = totalMaps > 0 ? T('＋ 按所选模板新增导图', '＋ Add map with template') : T('＋ 一键生成文献思维导图', '＋ Create map for this item');
             primaryBtn.setAttribute('data-l10n-id', totalMaps > 0 ? 'mindflow-item-pane-add-from-template' : 'mindflow-item-pane-generate-map');
             primaryBtn.addEventListener('click', async (e) => {
               e.preventDefault(); e.stopPropagation();
@@ -1614,10 +1632,21 @@
                 primaryBtn.disabled = false;
               }
             });
-            // 3. Academic Template Box
+            wrapper.appendChild(primaryBtn);
+
+            const primaryHint = createEl('div', 'mf-add-hint', T('点击即可创建思维导图并关联当前文献 · 支持双向同步', 'Click to create a mind map linked to this item · syncs automatically'));
+            primaryHint.setAttribute('data-l10n-id', 'mindflow-item-pane-choose-template-hint');
+            wrapper.appendChild(primaryHint);
+
+            // 3. Quick Create Map Section (Matching TaskFlow "快速新建待办" + template + green action button)
+            const createSection = createEl('div', 'mf-create-section');
+            const sectionTitle = createEl('div', 'mf-section-title', T('快速新建导图', 'Quick create map'));
+            sectionTitle.setAttribute('data-l10n-id', 'mindflow-item-pane-quick-create-title');
+            createSection.appendChild(sectionTitle);
+
             const templateBox = createEl('div', 'mf-template-box');
             const templateRow = createEl('div', 'mf-template-row');
-            const templateLabel = createEl('span', 'mf-template-label', '导图模板');
+            const templateLabel = createEl('span', 'mf-template-label', T('导图模板', 'Template'));
             templateLabel.setAttribute('data-l10n-id', 'mindflow-item-pane-template-label');
             templateRow.appendChild(templateLabel);
 
@@ -1639,11 +1668,76 @@
             templateRow.appendChild(templateSelect);
             templateBox.appendChild(templateRow);
 
+            const templateDesc = createEl('div', 'mf-hint-text', T('选择预设学术模板，一键生成结构化文献研读导图', 'Select an academic template to generate a structured map'));
+            templateBox.appendChild(templateDesc);
+
+            const templateCreateBtn = createEl('button', 'mf-btn-template-create', T('按所选模板生成导图', 'Generate map from template'));
+            templateCreateBtn.type = 'button';
+            templateCreateBtn.addEventListener('click', async (e) => {
+              e.preventDefault(); e.stopPropagation();
+              if (templateCreateBtn.disabled) return;
+              templateCreateBtn.disabled = true;
+              try {
+                const currentTarget = lastPaneTarget || target;
+                if (!currentTarget) return;
+                await this.openMindFlow({ mode: 'create_from_selection', items: [currentTarget], template: templateSelect.value || 'imrad', forceNew: totalMaps > 0 }, win);
+                state?.refresh?.();
+              } catch (err) {
+                Zotero.logError?.('[MindFlow] Template create failed: ' + err);
+              } finally {
+                templateCreateBtn.disabled = false;
+              }
+            });
+            templateBox.appendChild(templateCreateBtn);
+            createSection.appendChild(templateBox);
+            wrapper.appendChild(createSection);
+
+            // Divider before action grid
+            wrapper.appendChild(createEl('div', 'mf-divider'));
 
             // 4. Action Buttons Grid (2 Columns, matching TaskFlow td-action-grid)
             const toolsGrid = createEl('div', 'mindflow-pane-actions');
 
-            const toolAi = createEl('button', 'mf-tool-btn', 'AI 论文精读');
+            const toolWorkbench = createEl('button', 'mf-tool-btn', T('导图工作台', 'Workspace'));
+            toolWorkbench.type = 'button';
+            toolWorkbench.setAttribute('data-l10n-id', 'mindflow-item-pane-action-workbench');
+            toolWorkbench.setAttribute('data-mindflow-action', 'workbench');
+            toolWorkbench.title = T('进入 MindFlow 总工作台，查看和管理已有导图', 'Open the MindFlow workspace to browse and manage maps');
+            toolWorkbench.addEventListener('click', async (e = {}) => {
+              e.preventDefault?.(); e.stopPropagation?.();
+              if (toolWorkbench.disabled) return;
+              toolWorkbench.disabled = true;
+              try {
+                await this.openMindFlow({ mode: 'open', targetMode: 'tab' }, win);
+              } catch (error) {
+                Zotero.logError?.('[MindFlow] Open workbench failed: ' + error);
+                actionStatus.textContent = this.paneText('操作失败，请重试。', 'The action failed. Please try again.');
+              } finally {
+                toolWorkbench.disabled = false;
+              }
+            });
+            toolsGrid.appendChild(toolWorkbench);
+
+            const toolSubwin = createEl('button', 'mf-tool-btn', T('伴读窗口', 'Companion'));
+            toolSubwin.setAttribute('data-l10n-id', 'mindflow-item-pane-action-companion');
+            toolSubwin.type = 'button';
+            toolSubwin.setAttribute?.('data-mindflow-action', 'workspace');
+            toolSubwin.title = T('打开轻量独立窗口，适合与 PDF 左右分屏伴读对照', 'Open a compact window to read side by side with the PDF');
+            toolSubwin.addEventListener('click', (e = {}) => {
+              e.preventDefault?.(); e.stopPropagation?.();
+              try {
+                if (totalMaps > 0 && maps[0]) {
+                  this.openMindflowAttachment(maps[0], win);
+                } else {
+                  this.openMindFlow({ mode: 'open' }, win);
+                }
+              } catch (err) {
+                Zotero.logError?.('[MindFlow] Open standalone window failed: ' + err);
+              }
+            });
+            toolsGrid.appendChild(toolSubwin);
+
+            const toolAi = createEl('button', 'mf-tool-btn', T('AI 论文精读', 'AI Reading'));
             toolAi.setAttribute('data-l10n-id', 'mindflow-item-pane-action-ai');
             toolAi.type = 'button';
             toolAi.disabled = false;
@@ -1667,70 +1761,8 @@
             toolsGrid.appendChild(toolAi);
             lastPaneActions.push({ id: 'ai', button: toolAi, hasPDF: true });
 
-            const toolSubwin = createEl('button', 'mf-tool-btn', '伴读窗口');
-            toolSubwin.setAttribute('data-l10n-id', 'mindflow-item-pane-action-companion');
-            toolSubwin.type = 'button';
-            toolSubwin.setAttribute?.('data-mindflow-action', 'workspace');
-            toolSubwin.title = T('打开轻量独立窗口，适合与 PDF 左右分屏伴读对照', 'Open a compact window to read side by side with the PDF');
-            toolSubwin.addEventListener('click', (e = {}) => {
-              e.preventDefault?.(); e.stopPropagation?.();
-              try {
-                if (totalMaps > 0 && maps[0]) {
-                  this.openMindflowAttachment(maps[0], win);
-                } else {
-                  this.openMindFlow({ mode: 'open' }, win);
-                }
-              } catch (err) {
-                Zotero.logError?.('[MindFlow] Open standalone window failed: ' + err);
-              }
-            });
-
-            const toolImport = createEl('button', 'mf-tool-btn', '导入导图');
-            toolImport.setAttribute('data-l10n-id', 'mindflow-item-pane-action-import');
-            toolImport.type = 'button';
-            toolImport.disabled = false;
-            toolImport.setAttribute?.('data-mindflow-action', 'import');
-            toolImport.title = T('导入 MindFlow、JSON、Markdown 或 OPML 导图文件', 'Import a MindFlow, JSON, Markdown, or OPML map file');
-            toolImport.addEventListener('click', async (e = {}) => {
-              e.preventDefault?.(); e.stopPropagation?.();
-              await this.openMindFlow({ mode: 'import_file' }, win);
-            });
-            toolsGrid.appendChild(toolImport);
-
-            const toolBlank = createEl('button', 'mf-tool-btn', '独立空白导图');
-            toolBlank.setAttribute('data-l10n-id', 'mindflow-item-pane-action-blank');
-            toolBlank.type = 'button';
-            toolBlank.disabled = false;
-            toolBlank.setAttribute?.('data-mindflow-action', 'blank');
-            toolBlank.title = T('新建不绑定本文献的独立空白思维导图', 'Create a blank map that is not linked to this item');
-            toolBlank.addEventListener('click', async (e = {}) => {
-              e.preventDefault?.(); e.stopPropagation?.();
-              await this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
-            });
-            toolsGrid.appendChild(toolBlank);
-
-            const toolWorkbench = createEl('button', 'mf-tool-btn', '导图工作台');
-            toolWorkbench.type = 'button';
-            toolWorkbench.setAttribute('data-l10n-id', 'mindflow-item-pane-action-workbench');
-            toolWorkbench.setAttribute('data-mindflow-action', 'workbench');
-            toolWorkbench.title = T('进入 MindFlow 总工作台，查看和管理已有导图', 'Open the MindFlow workspace to browse and manage maps');
-            toolWorkbench.addEventListener('click', async (e = {}) => {
-              e.preventDefault?.(); e.stopPropagation?.();
-              if (toolWorkbench.disabled) return;
-              toolWorkbench.disabled = true;
-              try {
-                await this.openMindFlow({ mode: 'open', targetMode: 'tab' }, win);
-              } catch (error) {
-                Zotero.logError?.('[MindFlow] Open workbench failed: ' + error);
-                actionStatus.textContent = this.paneText('操作失败，请重试。', 'The action failed. Please try again.');
-              } finally {
-                toolWorkbench.disabled = false;
-              }
-            });
-            toolsGrid.appendChild(toolWorkbench);
-
             if (hasPDF) {
-              const toolPdf = createEl('button', 'mf-tool-btn mf-tool-btn-pdf', '打开 PDF');
+              const toolPdf = createEl('button', 'mf-tool-btn mf-tool-btn-pdf', T('打开 PDF', 'Open PDF'));
               toolPdf.setAttribute('data-l10n-id', 'mindflow-item-pane-action-pdf');
               toolPdf.type = 'button';
               toolPdf.disabled = false;
@@ -1753,6 +1785,31 @@
               toolsGrid.appendChild(toolPdf);
               lastPaneActions.push({ id: 'pdf', button: toolPdf, hasPDF: true });
             }
+
+            const toolImport = createEl('button', 'mf-tool-btn', T('导入导图', 'Import Map'));
+            toolImport.setAttribute('data-l10n-id', 'mindflow-item-pane-action-import');
+            toolImport.type = 'button';
+            toolImport.disabled = false;
+            toolImport.setAttribute?.('data-mindflow-action', 'import');
+            toolImport.title = T('导入 MindFlow、JSON、Markdown 或 OPML 导图文件', 'Import a MindFlow, JSON, Markdown, or OPML map file');
+            toolImport.addEventListener('click', async (e = {}) => {
+              e.preventDefault?.(); e.stopPropagation?.();
+              await this.openMindFlow({ mode: 'import_file' }, win);
+            });
+            toolsGrid.appendChild(toolImport);
+
+            const toolBlank = createEl('button', 'mf-tool-btn', T('独立空白导图', 'Blank Map'));
+            toolBlank.setAttribute('data-l10n-id', 'mindflow-item-pane-action-blank');
+            toolBlank.type = 'button';
+            toolBlank.disabled = false;
+            toolBlank.setAttribute?.('data-mindflow-action', 'blank');
+            toolBlank.title = T('新建不绑定本文献的独立空白思维导图', 'Create a blank map that is not linked to this item');
+            toolBlank.addEventListener('click', async (e = {}) => {
+              e.preventDefault?.(); e.stopPropagation?.();
+              await this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
+            });
+            toolsGrid.appendChild(toolBlank);
+            wrapper.appendChild(toolsGrid);
 
             // 5. Maps Section or Empty Guide
             if (totalMaps > 0) {
@@ -1871,14 +1928,6 @@
               mapsSection.appendChild(mapsList);
               wrapper.appendChild(mapsSection);
             }
-            const createSection = createEl('div', 'mf-create-section');
-            createSection.appendChild(templateBox);
-            const createActions = createEl('div', 'mf-create-actions');
-            createActions.appendChild(primaryBtn);
-            createActions.appendChild(toolSubwin);
-            createSection.appendChild(createActions);
-            wrapper.appendChild(createSection);
-            wrapper.appendChild(toolsGrid);
             body.appendChild(wrapper);
             if (state) { state.paneSignature = signature; state.paneActions = lastPaneActions; }
           },
