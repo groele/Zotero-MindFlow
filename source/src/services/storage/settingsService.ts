@@ -119,7 +119,7 @@ export function sanitizeSettings(settings: Partial<AppSettings>): AppSettings {
   if (!Number.isFinite(merged.autoSnapshotIntervalMinutes) || merged.autoSnapshotIntervalMinutes < 1 || merged.autoSnapshotIntervalMinutes > 120) {
     merged.autoSnapshotIntervalMinutes = 10;
   }
-  if (!Number.isFinite(merged.aiMaxPdfPages) || merged.aiMaxPdfPages < 10) {
+  if (!Number.isFinite(merged.aiMaxPdfPages) || merged.aiMaxPdfPages < 10 || merged.aiMaxPdfPages > 500) {
     merged.aiMaxPdfPages = 120;
   }
 

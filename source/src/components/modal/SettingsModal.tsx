@@ -19,7 +19,6 @@ interface SettingsModalProps {
   onUpdateSettings: (newSettings: AppSettings) => void;
   onRestoreWorkspace: (input: string | WorkspaceBackupData) => Promise<boolean>;
   onFlushCurrentDocument?: () => Promise<boolean>;
-  onLicenseChanged?: () => void;
 }
 
 type SettingsTab = 'interface' | 'webdav' | 'backup' | 'editing' | 'zotero' | 'ai' | 'license' | 'about';
@@ -1317,10 +1316,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     MF
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">MindFlow for Zotero 10</h3>
-                    <p className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">原生学术伴读增强版 v{APP_VERSION}</p>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Zotero MindFlow</h3>
+                    <p className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">知识组织与学术研读 · v{APP_VERSION}</p>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                      专为 Zotero 10 现代生态打造，深度集成文献研读、PDF 批注穿梭、AI 论文论证脉络解构与全键盘思维导图。
+                      专为 Zotero 10 至 12 现代生态打造，深度集成文献研读、PDF 批注穿梭、AI 论文论证脉络解构与全键盘思维导图。
                     </p>
                   </div>
                 </div>

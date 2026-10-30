@@ -15,5 +15,5 @@ export function emergencyDocument(
 ): MindMapDocument | null {
   const captured = captureNodeDrafts(document,
     draft && draft.documentId === document?.id ? [draft] : []);
-  return captured ? { ...captured, relationships } : null;
+  return captured ? { ...captured, relationships: Array.isArray(relationships) ? [...relationships] : [] } : null;
 }

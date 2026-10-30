@@ -1072,6 +1072,7 @@
 
     removeLocalization(doc) {
       doc?.getElementById('mindflow-item-pane-styles')?.remove();
+      doc?.getElementById('mindflow-itempane-styles')?.remove();
       if (!this.localizedDocs.has(doc)) return;
       try {
         doc.querySelector('link[rel="localization"][href="mindflow.ftl"]')?.remove();
