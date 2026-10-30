@@ -34,6 +34,7 @@ mindflow-item-pane-action-companion = Companion window
 mindflow-item-pane-action-import = Import map
 mindflow-item-pane-action-blank = Standalone map
 mindflow-item-pane-action-pdf = Open PDF
+mindflow-item-pane-pdf-open-failed = Unable to open the PDF. Check that the attachment has been downloaded.
 mindflow-item-pane-action-workbench = Map workspace
     .title = Open the MindFlow workspace to browse and manage existing maps
 mindflow-item-pane-card-open = Open

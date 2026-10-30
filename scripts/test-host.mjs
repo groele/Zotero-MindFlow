@@ -162,6 +162,7 @@ function fixture(options = {}) {
   const ctx = { Zotero, window:win, ChromeUtils: { importESModule: () => ({ FilePicker: options.exportPicker }) }, Services: { wm: { addListener() {}, removeListener() {}, getEnumerator: () => ({hasMoreElements:()=>false}) } },
     IOUtils, PathUtils: { join: (...parts)=>parts.join('/'), parent:p=>p.slice(0,p.lastIndexOf('/')), filename:p=>p.split('/').pop(), tempDir:'/tmp' },
     URL, setTimeout, clearTimeout, console };
+  if (options.omitWindow) delete ctx.window;
   vm.runInNewContext(runtime.replace('  Zotero.MindFlow.init();','  Zotero.MindFlow._testLLMRequest = callLLMForZotero;'), ctx);
   const host = Zotero.MindFlow;
   function paper(key, libraryID=1) {
@@ -1238,6 +1239,31 @@ test('sidebar quick actions follow the selected PDF parent and keep standalone i
   assert.equal(opened[4].targetMode, 'tab');
   assert.equal(opened[4].items, undefined, 'workbench must not bind the selected paper');
   assert.equal(opened[4].forceNew, undefined, 'workbench must not create another document');
+});
+
+test('sidebar PDF works without a sandbox window and awaits reader failures before fallback', async () => {
+  const f = fixture({ omitWindow: true }), paper = f.paper('PDFOPEN1');
+  const pdf = f.attachment('PDFOPEN2', 1, paper.id, '/paper.pdf');
+  pdf.attachmentFilename = 'paper.pdf'; paper.attachments.push(pdf.id);
+  f.host.registerItemPaneSection();
+  const config = f.Zotero.ItemPaneManager.sections.get(f.host.itemPaneSectionID);
+  const body = f.doc.createElement('div'); config.onRender({ body, item: paper });
+  const all = n => [n, ...n.children.flatMap(all)];
+  const button = all(body).find(n => n.attrs['data-mindflow-action'] === 'pdf');
+  let opened;
+  f.Zotero.Reader = { async open(id) { opened = id; } };
+  await button.click(); assert.equal(opened, pdf.id);
+  f.Zotero.Reader.open = async () => { throw new Error('reader rejected'); };
+  let fallback;
+  f.win.ZoteroPane.viewAttachment = async id => { fallback = id; };
+  await button.click(); assert.equal(fallback, pdf.id);
+  f.win.ZoteroPane.viewAttachment = async () => { throw new Error('missing file'); };
+  await button.click();
+  assert.equal(button.disabled, false);
+  const status = all(body).find(n => n.attrs.role === 'status');
+  assert.equal(status.attrs['data-l10n-id'], 'mindflow-item-pane-pdf-open-failed');
+  f.Zotero.Reader.open = async id => { opened = id; };
+  await button.click(); assert.equal(status.textContent, '');
 });
 
 test('sidebar creates the first map with the selected template', async () => {

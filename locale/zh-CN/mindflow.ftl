@@ -33,6 +33,7 @@ mindflow-item-pane-action-companion = 伴读窗口
 mindflow-item-pane-action-import = 导入导图
 mindflow-item-pane-action-blank = 独立空白导图
 mindflow-item-pane-action-pdf = 打开 PDF
+mindflow-item-pane-pdf-open-failed = 无法打开 PDF，请检查附件是否已下载。
 mindflow-item-pane-action-workbench = 导图工作台
     .title = 进入 MindFlow 总工作台，查看和管理已有导图
 mindflow-item-pane-card-open = 打开

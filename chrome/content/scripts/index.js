@@ -558,11 +558,12 @@
     requestId: `open-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   });
 
-  const openPDFForItem = async (item) => {
+  const openPDFForItem = async (item, hostWindow = null) => {
     if (!item) return false;
+    const win = hostWindow || Zotero.getMainWindow?.();
     let target = item;
     const isPdf = (att) => {
-      if (!att) return false;
+      if (!att || att.deleted || !att.isAttachment?.()) return false;
       try {
         if (typeof att.isPDFAttachment === 'function' && att.isPDFAttachment()) return true;
       } catch (_) {}
@@ -578,6 +579,7 @@
     } else {
       try {
         if (typeof target.getBestAttachment === 'function') {
+          Zotero.debug?.('[MindFlow] Resolving PDF for item ' + target.id);
           const best = await target.getBestAttachment();
           if (isPdf(best)) pdfAtt = best;
         }
@@ -601,59 +603,38 @@
 
     if (!pdfAtt) {
       showMindFlowNotice('未检测到 PDF 附件', '所选文献尚未关联可读取的 PDF 附件，已在文献库中定位该条目。');
-      const tabs = window.Zotero_Tabs;
+      const tabs = win?.Zotero_Tabs;
       if (tabs && Array.isArray(tabs._tabs)) {
         const libTab = tabs._tabs.find((t) => t && (t.type === 'library' || t.id === 'zotero-pane'));
         if (libTab) tabs.select(libTab.id);
       }
-      const pane = window.ZoteroPane || Zotero.getActiveZoteroPane?.();
+      const pane = win?.ZoteroPane || Zotero.getActiveZoteroPane?.();
       if (pane && (target.id || item.id)) {
         pane.selectItem(target.id || item.id);
       }
       return false;
     }
 
-    const win = window;
-    const readerService = Zotero.Reader || win.Zotero?.Reader || (Zotero.getMainWindow?.()?.Zotero?.Reader);
+    const readerService = Zotero.Reader || win?.Zotero?.Reader;
     let opened = false;
 
     if (readerService && typeof readerService.open === 'function') {
       try {
-        const res = readerService.open(pdfAtt.id);
-        if (res && typeof res.catch === 'function') {
-          res.catch(() => {
-            try { readerService.open({ itemID: pdfAtt.id }); } catch (_) {}
-          });
-        }
+        Zotero.debug?.('[MindFlow] Opening PDF attachment ' + pdfAtt.id);
+        await readerService.open(pdfAtt.id);
         opened = true;
       } catch (err) {
-        try {
-          readerService.open({ itemID: pdfAtt.id });
-          opened = true;
-        } catch (_) {}
-      }
-    }
-
-    if (!opened && typeof Zotero.launchURL === 'function') {
-      try {
-        const groupID = Zotero.Libraries?.get?.(pdfAtt.libraryID)?.groupID;
-        const pdfUri = groupID
-          ? `zotero://open-pdf/groups/${groupID}/items/${pdfAtt.key}`
-          : `zotero://open-pdf/library/items/${pdfAtt.key}`;
-        Zotero.launchURL(pdfUri);
-        opened = true;
-      } catch (err) {
-        Zotero.logError?.('[MindFlow] launchURL open-pdf error: ' + err);
+        Zotero.logError?.('[MindFlow] Reader open failed: ' + err);
       }
     }
 
     if (!opened) {
-      const pane = window.ZoteroPane || Zotero.getActiveZoteroPane?.();
-      if (pane && typeof pane.viewItem === 'function') {
+      const pane = win?.ZoteroPane || Zotero.getActiveZoteroPane?.();
+      if (pane && typeof pane.viewAttachment === 'function') {
         try {
-          pane.viewItem(pdfAtt.id);
+          await pane.viewAttachment(pdfAtt.id);
           opened = true;
-        } catch (_) {}
+        } catch (err) { Zotero.logError?.('[MindFlow] Attachment open failed: ' + err); }
       }
     }
 
@@ -1717,9 +1698,19 @@
               toolPdf.disabled = false;
               toolPdf.setAttribute?.('data-mindflow-action', 'pdf');
               toolPdf.title = '在 Zotero 内置阅读器中打开本文献的 PDF 全文';
-              toolPdf.addEventListener('click', (e = {}) => {
+              toolPdf.addEventListener('click', async (e = {}) => {
                 e.preventDefault?.(); e.stopPropagation?.();
-                openPDFForItem(selectedPDF || target);
+                if (toolPdf.disabled) return;
+                toolPdf.disabled = true;
+                try {
+                  if (!await openPDFForItem(selectedPDF || target, win)) throw new Error('PDF could not be opened');
+                  actionStatus.textContent = '';
+                  actionStatus.removeAttribute('data-l10n-id');
+                } catch (error) {
+                  Zotero.logError?.('[MindFlow] Sidebar PDF open failed: ' + error);
+                  actionStatus.textContent = '无法打开 PDF，请检查附件是否已下载。';
+                  actionStatus.setAttribute('data-l10n-id', 'mindflow-item-pane-pdf-open-failed');
+                } finally { toolPdf.disabled = false; }
               });
               toolsGrid.appendChild(toolPdf);
               lastPaneActions.push({ id: 'pdf', button: toolPdf, hasPDF: true });

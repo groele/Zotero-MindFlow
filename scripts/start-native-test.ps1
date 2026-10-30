@@ -1,4 +1,4 @@
-param([string]$PackageName, [string]$PreviewMap)
+param([string]$PackageName, [string]$PreviewMap, [string]$RegressionScript)
 $ErrorActionPreference = 'Stop'
 $workspace = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $testRoot = Join-Path $workspace ('tests\native-test-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
@@ -46,8 +46,8 @@ if (window._mindflowInitialAction?.mode === 'import_file') {
 '@
   [IO.File]::WriteAllText($testIndexPath, $testIndex.Replace('</head>', $importProbe + '</head>'))
 }
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot $(if ($PreviewMap) { 'native-preview-map.js' } else { 'native-regression.js' })) -Destination (Join-Path $addon 'native-regression.js')
-if (!$PreviewMap) {
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot $(if ($RegressionScript) { $RegressionScript } elseif ($PreviewMap) { 'native-preview-map.js' } else { 'native-regression.js' })) -Destination (Join-Path $addon 'native-regression.js')
+if (!$PreviewMap -and !$RegressionScript) {
   & node (Join-Path $PSScriptRoot 'build-modal-test.mjs')
   if ($LASTEXITCODE -ne 0) { throw 'Modal test fixture build failed.' }
   Copy-Item -LiteralPath (Join-Path $workspace 'tests/modal-fixture/modal-test.html') -Destination (Join-Path $addon 'chrome/content/modal-test.html')
