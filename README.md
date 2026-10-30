@@ -9,7 +9,7 @@
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![当前正式版](https://img.shields.io/badge/version-12.6.8-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.8) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.8/zotero-mindflow-12.6.8.xpi) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
+[![当前正式版](https://img.shields.io/badge/version-12.6.10-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.6.10) · [下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.10/zotero-mindflow-12.6.10.xpi) · [问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
 
 [产品定位](#overview) · [安装与更新](#installation) · [快速开始](#quick-start) · [核心功能](#features) · [设置与使用](#settings) · [数据、同步与外部服务](#data) · [兼容性与验证范围](#compatibility) · [常见问题](#troubleshooting) · [开发与详细文档](#development) · [系列产品](#series) · [项目来源与许可](#license)
 
@@ -25,7 +25,7 @@
 
 ## 安装与更新
 
-1. 下载 [zotero-mindflow-12.6.8.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.8/zotero-mindflow-12.6.8.xpi)（当前正式版 **12.6.8**），不要安装 Source code ZIP。
+1. 下载 [zotero-mindflow-12.6.10.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v12.6.10/zotero-mindflow-12.6.10.xpi)（当前正式版 **12.6.10**），不要安装 Source code ZIP。
 2. 在 Zotero 打开 **工具 → 插件／附加组件**，从齿轮菜单选择 **从文件安装插件**。
 3. 选择 XPI，完成安装；按提示重启 Zotero。
 
