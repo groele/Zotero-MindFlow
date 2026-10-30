@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Zotero MindFlow",
-  "version": "12.6.6",
+  "version": "12.6.7",
   "description": "Organize papers, annotations, and ideas into editable maps.",
   "homepage_url": "https://github.com/groele/Zotero-MindFlow",
   "author": "groele",

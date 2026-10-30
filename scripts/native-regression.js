@@ -290,7 +290,7 @@
     await run('native sidebar quick actions render without overflow and route the selected paper', async () => {
       const nav = [...win.document.querySelectorAll('item-pane-sidenav')].map(n => n.querySelector('.btn[data-pane*="mindflow"]')).find(Boolean);
       nav.click();
-      const panel = await waitFor(() => [...win.document.querySelectorAll('.mf-pane-wrap')].find(n => n.querySelector('.mf-template-select') && n.getBoundingClientRect().width > 0), 'visible MindFlow sidebar');
+      let panel = await waitFor(() => [...win.document.querySelectorAll('.mf-pane-wrap')].find(n => n.querySelector('.mf-template-select') && n.getBoundingClientRect().width > 0), 'visible MindFlow sidebar');
       const collapsible = panel.closest('collapsible-section');
       check(collapsible?.empty === false && collapsible.open === true, 'MindFlow quick actions did not become visible on first open');
       await win.document.l10n.translateFragment(panel);
@@ -308,6 +308,7 @@
         check(calls[0].items[0].id === a.id && calls[1].parentID === a.id && calls[4].items[0].id === a.id && calls[4].forceNew, 'sidebar used stale paper or failed to create a new map');
         check(!calls[3].items && calls[3].forceNew, 'standalone map became linked');
       } finally { hostRuntime.openMindFlow = open; hostRuntime.openMindflowAttachment = openAttachment; }
+      panel = await waitFor(() => [...win.document.querySelectorAll('.mf-pane-wrap')].find(n => n.isConnected && n.querySelector('.mf-template-select') && n.getBoundingClientRect().width > 0), 'sidebar after action refresh');
       const originalWidth = panel.style.width;
       try {
         for (const width of [320, 240, 200]) {
@@ -316,6 +317,7 @@
           check(panel.scrollWidth <= panel.clientWidth + 1, 'sidebar overflows at ' + width + 'px');
           for (const button of panel.querySelectorAll('button')) {
             const box = button.getBoundingClientRect(), parent = panel.getBoundingClientRect();
+            check(box.width > 0 && box.height > 0, 'button is not visible at ' + width + 'px');
             check(box.right <= parent.right + 1, 'button overflows at ' + width + 'px');
           }
         }
@@ -323,6 +325,7 @@
       panel.scrollIntoView({ block: 'nearest' });
       await Zotero.Promise.delay(150);
       const rect = panel.getBoundingClientRect();
+      check(rect.width > 0 && rect.height > 0, 'cannot capture a detached or empty sidebar');
       const rail = nav.closest('item-pane-sidenav').getBoundingClientRect();
       check(rect.right <= rail.left + 1 || rect.left >= rail.right - 1, 'sidebar content overlaps the native icon rail');
       const canvas = win.document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
@@ -330,6 +333,38 @@
       canvas.getContext('2d').drawWindow(win, Math.max(0, rect.x - 8), Math.max(0, rect.y - 8), canvas.width, canvas.height, 'rgb(255,255,255)');
       const binary = win.atob(canvas.toDataURL('image/png').split(',')[1]);
       await IOUtils.write(PathUtils.join(Zotero.DataDirectory.dir, 'sidebar-ui.png'), Uint8Array.from(binary, c => c.charCodeAt(0)));
+    });
+    await run('sidebar visual fixtures capture connected empty and populated states', async () => {
+      const emptyPaper = await paper('MindFlow layout preview — long literature title for a narrow native sidebar');
+      const dimensions = { width: win.outerWidth, height: win.outerHeight };
+      const evidence = [];
+      try {
+        win.resizeTo(Math.max(win.outerWidth, 1100), Math.max(win.outerHeight, 1100));
+        for (const [name, item] of [['populated', a], ['empty', emptyPaper]]) {
+          await win.ZoteroPane.itemsView.selectItems([item.id]);
+          let panel = await waitFor(() => [...win.document.querySelectorAll('.mf-pane-wrap')].find(n => n.isConnected && n.querySelector('.mf-target-title')?.textContent === item.getField('title') && n.getBoundingClientRect().width > 0), 'visual fixture ' + name);
+          for (const width of [320, 240]) {
+            panel.style.width = width + 'px';
+            panel.scrollIntoView({ block: 'end' });
+            await Zotero.Promise.delay(150);
+            const rect = panel.getBoundingClientRect();
+            check(rect.width > 0 && rect.height > 0 && panel.isConnected, 'visual fixture detached');
+            check(panel.scrollWidth <= panel.clientWidth + 1, 'visual fixture overflow');
+            const canvas = win.document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
+            const x = Math.max(0, rect.x - 4), y = Math.max(0, rect.y - 4);
+            canvas.width = Math.ceil(rect.width + 8); canvas.height = Math.ceil(Math.min(rect.height + 8, win.innerHeight - y));
+            canvas.getContext('2d').drawWindow(win, x, y, canvas.width, canvas.height, 'rgb(255,255,255)');
+            const bytes = win.atob(canvas.toDataURL('image/png').split(',')[1]);
+            await IOUtils.write(PathUtils.join(Zotero.DataDirectory.dir, 'sidebar-' + name + '-' + width + '.png'), Uint8Array.from(bytes, c => c.charCodeAt(0)));
+            evidence.push({ name, width, connected: panel.isConnected, height: rect.height, font: win.getComputedStyle(panel).font, color: win.getComputedStyle(panel).color });
+          }
+          panel.style.width = '';
+        }
+      } finally {
+        win.resizeTo(dimensions.width, dimensions.height);
+        await win.ZoteroPane.itemsView.selectItems([a.id]);
+      }
+      await IOUtils.writeUTF8(PathUtils.join(Zotero.DataDirectory.dir, 'sidebar-visual-metrics.json'), JSON.stringify(evidence, null, 2));
     });
     await run('native sidebar import reuses the workspace and requests its existing file picker', async () => {
       host.openMindFlow({ mode: 'open', forceNew: true }, win);

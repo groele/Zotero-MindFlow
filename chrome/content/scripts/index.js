@@ -1154,766 +1154,85 @@
             vertical-align: middle !important;
           }
 
+          /* One scoped palette and spacing system for the native item pane. */
           .mf-pane-wrap {
-            display: flex;
-            contain: inline-size;
-            container-type: inline-size;
-            flex-direction: column;
-            gap: 8px;
-            padding: 6px 2px 10px 2px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            font-size: 12px;
-            box-sizing: border-box;
-            width: 100%;
-            min-width: 0;
-            max-width: 100%;
-            color: var(--fill-primary, inherit);
-          }
-
-          .mf-pane-wrap * {
-            box-sizing: border-box;
-          }
-
-          /* Header card & Status badge */
-          .mf-header-card {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            padding: 8px 10px;
-            background: rgba(0, 0, 0, 0.025);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            border-radius: 8px;
-            box-sizing: border-box;
-          }
-
-          .mf-header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-          }
-
-          .mf-status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 12px;
-            line-height: 1.3;
-          }
-
-          .mf-status-empty {
-            background: rgba(100, 116, 139, 0.12);
-            color: #64748b;
-          }
-
-          .mf-status-active {
-            background: rgba(64, 114, 229, 0.12);
-            color: #4072e5;
-          }
-
-          .mf-header-meta {
-            font-size: 11px;
-            color: var(--fill-secondary, #64748b);
-            flex-shrink: 0;
-          }
-
-          .mf-target-title {
-            font-size: 11.5px;
-            font-weight: 500;
-            line-height: 1.35;
-            color: var(--fill-primary, inherit);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-
-          /* Primary Action Button */
-          .mf-btn-primary {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            width: 100%;
-            min-height: 34px;
-            padding: 7px 12px;
-            border: 1px solid var(--accent-blue, #4072e5);
-            border-radius: 6px;
-            background: var(--accent-blue, #4072e5);
-            color: #ffffff !important;
-            font: inherit;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-            transition: opacity 0.15s ease, transform 0.1s ease;
-            user-select: none;
-            box-sizing: border-box;
-          }
-
-          .mf-btn-primary:hover:not(:disabled) {
-            opacity: 0.92;
-            transform: translateY(-0.5px);
-          }
-
-          .mf-btn-primary:active:not(:disabled) {
-            transform: translateY(0);
-          }
-
-          .mf-btn-primary:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-          }
-
-          .mf-hint-text {
-            font-size: 11px;
-            line-height: 1.4;
-            color: var(--fill-secondary, #64748b);
-            margin-top: -2px;
-            padding-left: 2px;
-          }
-
-          /* Template Box */
-          .mf-template-box {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            padding: 8px 10px;
-            background: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 6px;
-            box-sizing: border-box;
-          }
-
-          .mf-template-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-          }
-
-          .mf-template-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--fill-secondary, #64748b);
-            white-space: nowrap;
-          }
-
-          .mf-template-select {
-            flex: 1;
-            min-width: 0;
-            height: 25px;
-            padding: 1px 6px;
-            font-size: 11.5px;
-            border-radius: 4px;
-            border: 1px solid rgba(0, 0, 0, 0.15);
-            background: transparent;
-            color: inherit;
-            cursor: pointer;
-            box-sizing: border-box;
-          }
-
-          .mf-btn-template-create {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            padding: 5px 10px;
-            font-size: 11.5px;
-            font-weight: 500;
-            border-radius: 4px;
-            border: 1px solid rgba(0, 0, 0, 0.15);
-            background: #ffffff;
-            color: var(--fill-primary, inherit);
-            cursor: pointer;
-            transition: all 0.15s ease;
-            box-sizing: border-box;
-          }
-
-          .mf-btn-template-create:hover:not(:disabled) {
-            background: rgba(0, 0, 0, 0.05);
-            border-color: var(--accent-blue, #4072e5);
-            color: var(--accent-blue, #2563eb);
-          }
-
-          .mf-btn-template-create:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-          }
-
-          /* Quick Tools Grid (2 Columns, matching TaskFlow td-action-grid) */
-          .mf-tools-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-top: 2px;
-            box-sizing: border-box;
-          }
-
-          .mf-tool-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            padding: 5px 6px;
-            min-height: 28px;
-            font-size: 11px;
-            font-weight: 500;
-            color: #334155 !important;
-            background: #ffffff !important;
-            border: 1px solid rgba(0, 0, 0, 0.1) !important;
-            border-radius: 6px !important;
-            cursor: pointer !important;
-            text-decoration: none;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            appearance: none;
-            -moz-appearance: none;
-            transition: all 0.15s ease;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-            box-sizing: border-box;
-          }
-
-          .mf-tool-btn:hover:not(:disabled) {
-            background: #f8fafc !important;
-            border-color: rgba(64, 114, 229, 0.4) !important;
-            color: #2563eb !important;
-            transform: translateY(-0.5px);
-          }
-
-          .mf-tool-btn:active:not(:disabled) {
-            transform: translateY(0);
-          }
-
-          .mf-tool-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-          }
-
-          .mf-tool-btn-pdf {
-            grid-column: 1 / -1;
-            background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(59, 130, 246, 0.1)) !important;
-            border-color: rgba(37, 99, 235, 0.25) !important;
-            color: #1d4ed8 !important;
-            font-weight: 600;
-          }
-
-          .mf-tool-btn-pdf:hover:not(:disabled) {
-            background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.18)) !important;
-            border-color: #2563eb !important;
-            color: #1e40af !important;
-          }
-
-          /* Maps List */
-          .mf-maps-section {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            box-sizing: border-box;
-          }
-
-          .mf-maps-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 2px 2px;
-          }
-
-          .mf-maps-title {
-            font-size: 11.5px;
-            font-weight: 600;
-            color: var(--fill-primary, inherit);
-          }
-
-          .mf-btn-refresh {
-            background: transparent;
-            border: none;
-            font-size: 12px;
-            cursor: pointer;
-            color: var(--fill-secondary, #64748b);
-            padding: 1px 4px;
-            border-radius: 3px;
-          }
-
-          .mf-btn-refresh:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--fill-primary, inherit);
-          }
-
-          .mf-maps-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            max-height: 260px;
-            overflow-y: auto;
-            box-sizing: border-box;
-          }
-
-          .mf-map-card {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            padding: 8px 10px;
-            border-radius: 6px;
-            background: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-            transition: border-color 0.15s ease;
-            box-sizing: border-box;
-          }
-
-          .mf-map-card:hover {
-            border-color: var(--accent-blue, #4072e5);
-          }
-
-          .mf-map-card-top {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            min-width: 0;
-          }
-
-          .mf-map-icon {
-            flex-shrink: 0;
-            font-size: 14px;
-          }
-
-          .mf-map-name {
-            flex: 1;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--fill-primary, inherit);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-
-          .mf-map-card-meta {
-            font-size: 10.5px;
-            color: var(--fill-secondary, #888888);
-          }
-
-          .mf-map-card-actions {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 3px;
-            flex-wrap: wrap;
-          }
-
-          .mf-card-btn {
-            flex: 1;
-            min-width: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-            height: 24px;
-            padding: 0 6px;
-            font-size: 11px;
-            font-weight: 500;
-            border-radius: 4px;
-            border: 1px solid rgba(0, 0, 0, 0.12);
-            background: #ffffff;
-            color: var(--fill-primary, inherit);
-            cursor: pointer;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            transition: all 0.12s ease;
-            box-sizing: border-box;
-          }
-
-          .mf-card-btn:hover:not(:disabled) {
-            background: rgba(0, 0, 0, 0.05);
-            border-color: var(--accent-blue, #4072e5);
-            color: var(--accent-blue, #2563eb);
-          }
-
-          .mf-card-btn:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-          }
-
-          .mf-card-btn-primary {
-            background: var(--accent-blue, #4072e5) !important;
-            color: #ffffff !important;
-            border-color: var(--accent-blue, #4072e5) !important;
-            font-weight: 600;
-          }
-
-          .mf-card-btn-primary:hover:not(:disabled) {
-            opacity: 0.92;
-            color: #ffffff !important;
-          }
-
-          /* Empty Guide Card */
-          .mf-empty-guide {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 6px;
-            padding: 12px 10px;
-            background: rgba(0, 0, 0, 0.02);
-            border: 1px dashed rgba(0, 0, 0, 0.15);
-            border-radius: 8px;
-            box-sizing: border-box;
-          }
-
-          .mf-empty-icon {
-            font-size: 20px;
-            line-height: 1;
-          }
-
-          .mf-empty-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--fill-primary, inherit);
-          }
-
-          .mf-empty-desc {
-            font-size: 11px;
-            line-height: 1.45;
-            color: var(--fill-secondary, #64748b);
-            max-width: 240px;
-          }
-
-          /* Dark theme support */
-          @media (prefers-color-scheme: dark) {
-            .mf-pane-wrap {
-              color: #e2e8f0;
-            }
-            .mf-header-card {
-              background: rgba(255, 255, 255, 0.04);
-              border-color: rgba(255, 255, 255, 0.08);
-            }
-            .mf-target-title {
-              color: #f1f5f9;
-            }
-            .mf-template-box {
-              background: rgba(255, 255, 255, 0.03);
-              border-color: rgba(255, 255, 255, 0.1);
-            }
-            .mf-template-select {
-              background: #1e293b;
-              border-color: #334155;
-              color: #f1f5f9;
-            }
-            .mf-btn-template-create {
-              background: #1e293b;
-              border-color: rgba(255, 255, 255, 0.12);
-              color: #e2e8f0;
-            }
-            .mf-btn-template-create:hover:not(:disabled) {
-              background: #334155;
-              border-color: #60a5fa;
-              color: #ffffff;
-            }
-            .mf-tool-btn {
-              background: #1e293b !important;
-              border-color: rgba(255, 255, 255, 0.1) !important;
-              color: #e2e8f0 !important;
-            }
-            .mf-tool-btn:hover:not(:disabled) {
-              background: #334155 !important;
-              border-color: #60a5fa !important;
-              color: #93c5fd !important;
-            }
-            .mf-tool-btn-pdf {
-              background: rgba(37, 99, 235, 0.15) !important;
-              border-color: rgba(59, 130, 246, 0.35) !important;
-              color: #60a5fa !important;
-            }
-            .mf-tool-btn-pdf:hover:not(:disabled) {
-              background: rgba(37, 99, 235, 0.25) !important;
-              border-color: #3b82f6 !important;
-              color: #93c5fd !important;
-            }
-            .mf-map-card {
-              background: #1e293b;
-              border-color: rgba(255, 255, 255, 0.1);
-            }
-            .mf-map-name {
-              color: #f1f5f9;
-            }
-            .mf-card-btn {
-              background: #0f172a;
-              border-color: rgba(255, 255, 255, 0.12);
-              color: #e2e8f0;
-            }
-            .mf-card-btn:hover:not(:disabled) {
-              background: #334155;
-              border-color: #60a5fa;
-              color: #ffffff;
-            }
-            .mf-card-btn-primary {
-              background: #2563eb !important;
-              border-color: #3b82f6 !important;
-              color: #ffffff !important;
-            }
-            .mf-empty-guide {
-              background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-              border-color: rgba(255, 255, 255, 0.1);
-            }
-            .mf-empty-title {
-              color: #f1f5f9;
-            }
-            .mf-empty-desc {
-              color: #94a3b8;
-            }
-          }
-
-          /* Follow Zotero's semantic colors and native control metrics */
-          .mf-pane-wrap {
-            color: var(--fill-primary, CanvasText);
-            color-scheme: light dark;
-          }
-          .mf-header-card, .mf-template-box, .mf-map-card, .mf-tool-btn {
-            background: var(--material-background, Canvas) !important;
-            border-color: var(--fill-quinary, #cbd5e1) !important;
-            box-shadow: none;
-          }
-          .mf-target-title, .mf-map-name, .mf-tool-btn, .mf-card-btn {
-            color: var(--fill-primary, CanvasText) !important;
-          }
-          .mf-header-meta, .mf-hint-text, .mf-empty-desc, .mf-map-card-meta {
-            color: var(--fill-secondary, GrayText);
-          }
-
-          /* Calm, compact controls that sit naturally beside Zotero's native pane. */
-          .mf-pane-wrap {
-            gap: 7px;
-            padding: 5px 3px 9px;
-            font-family: system-ui, "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
-            font-size: 13px;
-          }
-
-          .mf-header-card,
-          .mf-template-box,
-          .mf-map-card,
-          .mf-empty-guide {
-            border-radius: 9px;
-          }
-
-          .mf-header-card,
-          .mf-template-box,
-          .mf-map-card {
-            padding: 9px 10px;
-          }
-
-          .mf-header-card {
-            gap: 5px;
-            background: color-mix(in srgb, currentColor 2%, transparent);
-            border-color: color-mix(in srgb, currentColor 12%, transparent);
-          }
-
-          .mf-status-badge,
-          .mf-header-meta,
-          .mf-map-card-meta {
-            font-size: 11px;
-          }
-
-          .mf-target-title,
-          .mf-map-name,
-          .mf-empty-title {
-            font-size: 13px;
-            line-height: 1.4;
-          }
-
-          .mf-btn-primary {
-            min-height: 36px;
-            border-color: var(--accent-blue, #3b78b4);
-            border-radius: 7px;
-            background: var(--accent-blue, #3b78b4);
-            font-size: 13px;
-            box-shadow: none;
-          }
-
-          .mf-hint-text,
-          .mf-empty-desc {
-            font-size: 12px;
-            line-height: 1.5;
-          }
-
-          .mf-template-label,
-          .mf-template-select,
-          .mf-btn-template-create,
-          .mf-tool-btn,
-          .mf-card-btn {
-            font: inherit;
-            font-size: 12px;
-          }
-
-          .mf-template-select {
-            min-height: 30px;
-            height: auto;
-            border-radius: 6px;
-            border-color: color-mix(in srgb, currentColor 18%, transparent);
-          }
-
-          .mf-btn-template-create,
-          .mf-tool-btn,
-          .mf-card-btn {
-            min-height: 30px;
-            border-radius: 7px;
-            border-color: color-mix(in srgb, currentColor 18%, transparent) !important;
-            box-shadow: none;
-          }
-
-          .mf-tool-btn:hover:not(:disabled),
-          .mf-btn-template-create:hover:not(:disabled),
-          .mf-card-btn:hover:not(:disabled) {
-            background: color-mix(in srgb, currentColor 4%, transparent) !important;
-            border-color: var(--accent-blue, #3b78b4) !important;
-            color: var(--accent-blue, #3b78b4) !important;
-          }
-
-          .mf-tool-btn-pdf {
-            background: color-mix(in srgb, var(--accent-blue, #3b78b4) 7%, transparent) !important;
-            border-color: color-mix(in srgb, var(--accent-blue, #3b78b4) 24%, transparent) !important;
-            color: var(--accent-blue, #3b78b4) !important;
-          }
-
-          .mf-empty-guide {
-            gap: 7px;
-            align-items: flex-start;
-            text-align: left;
-            padding: 9px 10px;
-            background: color-mix(in srgb, currentColor 2%, transparent);
-            border-color: color-mix(in srgb, currentColor 18%, transparent);
-          }
-
-          .mindflow-pane-actions {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 6px;
-            padding-top: 9px;
-            border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-          }
-
-          .mf-empty-icon {
-            display: none;
-          }
-
-          .mf-btn-primary:focus-visible,
-          .mf-btn-template-create:focus-visible,
-          .mf-tool-btn:focus-visible,
-          .mf-card-btn:focus-visible,
-          .mf-template-select:focus-visible {
-            outline: 2px solid var(--accent-blue, #3b78b4);
-            outline-offset: 2px;
-          }
-
-          @container (max-width: 210px) {
-            .mf-tools-grid {
-              grid-template-columns: minmax(0, 1fr);
-            }
-
-            .mindflow-pane-actions {
-              grid-template-columns: minmax(0, 1fr);
-            }
-
-            .mf-tool-btn-pdf {
-              grid-column: auto;
-            }
-
-            .mf-template-row {
-              align-items: flex-start;
-              flex-wrap: wrap;
-            }
-
-            .mf-template-label {
-              padding-top: 6px;
-            }
-          }
-
-          /* Match the host pane: simple rows, muted controls and a clear action grid. */
-          .mf-pane-wrap {
-            gap: 10px;
-            font: inherit;
-            line-height: 1.5;
-            color-scheme: inherit;
-          }
-          .mf-pane-wrap .mf-header-card,
-          .mf-pane-wrap .mf-template-box {
-            padding: 0;
-            border: 0 !important;
-            border-radius: 0;
-            background: transparent !important;
-          }
-          .mf-pane-wrap .mf-header-card { gap: 5px; }
-          .mf-pane-wrap .mf-template-row { gap: 10px; flex-wrap: nowrap; align-items: center; }
-          .mf-pane-wrap .mf-template-label { padding: 0; font-weight: 400; }
-          .mf-pane-wrap .mf-template-select { flex: 1 1 0; width: 0; min-width: 0; }
-          .mf-pane-wrap .mf-btn-primary,
-          .mf-pane-wrap .mf-btn-template-create,
-          .mf-pane-wrap .mf-tool-btn {
-            min-width: 0;
-            min-height: 30px;
-            padding: 6px 8px;
-            border: 1px solid color-mix(in srgb, var(--accent-blue, #3b78b4) 20%, transparent) !important;
-            border-radius: 5px !important;
-            background: color-mix(in srgb, var(--accent-blue, #3b78b4) 8%, transparent) !important;
-            color: var(--accent-blue, #3b78b4) !important;
-            box-shadow: none;
-            font: inherit;
-            white-space: normal;
-            overflow-wrap: anywhere;
-          }
-          .mf-pane-wrap .mf-hint-text { margin: 0; padding: 0; font-size: .92em; }
-          .mf-pane-wrap .mindflow-pane-actions { gap: 7px; padding-top: 10px; }
-          .mf-pane-wrap .mf-tool-btn-pdf { grid-column: 1 / -1; }
-          .mf-pane-wrap .mf-map-card { min-width: 0; }
-          .mf-pane-wrap {
-            --mf-line: color-mix(in srgb, currentColor 12%, transparent);
             --mf-blue: light-dark(#315f94, #a8c9ef);
             --mf-green: light-dark(#316d58, #a0d3bb);
             --mf-amber: light-dark(#7a5d2c, #e3c58d);
+            --mf-line: color-mix(in srgb, currentColor 12%, transparent);
+            --mf-muted: var(--fill-secondary, GrayText);
+            display: flex; flex-direction: column; gap: 12px;
+            contain: inline-size; container-type: inline-size;
+            width: 100%; min-width: 0; max-width: 100%;
+            padding: 6px 2px 12px; box-sizing: border-box;
+            font: inherit; line-height: 1.5;
+            color: var(--fill-primary, CanvasText); color-scheme: inherit;
           }
-          .mf-pane-wrap .mf-status-badge {
-            padding: 0;
-            border-radius: 0;
-            background: transparent;
-            color: var(--fill-primary, CanvasText);
-            font: inherit;
-            font-weight: 600;
+          .mf-pane-wrap * { box-sizing: border-box; }
+          .mf-pane-wrap :is(button, select) { font: inherit; min-width: 0; max-width: 100%; }
+          .mf-pane-wrap button { cursor: pointer; }
+          .mf-pane-wrap button:disabled { opacity: .55; cursor: default; }
+          .mf-pane-wrap :is(button, select):focus-visible { outline: 2px solid var(--color-accent, Highlight); outline-offset: 2px; }
+          .mf-pane-wrap .mf-action-status { font-size: .92em; color: var(--mf-muted); }
+          .mf-pane-wrap .mf-action-status:empty { display: none; }
+          .mf-pane-wrap .mf-header-card { display: flex; flex-direction: column; gap: 5px; }
+          .mf-pane-wrap .mf-header-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+          .mf-pane-wrap .mf-status-badge { color: var(--mf-muted); font-size: .92em; font-weight: 400; }
+          .mf-pane-wrap .mf-header-meta { color: var(--mf-muted); font-size: .85em; flex-shrink: 0; }
+          .mf-pane-wrap .mf-target-title {
+            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+            overflow: hidden; overflow-wrap: anywhere; line-height: 1.5; font-weight: 500;
           }
-          .mf-pane-wrap .mf-header-meta,
-          .mf-pane-wrap .mf-template-label,
-          .mf-pane-wrap .mf-hint-text { color: var(--fill-secondary, GrayText); font-size: .92em; }
-          .mf-pane-wrap .mf-target-title { font: inherit; overflow-wrap: anywhere; }
-          .mf-pane-wrap .mf-btn-primary {
-            align-self: flex-start;
-            width: auto;
-            min-height: 28px;
-            --mf-tone: var(--mf-green);
+          .mf-pane-wrap .mf-empty-state { display: flex; flex-direction: column; gap: 4px; padding: 2px 0; }
+          .mf-pane-wrap .mf-empty-title { font-weight: 500; }
+          .mf-pane-wrap :is(.mf-hint-text, .mf-template-label, .mf-map-card-meta) { color: var(--mf-muted); font-size: .92em; }
+          .mf-pane-wrap .mf-create-section { border-top: 1px solid var(--mf-line); padding-top: 12px; }
+          .mf-pane-wrap .mf-template-row { display: flex; align-items: center; gap: 10px; }
+          .mf-pane-wrap .mf-template-label { flex-shrink: 0; }
+          .mf-pane-wrap .mf-template-select {
+            flex: 1 1 0; width: 0; min-height: 30px; padding: 4px 6px;
+            border: 1px solid var(--mf-line); border-radius: 5px;
+            color: inherit; background: transparent;
           }
-          .mf-pane-wrap .mf-btn-template-create { --mf-tone: var(--mf-green); }
-          .mf-pane-wrap .mf-tool-btn { --mf-tone: var(--mf-blue); }
+          .mf-pane-wrap .mf-create-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 9px; }
+          .mf-pane-wrap .mindflow-pane-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding-top: 12px; border-top: 1px solid var(--mf-line); }
+          .mf-pane-wrap .mindflow-pane-actions > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+          .mf-pane-wrap :is(.mf-btn-primary, .mf-tool-btn, .mf-card-btn, .mf-btn-template-create) {
+            --mf-tone: var(--mf-blue);
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 30px; padding: 5px 8px; border-radius: 5px;
+            border: 1px solid color-mix(in srgb, var(--mf-tone) 20%, transparent);
+            background: color-mix(in srgb, var(--mf-tone) 8%, transparent);
+            color: var(--mf-tone); text-align: center; white-space: normal;
+            overflow-wrap: anywhere; text-decoration: none; font-weight: 400;
+          }
+          .mf-pane-wrap .mf-btn-primary { --mf-tone: var(--mf-green); font-weight: 600; }
+          .mf-pane-wrap .mf-create-actions :is(.mf-btn-primary, .mf-tool-btn) { width: 100%; min-height: 32px; }
           .mf-pane-wrap .mf-tool-btn[data-mindflow-action="ai"],
           .mf-pane-wrap .mf-tool-btn[data-mindflow-action="pdf"] { --mf-tone: var(--mf-green); }
           .mf-pane-wrap .mf-tool-btn[data-mindflow-action="import"] { --mf-tone: var(--mf-amber); }
-          .mf-pane-wrap :is(.mf-btn-primary, .mf-btn-template-create, .mf-tool-btn) {
-            color: var(--mf-tone, var(--mf-blue)) !important;
-            background: color-mix(in srgb, var(--mf-tone, var(--mf-blue)) 9%, transparent) !important;
-            border-color: color-mix(in srgb, var(--mf-tone, var(--mf-blue)) 20%, transparent) !important;
+          .mf-pane-wrap :is(.mf-btn-primary, .mf-tool-btn, .mf-card-btn, .mf-btn-template-create):hover:not(:disabled) {
+            background: color-mix(in srgb, var(--mf-tone) 14%, transparent);
+            border-color: color-mix(in srgb, var(--mf-tone) 30%, transparent);
           }
-          .mf-pane-wrap :is(.mf-btn-primary, .mf-btn-template-create, .mf-tool-btn):hover:not(:disabled) {
-            background: color-mix(in srgb, var(--mf-tone, var(--mf-blue)) 16%, transparent) !important;
-            border-color: color-mix(in srgb, var(--mf-tone, var(--mf-blue)) 32%, transparent) !important;
-          }
-          .mf-pane-wrap .mindflow-pane-actions { border-top: 1px solid var(--mf-line); }
-          .mf-pane-wrap .mf-create-section { border-top: 1px solid var(--mf-line); padding-top: 10px; }
-          .mf-pane-wrap .mf-create-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 9px; }
-          .mf-pane-wrap .mf-create-actions .mf-btn-primary { width: 100%; }
-          .mf-pane-wrap .mf-create-actions .mf-tool-btn { width: 100%; }
-          .mf-pane-wrap .mindflow-pane-actions .mf-tool-btn-pdf { grid-column: auto; }
-          .mf-pane-wrap .mf-map-card { background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--mf-line) !important; border-radius: 0; padding: 8px 0; }
+          .mf-pane-wrap :is(.mf-btn-primary, .mf-tool-btn, .mf-card-btn, .mf-btn-template-create):active:not(:disabled) { background: color-mix(in srgb, var(--mf-tone) 20%, transparent); }
+          .mf-pane-wrap .mf-maps-section { display: flex; flex-direction: column; gap: 4px; }
+          .mf-pane-wrap .mf-maps-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+          .mf-pane-wrap .mf-maps-title { font-weight: 500; }
+          .mf-pane-wrap .mf-btn-refresh { background: transparent; color: var(--mf-muted); border: 0; border-radius: 4px; min-width: 26px; min-height: 26px; padding: 2px 5px; }
+          .mf-pane-wrap .mf-btn-refresh:hover { background: color-mix(in srgb, currentColor 5%, transparent); }
+          .mf-pane-wrap .mf-maps-list { display: flex; flex-direction: column; max-height: 280px; overflow-y: auto; min-width: 0; scrollbar-width: thin; padding: 2px; }
+          .mf-pane-wrap .mf-map-card { display: flex; flex-direction: column; gap: 5px; padding: 9px 0; border-bottom: 1px solid var(--mf-line); min-width: 0; }
+          .mf-pane-wrap .mf-map-card:last-child { border-bottom: 0; }
+          .mf-pane-wrap .mf-map-card-top { min-width: 0; display: flex; align-items: center; }
+          .mf-pane-wrap .mf-map-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .mf-pane-wrap .mf-map-card-meta { font-size: .85em; }
+          .mf-pane-wrap .mf-map-card-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 2px; }
+          .mf-pane-wrap .mf-card-btn { min-height: 28px; padding: 4px 6px; font-size: .92em; background: transparent; color: inherit; border-color: var(--mf-line); }
+          .mf-pane-wrap .mf-card-btn-primary { background: color-mix(in srgb, var(--mf-blue) 8%, transparent); color: var(--mf-blue); border-color: color-mix(in srgb, var(--mf-blue) 20%, transparent); }
           @container (max-width: 210px) {
-            .mf-pane-wrap .mf-create-actions { grid-template-columns: minmax(0, 1fr); }
+            .mf-pane-wrap .mf-create-actions, .mf-pane-wrap .mindflow-pane-actions { grid-template-columns: minmax(0, 1fr); }
+            .mf-pane-wrap .mf-map-card-actions { grid-template-columns: minmax(0, 1fr); }
           }
         `;
         (doc.head || doc.documentElement)?.appendChild(style);
@@ -2392,7 +1711,7 @@
               const mapsHeader = createEl('div', 'mf-maps-header');
               mapsHeader.appendChild(createEl('span', 'mf-maps-title', `关联导图列表 (${totalMaps})`));
 
-              const refreshBtn = createEl('button', 'mf-btn-refresh', '🔄');
+              const refreshBtn = createEl('button', 'mf-btn-refresh', '↻');
               refreshBtn.type = 'button';
               refreshBtn.title = '刷新列表';
               refreshBtn.addEventListener('click', (e) => {
@@ -2430,7 +1749,6 @@
                 });
 
                 const cardTop = createEl('div', 'mf-map-card-top');
-                cardTop.appendChild(createEl('span', 'mf-map-icon', '🧠'));
                 const cardName = createEl('span', 'mf-map-name', cleanTitle);
                 cardName.title = cleanTitle;
                 cardTop.appendChild(cardName);
@@ -2446,7 +1764,8 @@
 
                 const cardActions = createEl('div', 'mf-map-card-actions');
 
-                const openBtn = createEl('button', 'mf-card-btn mf-card-btn-primary', '打开导图 ↗');
+                const openBtn = createEl('button', 'mf-card-btn mf-card-btn-primary', '打开');
+                openBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-card-open');
                 openBtn.type = 'button';
                 openBtn.title = '在工作台中打开并编辑此思维导图';
                 openBtn.addEventListener('click', async (e) => {
@@ -2463,7 +1782,8 @@
                 });
                 cardActions.appendChild(openBtn);
 
-                const exportBtn = createEl('button', 'mf-card-btn', '大纲笔记 📝');
+                const exportBtn = createEl('button', 'mf-card-btn', '导出大纲');
+                exportBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-card-export');
                 exportBtn.type = 'button';
                 exportBtn.title = '将思维导图结构一键导出为 Zotero 文献子笔记';
                 exportBtn.addEventListener('click', async (e) => {
@@ -2480,7 +1800,8 @@
                 });
                 cardActions.appendChild(exportBtn);
 
-                const locateBtn = createEl('button', 'mf-card-btn', '定位附件 📌');
+                const locateBtn = createEl('button', 'mf-card-btn', '定位附件');
+                locateBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-card-locate');
                 locateBtn.type = 'button';
                 locateBtn.title = '在文献库列表中定位并选中此思维导图附件';
                 locateBtn.addEventListener('click', (e) => {
