@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { LayoutNode } from '../../core/model/types';
 import { safeExternalUrl } from '../../core/model/links';
 import { imageDisplayHeight, isSafeNodeImage } from '../../core/model/nodeImage';
-import { ExternalLink, FileText, ChevronRight, ChevronDown, Tag, Star, Flag, CheckCircle2, HelpCircle, Link2, GraduationCap, Plus, Circle, Clock3 } from 'lucide-react';
+import { ExternalLink, FileText, ChevronRight, ChevronDown, Tag, Star, Flag, CheckCircle2, HelpCircle, Link2, GraduationCap, Plus, Circle, Clock3, Loader2 } from 'lucide-react';
 import { openZoteroUri, locateItemInZotero, openExternalUrl, extractDoi, isZoteroEnvironment } from '../../services/zotero/zoteroBridge';
 
 interface NodeCardProps {
@@ -52,6 +52,7 @@ export const NodeCard: React.FC<NodeCardProps> = ({
   const [editText, setEditText] = useState(node.text);
   const [isDragOverTarget, setIsDragOverTarget] = useState(false);
   const [showNotePopover, setShowNotePopover] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const isComposingRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -88,7 +89,7 @@ export const NodeCard: React.FC<NodeCardProps> = ({
   };
 
   const hasChildren = node.children && node.children.length > 0;
-  const rawDoi = extractDoi(node.link) || extractDoi(node.text);
+  const rawDoi = extractDoi(node.link) || extractDoi(node.text) || extractDoi(node.note);
   const externalUrl = safeExternalUrl(node.link) || (rawDoi ? `https://doi.org/${rawDoi}` : null);
   const isDoi = Boolean(rawDoi);
   const nodeImage = isSafeNodeImage(node.image) ? node.image : null;
@@ -110,9 +111,15 @@ export const NodeCard: React.FC<NodeCardProps> = ({
     // When DOI is present, prioritize jumping to the local Zotero library database item
     if (isDoi) {
       e.preventDefault();
-      const located = await locateItemInZotero(externalUrl, node.text);
-      if (!located) {
-        openExternalUrl(externalUrl);
+      if (isLocating) return;
+      setIsLocating(true);
+      try {
+        const located = await locateItemInZotero(externalUrl, node.text);
+        if (!located) {
+          openExternalUrl(externalUrl);
+        }
+      } finally {
+        setTimeout(() => setIsLocating(false), 800);
       }
       return;
     }
@@ -386,9 +393,17 @@ export const NodeCard: React.FC<NodeCardProps> = ({
               title={isDoi ? `在 Zotero 数据库中定位对应条目（未找到或按住 Ctrl 点击打开网页）\n${externalUrl}` : externalUrl}
               aria-label={isDoi ? '在 Zotero 数据库中定位对应条目' : '打开外部链接'}
               onClick={handleExternalClick}
-              className="flex-shrink-0 text-blue-500 hover:text-blue-700 p-0.5 rounded hover:bg-blue-50 transition-colors"
+              className={`flex-shrink-0 p-0.5 rounded transition-colors ${
+                isLocating
+                  ? 'cursor-wait text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50'
+                  : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/40'
+              }`}
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              {isLocating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <ExternalLink className="w-3.5 h-3.5" />
+              )}
             </a>
           )
         )}

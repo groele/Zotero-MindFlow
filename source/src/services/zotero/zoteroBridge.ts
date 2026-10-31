@@ -758,11 +758,18 @@ export async function searchItemByDoi(doiInput: string, Zotero: any, libraryID?:
           s2.addCondition('DOI', 'contains', doi);
           ids = await s2.search();
         }
+        if ((!Array.isArray(ids) || ids.length === 0) && typeof Zotero.Search === 'function') {
+          const s3 = new Zotero.Search();
+          s3.libraryID = libID;
+          s3.addCondition('extra', 'contains', doi);
+          ids = await s3.search();
+        }
         if (Array.isArray(ids) && ids.length > 0) {
           for (const id of ids) {
             const item = Zotero.Items?.get?.(id);
             if (item && !item.deleted) {
-              const itemDoi = extractDoi(typeof item.getField === 'function' ? item.getField('DOI') : item.doi);
+              const rawItemDoi = (typeof item.getField === 'function' ? (item.getField('DOI') || item.getField('extra')) : (item.doi || item.extra)) || '';
+              const itemDoi = extractDoi(rawItemDoi);
               if (itemDoi === doi) {
                 if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
                   const parent = Zotero.Items?.get?.(item.parentItemID);
@@ -785,7 +792,8 @@ export async function searchItemByDoi(doiInput: string, Zotero: any, libraryID?:
       const cached = Zotero.Items?.getAll?.(libID) || [];
       for (const item of cached) {
         if (!item || item.deleted) continue;
-        const itemDoi = extractDoi(typeof item.getField === 'function' ? item.getField('DOI') : item.doi);
+        const rawItemDoi = (typeof item.getField === 'function' ? (item.getField('DOI') || item.getField('extra')) : (item.doi || item.extra)) || '';
+        const itemDoi = extractDoi(rawItemDoi);
         if (itemDoi === doi) return item;
       }
     }
@@ -850,13 +858,15 @@ export async function locateItemInZotero(
       }
 
       if (item) {
-        const win = (typeof window !== 'undefined' && window.parent !== window ? window.parent : null) || Zotero.getMainWindow?.();
-        if (win?.Zotero_Tabs) {
-          const libTab = win.Zotero_Tabs._tabs?.find((t: any) => t && (t.type === 'library' || t.id === 'zotero-pane'));
-          if (libTab) win.Zotero_Tabs.select(libTab.id);
+        const win = (typeof window !== 'undefined' && window.parent !== window ? window.parent : null) || Zotero.getMainWindow?.() || window;
+        const tabs = win?.Zotero_Tabs || Zotero.getMainWindow?.()?.Zotero_Tabs;
+        if (tabs && Array.isArray(tabs._tabs)) {
+          const libTab = tabs._tabs.find((t: any) => t && (t.type === 'library' || t.id === 'zotero-pane')) || tabs._tabs[0];
+          if (libTab) tabs.select(libTab.id);
         }
-        if (win?.ZoteroPane) {
-          await win.ZoteroPane.selectItem(item.id);
+        const pane = win?.ZoteroPane || Zotero.getActiveZoteroPane?.() || Zotero.getMainWindow?.()?.ZoteroPane;
+        if (pane) {
+          await pane.selectItem(item.id);
           return true;
         }
       }

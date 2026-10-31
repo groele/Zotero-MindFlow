@@ -445,11 +445,15 @@ await run('extractDoi extracts clean DOI from raw string, prefix, url, and node 
 await run('safeExternalUrl normalizes raw DOI and doi: prefix to https://doi.org/...', () => {
   assert.equal(safeExternalUrl('10.1038/s41563-022-01459-z'), 'https://doi.org/10.1038/s41563-022-01459-z');
   assert.equal(safeExternalUrl('doi:10.1038/s41563-022-01459-z'), 'https://doi.org/10.1038/s41563-022-01459-z');
+  assert.equal(safeExternalUrl('DOI: 10.1038/s41563-022-01459-z'), 'https://doi.org/10.1038/s41563-022-01459-z');
+  assert.equal(safeExternalUrl('doi: 10.1038/s41563-022-01459-z'), 'https://doi.org/10.1038/s41563-022-01459-z');
+  assert.equal(safeExternalUrl('DOI:10.1038/s41563-022-01459-z'), 'https://doi.org/10.1038/s41563-022-01459-z');
   assert.equal(safeExternalUrl('https://example.com'), 'https://example.com/');
   assert.equal(safeExternalUrl('javascript:alert(1)'), null);
 });
-await run('searchItemByDoi queries Zotero search and finds matching item', async () => {
+await run('searchItemByDoi queries Zotero search and finds matching item in DOI or extra field', async () => {
   const itemMock = { id: 999, getField: (f: string) => (f === 'DOI' ? '10.1038/s41563-022-01459-z' : '') };
+  const extraMock = { id: 777, getField: (f: string) => (f === 'extra' ? 'Publisher: Nature\nDOI: 10.1038/s41563-022-01459-extra' : '') };
   const mockZ = {
     Search: class {
       conditions: any[] = [];
@@ -457,13 +461,17 @@ await run('searchItemByDoi queries Zotero search and finds matching item', async
       async search() {
         const cond = this.conditions.find(c => c.field === 'DOI');
         if (cond && cond.val.toLowerCase() === '10.1038/s41563-022-01459-z') return [999];
+        const extraCond = this.conditions.find(c => c.field === 'extra');
+        if (extraCond && extraCond.val.toLowerCase() === '10.1038/s41563-022-01459-extra') return [777];
         return [];
       }
     },
-    Items: { get: (id: number) => (id === 999 ? itemMock : null) },
+    Items: { get: (id: number) => (id === 999 ? itemMock : (id === 777 ? extraMock : null)) },
   };
   const found = await searchItemByDoi('https://doi.org/10.1038/s41563-022-01459-z', mockZ);
   assert.equal(found?.id, 999);
+  const foundExtra = await searchItemByDoi('10.1038/s41563-022-01459-extra', mockZ);
+  assert.equal(foundExtra?.id, 777);
 });
 await run('locateItemInZotero selects item and switches to library tab in direct environment', async () => {
   let selectedTab = 'other-tab';

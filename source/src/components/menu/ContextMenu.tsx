@@ -210,7 +210,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         </div>
       </button>
 
-      {Boolean((node.link && node.link.startsWith('zotero://')) || extractDoi(node.link) || extractDoi(node.text)) && (
+      {Boolean((node.link && node.link.startsWith('zotero://')) || extractDoi(node.link) || extractDoi(node.text) || extractDoi(node.note)) && (
         <>
           <div className="my-1 border-t border-slate-100 dark:border-slate-800/80" />
           <div className="px-3 py-0.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
@@ -219,7 +219,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           {onLocateZoteroItem && (
             <button
               onClick={() => {
-                onLocateZoteroItem(node.link || node.text, node.text);
+                const targetUri = node.link || (extractDoi(node.text) ? `https://doi.org/${extractDoi(node.text)}` : (extractDoi(node.note) ? `https://doi.org/${extractDoi(node.note)}` : node.text));
+                onLocateZoteroItem(targetUri, node.text);
                 onClose();
               }}
               className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 transition-colors text-left"
@@ -231,7 +232,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           {onOpenZoteroPdf && (
             <button
               onClick={() => {
-                onOpenZoteroPdf(node.link || node.text, node.text);
+                const targetUri = node.link || (extractDoi(node.text) ? `https://doi.org/${extractDoi(node.text)}` : (extractDoi(node.note) ? `https://doi.org/${extractDoi(node.note)}` : node.text));
+                onOpenZoteroPdf(targetUri, node.text);
                 onClose();
               }}
               className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 transition-colors text-left"

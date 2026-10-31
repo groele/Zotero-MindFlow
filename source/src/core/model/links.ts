@@ -4,8 +4,8 @@ export function safeExternalUrl(input: string | undefined): string | null {
   try {
     const trimmed = input.trim();
     if (trimmed.startsWith('zotero://')) return trimmed;
-    if (trimmed.startsWith('doi:')) {
-      const doi = trimmed.slice(4).trim();
+    if (/^doi:\s*/i.test(trimmed)) {
+      const doi = trimmed.replace(/^doi:\s*/i, '').trim();
       return doi ? `https://doi.org/${doi}` : null;
     }
     if (/^10\.\d{4,9}\/\S+$/.test(trimmed)) {

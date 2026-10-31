@@ -2,13 +2,14 @@
 
 [返回双语 README / Bilingual README](../README.md)
 
-当前正式发布 / Current release：[13.0.6 节点 DOI 按钮条目定位与外部回退 / DOI database locator and fallback launch](releases/v13.0.6.md) · [13.0.5 导入导出与触控体验优化 / IO links and touch refinement](releases/v13.0.5.md) · [13.0.4 快捷键面板与时序校准 / In-app shortcuts modal and matrix calibration](releases/v13.0.4.md) · [13.0.3 全功能审计与规范校准 / Audit calibration and specification alignment](releases/v13.0.3.md) · [13.0.2 规范与文档完善 / Audit refinement and card enhancement](releases/v13.0.2.md) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](releases/v13.0.1.md) · [13.0.0 大版本更新 / Major release](releases/v13.0.0.md)
+当前正式发布 / Current release：[13.0.7 交互动效与多格式 DOI 识别完善 / Visual loading feedback, Extra DOI lookup & parent resolution](releases/v13.0.7.md) · [13.0.6 节点 DOI 按钮条目定位与外部回退 / DOI database locator and fallback launch](releases/v13.0.6.md) · [13.0.5 导入导出与触控体验优化 / IO links and touch refinement](releases/v13.0.5.md) · [13.0.4 快捷键面板与时序校准 / In-app shortcuts modal and matrix calibration](releases/v13.0.4.md) · [13.0.3 全功能审计与规范校准 / Audit calibration and specification alignment](releases/v13.0.3.md) · [13.0.2 规范与文档完善 / Audit refinement and card enhancement](releases/v13.0.2.md) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](releases/v13.0.1.md) · [13.0.0 大版本更新 / Major release](releases/v13.0.0.md)
 
 ## 版本与证据 / Versions and evidence
 
 | 阶段 / Stage | 状态 / Status | 说明 / Description |
 | --- | --- | --- |
-| 13.0.6 / Add-on patch | 当前发布 / Current release | 节点 DOI 按钮一键跳转定位数据库条目、外部浏览器智能回退与快捷定位联动 / Node DOI button direct jump to database item, fallback web launch, and enhanced locator bridge |
+| 13.0.7 / Add-on patch | 当前发布 / Current release | 完善节点条目跳转交互动效、Extra 字段与多格式 DOI 识别、条目附件归档深度绑定 / Visual loading feedback for database locator, Extra field DOI cascading search, universal DOI casing tolerance, and deep parent item resolution for mind map archiving |
+| 13.0.6 / Add-on patch | 历史发布 / Historical release | 节点 DOI 按钮一键跳转定位数据库条目、外部浏览器智能回退与快捷定位联动 / Node DOI button direct jump to database item, fallback web launch, and enhanced locator bridge |
 | 13.0.5 / Add-on patch | 历史发布 / Historical release | Markdown 导入支持本地文件与附件协议、离线交互导图支持触控漫游手势、预设 ID 生成安全防御与文档时序中英对齐 / Support file/attachment link protocols in Markdown import, touch panning gestures for interactive HTML export, guarded preset UUID generation, and aligned bilingual audit chronology |
 | 13.0.4 / Add-on patch | 历史发布 / Historical release | 全局快捷键面板与设置文案优化、文档索引时序与版本表校准 / In-app shortcuts modal & settings copy refinement, audit documentation chronology and matrix calibration |
 | 13.0.3 / Add-on patch | 历史发布 / Historical release | 全功能特性与快捷键审计校准、设置面板与研读模板对齐、品牌体系规范化 / Full shortcut audit, settings & template alignment, brand restoration |
@@ -39,6 +40,7 @@
 
 ## 中文索引
 
+- [13.0.7 发布记录](releases/v13.0.7.md)：完善节点条目跳转交互动效、Extra 字段与多格式 DOI 识别、条目附件归档深度绑定。
 - [13.0.6 发布记录](releases/v13.0.6.md)：节点 DOI 按钮一键跳转定位数据库条目、外部浏览器智能回退与快捷定位联动。
 - [13.0.5 发布记录](releases/v13.0.5.md)：Markdown 导入支持本地文件与附件协议、离线交互导图支持触控漫游手势、预设 ID 生成安全防御与文档时序中英对齐。
 - [13.0.4 发布记录](releases/v13.0.4.md)：全局快捷键面板与设置文案优化、文档索引时序与版本表校准。
@@ -82,6 +84,7 @@
 
 ## English index
 
+- [13.0.7 release record](releases/v13.0.7.md): visual loading feedback for database locator, Extra field DOI cascading search, universal DOI casing tolerance, and deep parent item resolution for mind map archiving.
 - [13.0.6 release record](releases/v13.0.6.md): node DOI button direct jump to database item, fallback web launch, and enhanced locator bridge.
 - [13.0.5 release record](releases/v13.0.5.md): support file/attachment link protocols in Markdown import, touch panning gestures for interactive HTML export, guarded preset UUID generation, and aligned bilingual audit chronology.
 - [13.0.4 release record](releases/v13.0.4.md): in-app shortcuts modal & settings copy refinement, audit documentation chronology and matrix calibration.

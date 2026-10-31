@@ -590,11 +590,18 @@
             s2.addCondition('DOI', 'contains', doi);
             ids = await s2.search();
           }
+          if ((!Array.isArray(ids) || ids.length === 0) && typeof Zotero.Search === 'function') {
+            const s3 = new Zotero.Search();
+            s3.libraryID = libID;
+            s3.addCondition('extra', 'contains', doi);
+            ids = await s3.search();
+          }
           if (Array.isArray(ids) && ids.length > 0) {
             for (const id of ids) {
               const item = Zotero.Items?.get?.(id);
               if (item && !item.deleted) {
-                const itemDoi = normalizeDOI(typeof item.getField === 'function' ? item.getField('DOI') : item.doi);
+                const rawItemDoi = (typeof item.getField === 'function' ? (item.getField('DOI') || item.getField('extra')) : (item.doi || item.extra)) || '';
+                const itemDoi = normalizeDOI(rawItemDoi);
                 if (itemDoi === doi) {
                   if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
                     const parent = Zotero.Items?.get?.(item.parentItemID);
@@ -616,7 +623,8 @@
         const cached = Zotero.Items?.getAll?.(libID) || [];
         for (const item of cached) {
           if (!item || item.deleted) continue;
-          const itemDoi = normalizeDOI(typeof item.getField === 'function' ? item.getField('DOI') : item.doi);
+          const rawItemDoi = (typeof item.getField === 'function' ? (item.getField('DOI') || item.getField('extra')) : (item.doi || item.extra)) || '';
+          const itemDoi = normalizeDOI(rawItemDoi);
           if (itemDoi === doi) return item;
         }
       }
@@ -2371,7 +2379,7 @@
           }
 
           // A. Locate and highlight item in Library
-          if (data.type === 'MINDFLOW_LOCATE_ITEM' && (data.key || data.doi || data.text)) {
+          if (data.type === 'MINDFLOW_LOCATE_ITEM' && (data.key || data.doi || data.text || data.note)) {
             const reply = (success) => {
               if (data.requestId && typeof data.requestId === 'string') {
                 try {
@@ -2387,19 +2395,20 @@
             (async () => {
               let item = data.key ? resolveItemReference(data.key, data.libraryID) : null;
               if (!item) {
-                const doi = data.doi || normalizeDOI(data.key) || normalizeDOI(data.text);
+                const doi = data.doi || normalizeDOI(data.key) || normalizeDOI(data.text) || normalizeDOI(data.note);
                 if (doi) {
                   item = await searchItemByDoi(doi, data.libraryID);
                 }
               }
               if (item) {
-                const tabs = window.Zotero_Tabs;
+                const tabs = window.Zotero_Tabs || Zotero.getMainWindow?.()?.Zotero_Tabs;
                 if (tabs && Array.isArray(tabs._tabs)) {
-                  const libTab = tabs._tabs.find((t) => t && (t.type === 'library' || t.id === 'zotero-pane'));
+                  const libTab = tabs._tabs.find((t) => t && (t.type === 'library' || t.id === 'zotero-pane')) || tabs._tabs[0];
                   if (libTab) tabs.select(libTab.id);
                 }
-                if (window.ZoteroPane) {
-                  await window.ZoteroPane.selectItem(item.id);
+                const pane = window.ZoteroPane || Zotero.getActiveZoteroPane?.() || Zotero.getMainWindow?.()?.ZoteroPane;
+                if (pane) {
+                  await pane.selectItem(item.id);
                 }
                 reply(true);
                 return;
@@ -2413,7 +2422,7 @@
           }
 
           // B. Open PDF Reader in Zotero
-          if (data.type === 'MINDFLOW_OPEN_PDF' && (data.key || data.doi || data.text)) {
+          if (data.type === 'MINDFLOW_OPEN_PDF' && (data.key || data.doi || data.text || data.note)) {
             const rawRef = String(data.key || '').trim();
             let directOpened = false;
             if (rawRef.startsWith('zotero://open-pdf/')) {
@@ -2428,7 +2437,7 @@
               (async () => {
                 let item = data.key ? resolveItemReference(data.key, data.libraryID) : null;
                 if (!item) {
-                  const doi = data.doi || normalizeDOI(data.key) || normalizeDOI(data.text);
+                  const doi = data.doi || normalizeDOI(data.key) || normalizeDOI(data.text) || normalizeDOI(data.note);
                   if (doi) {
                     item = await searchItemByDoi(doi, data.libraryID);
                   }
@@ -4284,6 +4293,12 @@
           (data.parentItemKey || doc.metadata?.zoteroUri || doc.metadata?.zoteroItemKey);
         if (explicitReference) {
           parentItem = resolveItemReference(explicitReference, doc.metadata?.zoteroLibraryID);
+          if (!parentItem) {
+            const explicitDoi = normalizeDOI(explicitReference);
+            if (explicitDoi) {
+              parentItem = await searchItemByDoi(explicitDoi, doc.metadata?.zoteroLibraryID);
+            }
+          }
         }
 
         // Selection is a fallback only for maps without a stored association.

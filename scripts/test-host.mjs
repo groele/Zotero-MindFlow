@@ -123,6 +123,59 @@ test('host MINDFLOW_LOCATE_ITEM matches item even if library DOI field contains 
   assert.equal(replied?.success, true);
 });
 
+test('host MINDFLOW_LOCATE_ITEM matches item when DOI is stored in extra field', async () => {
+  const f = fixture();
+  f.host.addToWindow(f.win);
+  f.host.openMindFlow({ mode: 'open' }, f.win);
+  const tab = f.tabs._tabs.find(t => t.type === 'mindflow');
+  const frame = f.tabs.getTabContent(tab.id).children[0];
+
+  const paper = f.paper('PAPER_EXTRA_DOI');
+  paper.setField('extra', 'Publisher: Nature\nDOI: 10.1038/s41563-022-01459-z');
+  let selectedItemId = null;
+  f.win.ZoteroPane.selectItem = (id) => { selectedItemId = id; };
+  f.tabs.selectedID = 'other-tab';
+
+  const onMessage = f.listeners.get('message');
+  onMessage({
+    source: frame.contentWindow,
+    origin: 'chrome://mindflow',
+    data: {
+      type: 'MINDFLOW_LOCATE_ITEM',
+      requestId: 'req-doi-extra-1',
+      note: 'DOI: 10.1038/s41563-022-01459-z',
+    },
+  });
+
+  await new Promise((r) => setTimeout(r, 20));
+
+  assert.equal(f.tabs.selectedID, 'zotero-pane');
+  assert.equal(selectedItemId, paper.id);
+  const replied = frame.contentWindow.messages.find(m => m.type === 'MINDFLOW_LOCATE_ITEM_RESULT' && m.requestId === 'req-doi-extra-1');
+  assert.equal(replied?.success, true);
+});
+
+test('host saveMindMapToItem resolves parent item by DOI when parentItemKey is a DOI URL', async () => {
+  const f = fixture();
+  const paper = f.paper('PAPER_ARCHIVE_DOI');
+  paper.setField('DOI', '10.1038/s41563-022-01459-z');
+  const doc = {
+    id: 'doc_archive_doi',
+    title: 'Archive DOI Map',
+    themeId: 'classic-light',
+    layoutType: 'mindmap',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    revision: 1,
+    root: { id: 'root', text: 'Root', children: [] },
+  };
+
+  const res = await f.host._saveMindMapToItem({ doc, parentItemKey: 'https://doi.org/10.1038/s41563-022-01459-z' });
+  assert.equal(res.success, true);
+  assert.equal(res.parentLibraryID, paper.libraryID);
+  assert.equal(paper.attachments.length, 1);
+});
+
 test('host MINDFLOW_LOCATE_ITEM selects database item by key', async () => {
   const f = fixture();
   f.host.addToWindow(f.win);
@@ -266,6 +319,17 @@ function fixture(options = {}) {
             const targetVal = String(doiCond.val).toLowerCase();
             const fieldVal = String(itDoi).toLowerCase();
             return doiCond.operator === 'contains' ? fieldVal.includes(targetVal) : fieldVal === targetVal;
+          });
+          return matched.map(m => m.id);
+        }
+        const extraCond = this.conditions.find(c => c.field === 'extra');
+        if (extraCond) {
+          const matched = [...items.values()].filter(i => {
+            const itExtra = (typeof i.getField === 'function' ? i.getField('extra') : (i.extra || i.fields?.extra));
+            if (!itExtra) return false;
+            const targetVal = String(extraCond.val).toLowerCase();
+            const fieldVal = String(itExtra).toLowerCase();
+            return extraCond.operator === 'contains' ? fieldVal.includes(targetVal) : fieldVal === targetVal;
           });
           return matched.map(m => m.id);
         }

@@ -345,7 +345,7 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
 
         {/* Zotero Item Link Action Box */}
         {(() => {
-          const nodeDoi = extractDoi(selectedNode.link) || extractDoi(selectedNode.text);
+          const nodeDoi = extractDoi(selectedNode.link) || extractDoi(selectedNode.text) || extractDoi(selectedNode.note);
           const zoteroTargetKey =
             currentDoc.metadata?.zoteroItemKey ||
             currentDoc.metadata?.zoteroUri ||
