@@ -230,6 +230,42 @@ test('host MINDFLOW_LAUNCH_URL invokes Zotero.launchURL for external links', () 
 
   assert.equal(launchedUrl, 'https://doi.org/10.1038/s41563-022-01459-z');
 });
+
+test('host MINDFLOW_LOCATE_ITEM accepts commands from registered standalone workspace windows', async () => {
+  const f = fixture();
+  f.host.addToWindow(f.win);
+  const standaloneWin = {
+    closed: false,
+    postMessage(data) { this.messages.push(data); },
+    messages: [],
+  };
+  f.host._standaloneWindows = new Map([['standalone-target', standaloneWin]]);
+
+  const paper = f.paper('PAPER_STANDALONE');
+  paper.setField('DOI', '10.1038/s41586-020-2649-2');
+  let selectedItemId = null;
+  let selectedCollectionFlag = null;
+  f.win.ZoteroPane.selectItem = (id, flag) => { selectedItemId = id; selectedCollectionFlag = flag; };
+
+  const onMessage = f.listeners.get('message');
+  onMessage({
+    source: standaloneWin,
+    origin: 'chrome://mindflow',
+    data: {
+      type: 'MINDFLOW_LOCATE_ITEM',
+      requestId: 'req-standalone-1',
+      doi: '10.1038/s41586-020-2649-2',
+    },
+  });
+
+  await new Promise((r) => setTimeout(r, 20));
+
+  assert.equal(selectedItemId, paper.id);
+  assert.equal(selectedCollectionFlag, true);
+  const replied = standaloneWin.messages.find(m => m.type === 'MINDFLOW_LOCATE_ITEM_RESULT');
+  assert.equal(replied?.success, true);
+  assert.equal(replied?.requestId, 'req-standalone-1');
+});
 function hangingTurn(_request, _onEvent, { signal }) {
   return new Promise((_resolve, reject) => {
     const abort = () => reject(Object.assign(new Error('cancelled'), { name: 'AbortError' }));

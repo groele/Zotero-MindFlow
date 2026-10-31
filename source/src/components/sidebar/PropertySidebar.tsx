@@ -346,11 +346,13 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
         {/* Zotero Item Link Action Box */}
         {(() => {
           const nodeDoi = extractDoi(selectedNode.link) || extractDoi(selectedNode.text) || extractDoi(selectedNode.note);
-          const zoteroTargetKey =
-            currentDoc.metadata?.zoteroItemKey ||
-            currentDoc.metadata?.zoteroUri ||
+          const nodeSpecificTarget =
             (selectedNode.link && selectedNode.link.startsWith('zotero://') ? selectedNode.link : null) ||
             (nodeDoi ? `https://doi.org/${nodeDoi}` : null);
+          const zoteroTargetKey =
+            nodeSpecificTarget ||
+            currentDoc.metadata?.zoteroItemKey ||
+            currentDoc.metadata?.zoteroUri;
 
           if (!zoteroTargetKey) return null;
 

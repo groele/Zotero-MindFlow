@@ -45,7 +45,7 @@ export function getZoteroInstance(): any | null {
  * Check if the application is running inside Zotero desktop
  */
 export function isZoteroEnvironment(): boolean {
-  return getZoteroInstance() !== null;
+  return getZoteroInstance() !== null || isZoteroWorkspace();
 }
 
 /** The packaged workspace has a Zotero chrome URL even when API injection is late. */
@@ -801,7 +801,13 @@ export async function searchItemByDoi(doiInput: string, Zotero: any, libraryID?:
         if (!item || item.deleted) continue;
         const rawItemDoi = (typeof item.getField === 'function' ? (item.getField('DOI') || item.getField('extra')) : (item.doi || item.extra)) || '';
         const itemDoi = extractDoi(rawItemDoi);
-        if (itemDoi === doi) return item;
+        if (itemDoi === doi) {
+          if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
+            const parent = Zotero.Items?.get?.(item.parentItemID);
+            if (parent && !parent.deleted) return parent;
+          }
+          return item;
+        }
       }
     }
   } catch {
@@ -869,11 +875,20 @@ export async function locateItemInZotero(
         const tabs = win?.Zotero_Tabs || Zotero.getMainWindow?.()?.Zotero_Tabs;
         if (tabs && Array.isArray(tabs._tabs)) {
           const libTab = tabs._tabs.find((t: any) => t && (t.type === 'library' || t.id === 'zotero-pane')) || tabs._tabs[0];
-          if (libTab) tabs.select(libTab.id);
+          if (libTab) {
+            if (typeof tabs.select === 'function') tabs.select(libTab.id);
+            else if (typeof tabs.selectTab === 'function') tabs.selectTab(libTab.id);
+          }
         }
         const pane = win?.ZoteroPane || Zotero.getActiveZoteroPane?.() || Zotero.getMainWindow?.()?.ZoteroPane;
         if (pane) {
-          await pane.selectItem(item.id);
+          try {
+            await pane.selectItem(item.id, true);
+          } catch {
+            await pane.selectItem(item.id);
+          }
+          const mainWin = Zotero.getMainWindow?.() || (win !== window ? win : null);
+          try { mainWin?.focus?.(); } catch (_) {}
           return true;
         }
       }
@@ -1054,16 +1069,16 @@ export async function openItemPdfInZotero(itemKeyOrUri: string | number, fallbac
 /**
  * Open / Navigate to a Zotero URI or DOI
  */
-export async function openZoteroUri(uri: string, fallbackText?: string): Promise<boolean> {
+export async function openZoteroUri(uri: string, fallbackText?: string, options?: { noteText?: string; libraryID?: number }): Promise<boolean> {
   if (uri.startsWith('zotero://open-pdf/')) {
-    if (await openItemPdfInZotero(uri, fallbackText)) return true;
+    if (await openItemPdfInZotero(uri, fallbackText, options?.noteText)) return true;
   }
   if (uri.startsWith('zotero://select/') && uri.includes('/items/')) {
-    if (await locateItemInZotero(uri, fallbackText)) return true;
+    if (await locateItemInZotero(uri, fallbackText, options)) return true;
   }
-  const doi = extractDoi(uri) || extractDoi(fallbackText);
+  const doi = extractDoi(uri) || extractDoi(fallbackText) || extractDoi(options?.noteText);
   if (doi) {
-    if (await locateItemInZotero(uri, fallbackText)) return true;
+    if (await locateItemInZotero(uri, fallbackText, options)) return true;
   }
 
   openExternalUrl(uri);

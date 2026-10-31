@@ -219,7 +219,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           {onLocateZoteroItem && (
             <button
               onClick={() => {
-                const targetUri = node.link || (extractDoi(node.text) ? `https://doi.org/${extractDoi(node.text)}` : (extractDoi(node.note) ? `https://doi.org/${extractDoi(node.note)}` : node.text));
+                const nodeDoi = extractDoi(node.link) || extractDoi(node.text) || extractDoi(node.note);
+                const targetUri = (node.link && node.link.startsWith('zotero://') ? node.link : null) || (nodeDoi ? `https://doi.org/${nodeDoi}` : (node.link || node.text));
                 onLocateZoteroItem(targetUri, node.text, node.note);
                 onClose();
               }}
@@ -232,7 +233,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           {onOpenZoteroPdf && (
             <button
               onClick={() => {
-                const targetUri = node.link || (extractDoi(node.text) ? `https://doi.org/${extractDoi(node.text)}` : (extractDoi(node.note) ? `https://doi.org/${extractDoi(node.note)}` : node.text));
+                const nodeDoi = extractDoi(node.link) || extractDoi(node.text) || extractDoi(node.note);
+                const targetUri = (node.link && node.link.startsWith('zotero://') ? node.link : null) || (nodeDoi ? `https://doi.org/${nodeDoi}` : (node.link || node.text));
                 onOpenZoteroPdf(targetUri, node.text, node.note);
                 onClose();
               }}

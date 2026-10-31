@@ -625,7 +625,13 @@
           if (!item || item.deleted) continue;
           const rawItemDoi = (typeof item.getField === 'function' ? (item.getField('DOI') || item.getField('extra')) : (item.doi || item.extra)) || '';
           const itemDoi = normalizeDOI(rawItemDoi);
-          if (itemDoi === doi) return item;
+          if (itemDoi === doi) {
+            if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
+              const parent = Zotero.Items?.get?.(item.parentItemID);
+              if (parent && !parent.deleted) return parent;
+            }
+            return item;
+          }
         }
       }
     } catch (_) {}
@@ -2306,10 +2312,11 @@
           if (typeof data.type !== 'string' || !data.type.startsWith('MINDFLOW_')) return;
           const source = event.source;
           if (!source) return;
-          // Only frames created by this plugin can issue privileged host commands.
+          // Only frames or windows created by this plugin can issue privileged host commands.
           const ownerFrame = Array.from(doc.querySelectorAll?.('.mindflow-workspace-iframe') || [])
             .find((frame) => sameWindow(frame.contentWindow, source));
-          if (!ownerFrame) return;
+          const isOwner = Boolean(ownerFrame) || this.ownsWorkspaceWindow(source);
+          if (!isOwner) return;
           const responseOrigin = event.origin && event.origin !== 'null' ? event.origin : '*';
 
           if (data.type === 'MINDFLOW_READY') {
@@ -2407,12 +2414,21 @@
                 const tabs = window.Zotero_Tabs || Zotero.getMainWindow?.()?.Zotero_Tabs;
                 if (tabs && Array.isArray(tabs._tabs)) {
                   const libTab = tabs._tabs.find((t) => t && (t.type === 'library' || t.id === 'zotero-pane')) || tabs._tabs[0];
-                  if (libTab) tabs.select(libTab.id);
+                  if (libTab) {
+                    if (typeof tabs.select === 'function') tabs.select(libTab.id);
+                    else if (typeof tabs.selectTab === 'function') tabs.selectTab(libTab.id);
+                  }
                 }
                 const pane = window.ZoteroPane || Zotero.getActiveZoteroPane?.() || Zotero.getMainWindow?.()?.ZoteroPane;
                 if (pane) {
-                  await pane.selectItem(item.id);
+                  try {
+                    await pane.selectItem(item.id, true);
+                  } catch (_) {
+                    await pane.selectItem(item.id);
+                  }
                 }
+                const mainWin = Zotero.getMainWindow?.() || window;
+                try { mainWin?.focus?.(); } catch (_) {}
                 reply(true);
                 return;
               }
@@ -2458,10 +2474,12 @@
           // C. Launch external URL in default browser
           if (data.type === 'MINDFLOW_LAUNCH_URL' && typeof data.url === 'string') {
             try {
-              if (typeof Zotero.launchURL === 'function') {
-                Zotero.launchURL(data.url);
-              } else if (typeof window.open === 'function') {
-                window.open(data.url, '_blank');
+              if (/^(https?|zotero):\/\//i.test(data.url)) {
+                if (typeof Zotero.launchURL === 'function') {
+                  Zotero.launchURL(data.url);
+                } else if (typeof window.open === 'function') {
+                  window.open(data.url, '_blank');
+                }
               }
             } catch (err) {
               Zotero.log?.('[MindFlow] MINDFLOW_LAUNCH_URL error: ' + err);

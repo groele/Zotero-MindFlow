@@ -525,5 +525,23 @@ await run('extractZoteroItemData extracts DOI from extra field when DOI field is
   const extracted = extractZoteroItemData(item);
   assert.equal(extracted?.doi, '10.1038/s41586-extra');
 });
+await run('searchItemByDoi in-memory fallback resolves attachment items to parent item', async () => {
+  const parentItem = { id: 101, isRegularItem: () => true, getField: () => '' };
+  const attachmentItem = {
+    id: 102,
+    isRegularItem: () => false,
+    parentItemID: 101,
+    getField: (f: string) => (f === 'extra' ? 'DOI: 10.1038/s41586-parent-test' : ''),
+  };
+  const mockZ = {
+    Libraries: { userLibraryID: 1, getAll: () => [{ libraryID: 1 }] },
+    Items: {
+      getAll: () => [attachmentItem],
+      get: (id: number) => (id === 101 ? parentItem : (id === 102 ? attachmentItem : null)),
+    },
+  };
+  const found = await searchItemByDoi('10.1038/s41586-parent-test', mockZ);
+  assert.equal(found?.id, 101);
+});
 console.log(`${count} frontend data-chain tests passed`);
 

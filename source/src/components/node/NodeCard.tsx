@@ -379,7 +379,7 @@ export const NodeCard: React.FC<NodeCardProps> = ({
               aria-label={externalUrl.startsWith('zotero://open-pdf/') ? '查看原 PDF 批注' : '在 Zotero 中定位关联条目'}
               onClick={(e) => {
                 e.stopPropagation();
-                openZoteroUri(externalUrl, node.text);
+                openZoteroUri(externalUrl, node.text, { noteText: node.note });
               }}
               className="flex-shrink-0 text-sky-600 hover:text-sky-800 p-0.5 rounded hover:bg-sky-100 dark:hover:bg-sky-950 transition-colors flex items-center"
             >
