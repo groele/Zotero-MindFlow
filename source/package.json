@@ -1,6 +1,6 @@
 {
   "name": "zotero-mindflow",
-  "version": "13.0.7",
+  "version": "13.0.8",
   "type": "module",
   "main": "index.js",
   "scripts": {

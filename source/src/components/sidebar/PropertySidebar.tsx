@@ -357,7 +357,7 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
           const handleOpenPdf = async () => {
             setIsOpeningPdf(true);
             try {
-              const success = await openItemPdfInZotero(zoteroTargetKey, selectedNode.text);
+              const success = await openItemPdfInZotero(zoteroTargetKey, selectedNode.text, selectedNode.note);
               if (!success) {
                 setSyncStatusMsg('未检测到 PDF 附件，已在文库中定位文献');
                 setTimeout(() => setSyncStatusMsg(null), 3500);
@@ -412,7 +412,7 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => locateItemInZotero(zoteroTargetKey, selectedNode.text)}
+                  onClick={() => locateItemInZotero(zoteroTargetKey, selectedNode.text, { noteText: selectedNode.note })}
                   className="flex-1 py-1.5 px-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
                 >
                   <MapPin className="w-3.5 h-3.5" />

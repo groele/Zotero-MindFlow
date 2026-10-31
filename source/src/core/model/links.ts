@@ -11,6 +11,10 @@ export function safeExternalUrl(input: string | undefined): string | null {
     if (/^10\.\d{4,9}\/\S+$/.test(trimmed)) {
       return `https://doi.org/${trimmed}`;
     }
+    if (/^www\./i.test(trimmed)) {
+      const url = new URL(`https://${trimmed}`);
+      return url.toString();
+    }
     const url = new URL(trimmed);
     return ['https:', 'http:', 'mailto:', 'zotero:'].includes(url.protocol) ? url.toString() : null;
   } catch {

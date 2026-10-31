@@ -123,6 +123,15 @@ export function sanitizeSettings(settings: Partial<AppSettings>): AppSettings {
     merged.aiMaxPdfPages = 120;
   }
 
+  // Theme ID validation
+  const validThemes = [
+    'classic-blue', 'dark-nebula', 'macaron', 'forest-green', 'minimal-ink',
+    'warm-amber', 'cyberpunk-neon', 'nordic-frost', 'academic-paper', 'lavender-dream',
+  ];
+  if (!validThemes.includes(merged.defaultThemeId)) {
+    merged.defaultThemeId = 'classic-blue';
+  }
+
   // Toolbar placement enums
   for (const key of ['toolbarTemplatesPlacement', 'toolbarPresentationPlacement', 'toolbarExportPlacement'] as const) {
     if (!['toolbar', 'more', 'hidden'].includes(merged[key])) merged[key] = 'more';
@@ -136,6 +145,19 @@ export function sanitizeSettings(settings: Partial<AppSettings>): AppSettings {
     if (typeof merged[boolKey] !== 'boolean') {
       merged[boolKey] = Boolean(DEFAULT_SETTINGS[boolKey]);
     }
+  }
+
+  // WebDAV configuration validation
+  if (!merged.webdav || typeof merged.webdav !== 'object') {
+    merged.webdav = { ...DEFAULT_SETTINGS.webdav };
+  } else {
+    merged.webdav.enabled = Boolean(merged.webdav.enabled);
+    merged.webdav.autoSyncOnSave = Boolean(merged.webdav.autoSyncOnSave);
+    merged.webdav.serverUrl = typeof merged.webdav.serverUrl === 'string' ? merged.webdav.serverUrl.trim() : '';
+    merged.webdav.basePath = typeof merged.webdav.basePath === 'string' && merged.webdav.basePath.trim()
+      ? merged.webdav.basePath.trim() : '/MindFlow/';
+    merged.webdav.username = typeof merged.webdav.username === 'string' ? merged.webdav.username.trim() : '';
+    merged.webdav.password = typeof merged.webdav.password === 'string' ? merged.webdav.password : '';
   }
 
   return merged;
@@ -166,10 +188,16 @@ export class SettingsService {
       }
     }
 
+    const isFromLegacy = !loadedSettings && Boolean(getZoteroInstance());
     const merged = sanitizeSettings(
-      loadedSettings || (getZoteroInstance() ? legacyZoteroSettings() : {})
+      loadedSettings || (isFromLegacy ? legacyZoteroSettings() : {})
     );
     this.cachedSettings = merged;
+
+    if (isFromLegacy) {
+      safeStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(merged));
+    }
+
     return structuredClone(merged);
   }
 

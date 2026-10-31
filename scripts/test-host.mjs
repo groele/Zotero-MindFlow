@@ -40,6 +40,7 @@ test('host inbox migrates legacy preferences and serializes restore plus process
     f.host.workspaceStorage('mutateInbox', { additions: [item('restored')] })]);
   const items = JSON.parse(await f.host.workspaceStorage('get', { key: 'mindflow_inbox_items' }));
   assert.equal(items.length, 2); assert.equal(items.find(item => item.id === 'legacy').isProcessed, true);
+  assert.equal(f.prefs.get('mindflow.mindflow_inbox_items'), undefined);
   await f.host.workspaceStorage('mutateInbox', { clearProcessed: true });
   assert.equal(JSON.parse(await f.host.workspaceStorage('get', { key: 'mindflow_inbox_items' }))[0].id, 'restored');
 });

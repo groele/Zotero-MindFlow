@@ -8,12 +8,12 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Version](https://img.shields.io/badge/version-13.0.7-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.7)
+[![Version](https://img.shields.io/badge/version-13.0.8-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.8)
 [![Zotero Compatibility](https://img.shields.io/badge/Zotero-10.0--12.*-brightgreen?style=flat-square)](https://www.zotero.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
-[![Tests Passing](https://img.shields.io/badge/tests-115%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
+[![Tests Passing](https://img.shields.io/badge/tests-116%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
 
-[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.7/zotero-mindflow-13.0.7.xpi) · [📝 Release Notes](docs/releases/v13.0.7.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
+[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.8/zotero-mindflow-13.0.8.xpi) · [📝 Release Notes](docs/releases/v13.0.8.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
 
 [📖 Overview](#overview) · [📦 Installation and updates](#installation) · [🚀 Quick start](#quick-start) · [🛠️ Key features](#features) · [✨ In-depth highlights](#highlights) · [⚙️ Settings](#settings) · [🔒 Data, sync, and services](#data) · [🧪 Compatibility and validation](#compatibility) · [❓ Troubleshooting](#troubleshooting) · [💻 Development and documentation](#development) · [🔗 The Flow series](#series) · [📄 Origin and license](#license)
 
@@ -38,24 +38,24 @@ As an integral pillar of the **Zotero Flow** series, MindFlow operates completel
 | Specification | Official Parameter & Requirement |
 |---|---|
 | **Add-on ID** | `mindflow@groele.org` |
-| **Current Stable Release** | `v13.0.7` (Patch Release) |
+| **Current Stable Release** | `v13.0.8` (Patch Release) |
 | **Host Compatibility** | Zotero `10.0` through `12.*` (fully adaptive across 10.x / 11.x / 12.x light and dark themes) |
-| **Package File** | `zotero-mindflow-13.0.7.xpi` |
-| **File Size** | `534,622 bytes` |
-| **SHA-256 Checksum** | `caae35232aef2a9a7ed6c85f56aca5c9f626110cb59f59e3fb4d6ee5fac8aa29` |
+| **Package File** | `zotero-mindflow-13.0.8.xpi` |
+| **File Size** | `535,098 bytes` |
+| **SHA-256 Checksum** | `c5a69617c19b79010d4ff82a4ccfd8855906a95c2d53c2586e3fd317926ee359` |
 | **Online Update Feed** | [zotero/update.json](zotero/update.json) |
 
 ### Installation Steps
 
-1. Download the official release package [zotero-mindflow-13.0.7.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.7/zotero-mindflow-13.0.7.xpi) (**current stable release v13.0.7**; download the XPI directly, do not install the Source code ZIP).
+1. Download the official release package [zotero-mindflow-13.0.8.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.8/zotero-mindflow-13.0.8.xpi) (**current stable release v13.0.8**; download the XPI directly, do not install the Source code ZIP).
 2. In Zotero, navigate to **Tools → Plugins / Add-ons** from the top menu.
-3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**, or drag and drop `zotero-mindflow-13.0.7.xpi` directly into the window.
-4. Choose the downloaded `zotero-mindflow-13.0.7.xpi` file and restart Zotero when prompted.
+3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**, or drag and drop `zotero-mindflow-13.0.8.xpi` directly into the window.
+4. Choose the downloaded `zotero-mindflow-13.0.8.xpi` file and restart Zotero when prompted.
 
 > [!TIP]
 > **Update Feeds and Verification**  
 > - **Online Update Manifest**: Hosted as an immutable asset feed at [zotero/update.json](zotero/update.json) with Add-on ID `mindflow@groele.org`.  
-> - **SHA-256 Checksum**: `caae35232aef2a9a7ed6c85f56aca5c9f626110cb59f59e3fb4d6ee5fac8aa29`.  
+> - **SHA-256 Checksum**: `c5a69617c19b79010d4ff82a4ccfd8855906a95c2d53c2586e3fd317926ee359`.  
 > - **Browser Renaming Note**: Certain browsers (such as Safari or Edge) may occasionally rename downloaded files to `.zip`. If this occurs, simply rename the file back to `.xpi` before loading into Zotero.  
 > - Subsequent updates can be detected and applied directly through the Zotero Add-on Manager. Backing up the workspace before major version upgrades is always recommended.
 
@@ -182,11 +182,11 @@ Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**, neatly ar
 
 | Dimension | Specification & Verification Status |
 |---|---|
-| **Current Published Release** | **v13.0.4** (Patch Release) |
+| **Current Published Release** | **v13.0.8** (Patch Release) |
 | **Declared Manifest Range** | Zotero `10.0` through `12.*` (`strict_min_version: 10.0`, `strict_max_version: 12.*`) |
 | **TypeScript Static Check** | `npm run typecheck` (PASS, **0** errors) |
-| **Frontend Unit Suite** | `npm test` (**111 / 111** tests PASS: 45 data pipelines + 36 core logic + 7 presets + 23 data integrity) |
-| **Host Logic Regression** | `node --test scripts/test-host.mjs` (**89 / 89** tests PASS) |
+| **Frontend Unit Suite** | `npm test` (**116 / 116** tests PASS: 50 data pipelines + 36 core logic + 7 presets + 23 data integrity) |
+| **Host Logic Regression** | `node --test scripts/test-host.mjs` (**95 / 95** tests PASS) |
 | **Package & Update Feed Check** | `python scripts/test-release-package.py` (**8 / 8** tests PASS, payload hashes verified) |
 
 ---
@@ -247,7 +247,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [Audit Documentation Index](docs/README.md)
-- [Release Notes v13.0.5](docs/releases/v13.0.5.md)
+- [Release Notes v13.0.8](docs/releases/v13.0.8.md)
 - [Brand & Product Specifications](docs/brand/PRODUCT.md)
 - [Release Tag Policy](docs/release-tag-policy.md)
 - [Historical Reference Guide & Acknowledgments](docs/reference/README.md)

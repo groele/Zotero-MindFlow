@@ -279,16 +279,21 @@ await run('importFromMarkdown successfully parses and preserves zotero://, web, 
 await run('SettingsService sanitizes invalid layout and out-of-range numerical settings', async () => {
   const sanitized = sanitizeSettings({
     defaultLayout: 'invalid-layout' as any,
+    defaultThemeId: 'deprecated-theme' as any,
     maxSnapshotsPerDoc: -10,
     zoomStep: 999,
     canvasBackground: 'unknown-bg' as any,
     toolbarPosition: 'floating' as any,
+    webdav: { enabled: true, serverUrl: '  https://dav.example.com  ' } as any,
   });
   assert.equal(sanitized.defaultLayout, 'mindmap');
+  assert.equal(sanitized.defaultThemeId, 'classic-blue');
   assert.equal(sanitized.maxSnapshotsPerDoc, 20);
   assert.equal(sanitized.zoomStep, 0.15);
   assert.equal(sanitized.canvasBackground, 'dots');
   assert.equal(sanitized.toolbarPosition, 'top');
+  assert.equal(sanitized.webdav.serverUrl, 'https://dav.example.com');
+  assert.equal(sanitized.webdav.basePath, '/MindFlow/');
 });
 await run('BackupService rejects future major version backups and validates schemaVersion 2', async () => {
   const futureBackup = {
@@ -299,6 +304,16 @@ await run('BackupService rejects future major version backups and validates sche
   await assert.rejects(async () => {
     await BackupService.previewFullWorkspaceData(futureBackup);
   }, /更高版本/);
+
+  const futureSchemaBackup = {
+    version: APP_VERSION,
+    schemaVersion: 99,
+    exportedAt: Date.now(),
+    documents: [],
+  };
+  await assert.rejects(async () => {
+    await BackupService.previewFullWorkspaceData(futureSchemaBackup);
+  }, /架构版本/);
 
   const invalidTimeBackup = {
     version: APP_VERSION,

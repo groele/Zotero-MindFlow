@@ -114,7 +114,7 @@ export const NodeCard: React.FC<NodeCardProps> = ({
       if (isLocating) return;
       setIsLocating(true);
       try {
-        const located = await locateItemInZotero(externalUrl, node.text);
+        const located = await locateItemInZotero(externalUrl, node.text, { noteText: node.note });
         if (!located) {
           openExternalUrl(externalUrl);
         }

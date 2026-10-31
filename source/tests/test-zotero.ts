@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { planIncomingDocument, sameDocumentSource, detachedMetadata } from '../src/services/zotero/documentIdentity';
-import { resolveZoteroItem, extractDoi, searchItemByDoi, locateItemInZotero } from '../src/services/zotero/zoteroBridge';
+import { resolveZoteroItem, extractDoi, searchItemByDoi, locateItemInZotero, extractZoteroItemData } from '../src/services/zotero/zoteroBridge';
 import { safeExternalUrl } from '../src/core/model/links';
 import { StorageService, DocumentConflictError } from '../src/services/storage/storageService';
 import vm from 'node:vm';
@@ -448,6 +448,7 @@ await run('safeExternalUrl normalizes raw DOI and doi: prefix to https://doi.org
   assert.equal(safeExternalUrl('DOI: 10.1038/s41563-022-01459-z'), 'https://doi.org/10.1038/s41563-022-01459-z');
   assert.equal(safeExternalUrl('doi: 10.1038/s41563-022-01459-z'), 'https://doi.org/10.1038/s41563-022-01459-z');
   assert.equal(safeExternalUrl('DOI:10.1038/s41563-022-01459-z'), 'https://doi.org/10.1038/s41563-022-01459-z');
+  assert.equal(safeExternalUrl('www.nature.com/articles/sample'), 'https://www.nature.com/articles/sample');
   assert.equal(safeExternalUrl('https://example.com'), 'https://example.com/');
   assert.equal(safeExternalUrl('javascript:alert(1)'), null);
 });
@@ -502,13 +503,27 @@ await run('locateItemInZotero selects item and switches to library tab in direct
   (globalThis as any).window = mockWin;
 
   try {
-    const success = await locateItemInZotero('10.1038/test-locate');
+    const success = await locateItemInZotero('10.1038/test-locate', undefined, { noteText: 'DOI: 10.1038/test-locate' });
     assert.equal(success, true);
     assert.equal(selectedTab, 'zotero-pane');
     assert.equal(selectedId, 888);
   } finally {
     (globalThis as any).window = previousWin;
   }
+});
+await run('extractZoteroItemData extracts DOI from extra field when DOI field is empty', () => {
+  const item = {
+    key: 'ITEMEXTRA',
+    title: 'Test Article',
+    isRegularItem: () => true,
+    getField: (f: string) => (f === 'extra' ? 'Type: article\nDOI: 10.1038/s41586-extra\nPMID: 12345' : ''),
+    getCreators: () => [{ lastName: 'Smith' }],
+    getTags: () => [],
+    getNotes: () => [],
+    getAttachments: () => [],
+  };
+  const extracted = extractZoteroItemData(item);
+  assert.equal(extracted?.doi, '10.1038/s41586-extra');
 });
 console.log(`${count} frontend data-chain tests passed`);
 

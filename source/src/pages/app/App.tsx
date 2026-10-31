@@ -2732,8 +2732,8 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
           onToggleCollapse={handleToggleCollapse}
           onStartEdit={(id) => setEditingId(id)}
           onFocusSubtree={(id) => handleSelectAndCenterNode(id)}
-          onLocateZoteroItem={(uri, text) => locateItemInZotero(uri, text)}
-          onOpenZoteroPdf={(uri, text) => openItemPdfInZotero(uri, text)}
+          onLocateZoteroItem={(uri, text, note) => locateItemInZotero(uri, text, { noteText: note })}
+          onOpenZoteroPdf={(uri, text, note) => openItemPdfInZotero(uri, text, note)}
         />
       )}
 

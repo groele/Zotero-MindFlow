@@ -927,6 +927,7 @@
           await IOUtils.makeDirectory(directory, { createAncestors: true, ignoreExisting: true });
           await IOUtils.writeUTF8(path, serialized, { tmpPath: `${path}.tmp`, backupFile: `${path}.bak`, flush: true });
           if (await IOUtils.readUTF8(path) !== serialized) throw new Error('收集箱写入后校验失败');
+          try { Zotero.Prefs?.clear?.('mindflow.mindflow_inbox_items', true); } catch (_) {}
           return items;
         });
         this._workspaceWriteQueue = operation.catch(() => {});
@@ -967,6 +968,7 @@
           await IOUtils.makeDirectory(directory, { createAncestors: true, ignoreExisting: true });
           await IOUtils.writeUTF8(path, serialized, { tmpPath: `${path}.tmp`, backupFile: `${path}.bak`, flush: true });
           if (await IOUtils.readUTF8(path) !== serialized) throw new Error('快照写入后校验失败');
+          try { Zotero.Prefs?.clear?.(`mindflow.${key}`, true); } catch (_) {}
           return snapshots;
         });
         this._workspaceWriteQueue = operation.catch(() => {});
@@ -1054,6 +1056,7 @@
               throw new Error(`Zotero 数据目录写入后校验失败：${key}`);
             }
             this._workspaceRecoveredKeys?.delete(key);
+            try { Zotero.Prefs?.clear?.(`mindflow.${key}`, true); } catch (_) {}
           }
           for (const id of recreatedIds) {
             const markerKey = `mindflow_deleted_doc_${id}`;
@@ -3448,7 +3451,14 @@
         } catch (_) {}
 
         const publication = typeof target.getField === 'function' ? (target.getField('publicationTitle') || target.getField('proceedingsTitle') || target.getField('publisher')) : '';
-        const doi = typeof target.getField === 'function' ? target.getField('DOI') : target.doi;
+        let doi = typeof target.getField === 'function' ? target.getField('DOI') : target.doi;
+        if (!doi && typeof target.getField === 'function') {
+          const extra = target.getField('extra');
+          if (extra) {
+            const extraDoi = normalizeDOI(extra);
+            if (extraDoi) doi = extraDoi;
+          }
+        }
         const url = typeof target.getField === 'function' ? target.getField('url') : target.url;
         const abstract = typeof target.getField === 'function' ? target.getField('abstractNote') : target.abstractNote;
 

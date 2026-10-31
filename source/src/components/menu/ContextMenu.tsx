@@ -23,8 +23,8 @@ export interface ContextMenuProps {
   onDuplicateNode?: (id: string) => void;
   onPasteSubtree?: (id: string) => void;
   hasClipboardContent?: boolean;
-  onLocateZoteroItem?: (uri: string, fallbackText?: string) => void;
-  onOpenZoteroPdf?: (uri: string, fallbackText?: string) => void;
+  onLocateZoteroItem?: (uri: string, fallbackText?: string, noteText?: string) => void;
+  onOpenZoteroPdf?: (uri: string, fallbackText?: string, noteText?: string) => void;
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
@@ -220,7 +220,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <button
               onClick={() => {
                 const targetUri = node.link || (extractDoi(node.text) ? `https://doi.org/${extractDoi(node.text)}` : (extractDoi(node.note) ? `https://doi.org/${extractDoi(node.note)}` : node.text));
-                onLocateZoteroItem(targetUri, node.text);
+                onLocateZoteroItem(targetUri, node.text, node.note);
                 onClose();
               }}
               className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 transition-colors text-left"
@@ -233,7 +233,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <button
               onClick={() => {
                 const targetUri = node.link || (extractDoi(node.text) ? `https://doi.org/${extractDoi(node.text)}` : (extractDoi(node.note) ? `https://doi.org/${extractDoi(node.note)}` : node.text));
-                onOpenZoteroPdf(targetUri, node.text);
+                onOpenZoteroPdf(targetUri, node.text, node.note);
                 onClose();
               }}
               className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 transition-colors text-left"

@@ -196,7 +196,14 @@ export function extractZoteroItemData(item: any): ZoteroItemData | null {
     }
 
     const publication = typeof target.getField === 'function' ? (target.getField('publicationTitle') || target.getField('proceedingsTitle') || target.getField('publisher')) : '';
-    const doi = typeof target.getField === 'function' ? target.getField('DOI') : target.doi;
+    let doi = typeof target.getField === 'function' ? target.getField('DOI') : target.doi;
+    if (!doi && typeof target.getField === 'function') {
+      const extra = target.getField('extra');
+      if (extra) {
+        const extraDoi = extractDoi(extra);
+        if (extraDoi) doi = extraDoi;
+      }
+    }
     const url = typeof target.getField === 'function' ? target.getField('url') : target.url;
     const abstract = typeof target.getField === 'function' ? target.getField('abstractNote') : target.abstractNote;
 
@@ -843,11 +850,11 @@ export function openExternalUrl(url: string): void {
 export async function locateItemInZotero(
   itemKeyOrUri: string | number,
   fallbackText?: string,
-  options?: { libraryID?: number }
+  options?: { libraryID?: number; noteText?: string }
 ): Promise<boolean> {
   const Zotero = getZoteroInstance();
   const raw = String(itemKeyOrUri ?? '').trim();
-  const doi = extractDoi(raw) || extractDoi(fallbackText);
+  const doi = extractDoi(raw) || extractDoi(fallbackText) || extractDoi(options?.noteText);
 
   // Prefer a direct Zotero API call when available
   if (Zotero) {
@@ -901,6 +908,7 @@ export async function locateItemInZotero(
           key: itemKeyOrUri,
           doi,
           text: fallbackText,
+          note: options?.noteText,
           libraryID: options?.libraryID,
         }, '*');
       } catch {
@@ -915,7 +923,7 @@ export async function locateItemInZotero(
 /**
  * Open the PDF reader for a given Zotero item
  */
-export async function openItemPdfInZotero(itemKeyOrUri: string | number, fallbackText?: string): Promise<boolean> {
+export async function openItemPdfInZotero(itemKeyOrUri: string | number, fallbackText?: string, noteText?: string): Promise<boolean> {
   const Zotero = getZoteroInstance();
   let directOpened = false;
 
@@ -933,7 +941,7 @@ export async function openItemPdfInZotero(itemKeyOrUri: string | number, fallbac
 
       let item = resolveZoteroItem(itemKeyOrUri, Zotero);
       if (!item) {
-        const doi = extractDoi(raw) || extractDoi(fallbackText);
+        const doi = extractDoi(raw) || extractDoi(fallbackText) || extractDoi(noteText);
         if (doi) {
           item = await searchItemByDoi(doi, Zotero);
         }
@@ -1031,8 +1039,8 @@ export async function openItemPdfInZotero(itemKeyOrUri: string | number, fallbac
   // Also postMessage to parent window if running inside an iframe tab
   if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
     try {
-      const doi = extractDoi(String(itemKeyOrUri)) || extractDoi(fallbackText);
-      window.parent.postMessage({ type: 'MINDFLOW_OPEN_PDF', key: itemKeyOrUri, doi, text: fallbackText }, '*');
+      const doi = extractDoi(String(itemKeyOrUri)) || extractDoi(fallbackText) || extractDoi(noteText);
+      window.parent.postMessage({ type: 'MINDFLOW_OPEN_PDF', key: itemKeyOrUri, doi, text: fallbackText, note: noteText }, '*');
       return true;
     } catch {
       // ignore
@@ -1040,7 +1048,7 @@ export async function openItemPdfInZotero(itemKeyOrUri: string | number, fallbac
   }
 
   // Fallback to locating item
-  return locateItemInZotero(itemKeyOrUri, fallbackText);
+  return locateItemInZotero(itemKeyOrUri, fallbackText, { noteText });
 }
 
 /**

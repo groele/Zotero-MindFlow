@@ -91,6 +91,14 @@ function validateWorkspaceData(value: unknown): WorkspaceBackupData {
       throw new Error(`备份来自更高版本的 MindFlow (v${value.version})，当前版本 (v${APP_VERSION}) 无法保证兼容，请先升级插件后再恢复`);
     }
   }
+  if (value.schemaVersion !== undefined) {
+    if (!Number.isSafeInteger(value.schemaVersion) || (value.schemaVersion as number) < 1) {
+      throw new Error('备份文件缺少有效的架构版本标识');
+    }
+    if ((value.schemaVersion as number) > 2) {
+      throw new Error(`备份架构版本 (v${value.schemaVersion}) 高于当前支持的最大架构版本 (v2)，请先升级插件后再恢复`);
+    }
+  }
   if (value.exportedAt !== undefined && (!Number.isFinite(value.exportedAt) || (value.exportedAt as number) <= 0)) {
     throw new Error('备份文件缺少有效的导出时间戳');
   }
@@ -328,7 +336,7 @@ export class BackupService {
     data = validateWorkspaceData(JSON.parse(JSON.stringify(data)));
 
     // Keep a recovery point for any local document that this restore will
-    // replace by ID. If snapshot creation fails, stop before overwriting it.
+    // replace by ID. Preflight verify local snapshots before any write.
     const existingIds = new Set<string>();
     const revisions = new Map<string, number>();
     for (const incoming of data.documents) await this.getSnapshots(incoming.id);
@@ -403,7 +411,7 @@ export class BackupService {
       throw new Error('备份文件超过 20 MB 安全导入上限');
     }
     const data = JSON.parse(jsonContent) as WorkspaceBackupData;
-    return this.importFullWorkspaceData(validateWorkspaceData(data));
+    return this.importFullWorkspaceData(data);
   }
 
   // 7. Get approximate storage quota
