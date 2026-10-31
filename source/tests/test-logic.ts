@@ -1,12 +1,12 @@
 import { requestWebDAV } from '../src/services/sync/webdavRequest';
 import assert from 'node:assert/strict';
-import { cloneTree, replaceNodeText, replaceAllNodeText, expandAncestors, deleteNode, nextTaskStatus } from '../src/core/model/treeOps';
+import { cloneTree, replaceNodeText, replaceAllNodeText, expandAncestors, deleteNode, nextTaskStatus, setCollapseByLevel } from '../src/core/model/treeOps';
 import { validRelationships, captureNodeDrafts, retargetDocumentLinks } from '../src/core/model/editorState';
 import { HistoryManager } from '../src/core/history/historyManager';
 import { InboxService } from '../src/services/storage/inboxService';
 import { SettingsService, sanitizeSettings } from '../src/services/storage/settingsService';
 import { safeStorage } from '../src/services/storage/safeStorage';
-import { parseOPMLString, importFromMarkdown, exportToInteractiveHTML } from '../src/services/io/exporter';
+import { parseOPMLString, importFromMarkdown, exportToInteractiveHTML, generateMermaidMindmap } from '../src/services/io/exporter';
 import { BackupService } from '../src/services/storage/backupService';
 import { WebDAVService } from '../src/services/sync/webdavService';
 import type { MindMapNode, MindMapDocument } from '../src/core/model/types';
@@ -367,6 +367,87 @@ await run('exportToInteractiveHTML renders task status badge and completed line-
     { download: (blob) => { capturedBlob = blob; } }
   );
   assert.ok(capturedBlob, 'Interactive HTML was generated');
+});
+await run('exportToInteractiveHTML includes touch pinch-to-zoom support for mobile and tablet devices', async () => {
+  let html = '';
+  const mockNodes: any[] = [{
+    id: 'root',
+    node: { id: 'root', text: 'Root', children: [] },
+    x: 0, y: 0, width: 100, height: 40, level: 0, bgColor: '#fff', borderColor: '#ccc',
+    shape: 'rounded', children: [], textColor: '#000',
+  }];
+  const theme: any = { background: '#fff', surface: '#fff', text: '#000', nodeText: '#000' };
+  exportToInteractiveHTML(
+    mockNodes,
+    [],
+    { minX: 0, maxX: 100, minY: 0, maxY: 100 },
+    theme,
+    'Pinch Test',
+    { download: (blob) => {
+      void blob.text().then(t => { html = t; });
+    } }
+  );
+  await new Promise(resolve => setTimeout(resolve, 15));
+  assert.ok(html.includes('isPinching'), 'Interactive HTML contains isPinching flag');
+  assert.ok(html.includes('initialPinchDist'), 'Interactive HTML contains initialPinchDist logic');
+});
+await run('generateMermaidMindmap produces valid Mermaid mindmap with escaped labels', async () => {
+  const tree: MindMapNode = {
+    id: 'root',
+    text: 'Research Paper ("Title")',
+    children: [
+      {
+        id: 'c1',
+        text: 'Methodology & Data',
+        children: [
+          { id: 'c1_1', text: 'Dataset [A]', children: [] },
+        ],
+      },
+      {
+        id: 'c2',
+        text: 'Results & Evaluation',
+        children: [],
+      },
+    ],
+  };
+  const mermaid = generateMermaidMindmap(tree);
+  assert.ok(mermaid.startsWith('mindmap\n'), 'Starts with mindmap keyword');
+  assert.ok(mermaid.includes('root(("Research Paper (\'Title\')"))'), 'Escapes double quotes in root node');
+  assert.ok(mermaid.includes('    ("Methodology & Data")'), 'Contains level 1 child at 4 spaces');
+  assert.ok(mermaid.includes('      ("Dataset [A]")'), 'Contains level 2 child at 6 spaces');
+});
+await run('setCollapseByLevel controls expansion up to level 3', async () => {
+  const deepTree: MindMapNode = {
+    id: 'r',
+    text: 'Root',
+    isExpanded: true,
+    children: [
+      {
+        id: 'l1',
+        text: 'Level 1',
+        children: [
+          {
+            id: 'l2',
+            text: 'Level 2',
+            children: [
+              {
+                id: 'l3',
+                text: 'Level 3',
+                children: [
+                  { id: 'l4', text: 'Level 4', children: [] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  const collapsedTo3 = setCollapseByLevel(deepTree, 3);
+  assert.equal(collapsedTo3.isExpanded, true);
+  assert.equal(collapsedTo3.children[0].isExpanded, true);
+  assert.equal(collapsedTo3.children[0].children[0].isExpanded, true);
+  assert.equal(collapsedTo3.children[0].children[0].children[0].isExpanded, false);
 });
 console.log(`${passed} logic tests passed; ${failed} failed`);
 if (failed) process.exitCode = 1;

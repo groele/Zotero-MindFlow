@@ -54,6 +54,16 @@ export function isZoteroWorkspace(): boolean {
     window.location.host === 'mindflow';
 }
 
+/**
+ * Get the target host window for postMessage communication (iframe parent or standalone opener).
+ */
+export function getHostWindow(): Window | null {
+  if (typeof window === 'undefined') return null;
+  if (window.parent && window.parent !== window) return window.parent;
+  if (window.opener && window.opener !== window) return window.opener;
+  return null;
+}
+
 export async function zoteroWorkspaceStorage(
   action: 'get' | 'setMany' | 'remove' | 'getAll' | 'keys' | 'commitDocument' | 'deleteDocument' | 'mutateSnapshots' | 'mutateInbox',
   payload: { key?: string; items?: Record<string, string>; doc?: MindMapDocument; id?: string; expectedRevision?: number; force?: boolean; restoreDeleted?: boolean;
@@ -65,7 +75,8 @@ export async function zoteroWorkspaceStorage(
   if (typeof direct === 'function') {
     return direct.call(zotero.MindFlow, action, payload);
   }
-  if (typeof window === 'undefined' || window.parent === window) {
+  const hostWindow = getHostWindow();
+  if (!hostWindow) {
     throw new Error('Zotero 本地文件存储通道未连接；导图未保存');
   }
   const requestId = `mindflow-storage-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -76,14 +87,14 @@ export async function zoteroWorkspaceStorage(
       if (error) reject(new Error(error)); else resolve(result);
     };
     const onMessage = (event: MessageEvent) => {
-      if (event.source !== window.parent || event.data?.type !== 'MINDFLOW_STORAGE_RESULT' ||
+      if (event.source !== hostWindow || event.data?.type !== 'MINDFLOW_STORAGE_RESULT' ||
           event.data.requestId !== requestId) return;
       finish(event.data.error, event.data.result);
     };
     const timeout = window.setTimeout(() => finish('Zotero 本地文件存储超时；导图未确认保存'), 20000);
     window.addEventListener('message', onMessage);
     try {
-      window.parent.postMessage({ type: 'MINDFLOW_STORAGE', requestId, action, payload }, '*');
+      hostWindow.postMessage({ type: 'MINDFLOW_STORAGE', requestId, action, payload }, '*');
     } catch (error) {
       finish(`无法请求 Zotero 保存导图：${error}`);
     }
@@ -775,9 +786,11 @@ export async function searchItemByDoi(doiInput: string, Zotero: any, libraryID?:
           for (const id of ids) {
             const item = Zotero.Items?.get?.(id);
             if (item && !item.deleted) {
-              const rawItemDoi = (typeof item.getField === 'function' ? (item.getField('DOI') || item.getField('extra')) : (item.doi || item.extra)) || '';
-              const itemDoi = extractDoi(rawItemDoi);
-              if (itemDoi === doi) {
+              const doiVal = (typeof item.getField === 'function' ? item.getField('DOI') : item.doi) || '';
+              const extraVal = (typeof item.getField === 'function' ? item.getField('extra') : item.extra) || '';
+              const itemDoi = extractDoi(doiVal);
+              const extraDoi = extractDoi(extraVal);
+              if (itemDoi === doi || extraDoi === doi || (extraVal && extraVal.toLowerCase().includes(doi))) {
                 if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
                   const parent = Zotero.Items?.get?.(item.parentItemID);
                   if (parent && !parent.deleted) return parent;
@@ -799,9 +812,11 @@ export async function searchItemByDoi(doiInput: string, Zotero: any, libraryID?:
       const cached = Zotero.Items?.getAll?.(libID) || [];
       for (const item of cached) {
         if (!item || item.deleted) continue;
-        const rawItemDoi = (typeof item.getField === 'function' ? (item.getField('DOI') || item.getField('extra')) : (item.doi || item.extra)) || '';
-        const itemDoi = extractDoi(rawItemDoi);
-        if (itemDoi === doi) {
+        const doiVal = (typeof item.getField === 'function' ? item.getField('DOI') : item.doi) || '';
+        const extraVal = (typeof item.getField === 'function' ? item.getField('extra') : item.extra) || '';
+        const itemDoi = extractDoi(doiVal);
+        const extraDoi = extractDoi(extraVal);
+        if (itemDoi === doi || extraDoi === doi || (extraVal && extraVal.toLowerCase().includes(doi))) {
           if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
             const parent = Zotero.Items?.get?.(item.parentItemID);
             if (parent && !parent.deleted) return parent;
@@ -831,9 +846,10 @@ export function openExternalUrl(url: string): void {
       // ignore
     }
   }
-  if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+  const hostWindow = getHostWindow();
+  if (hostWindow) {
     try {
-      window.parent.postMessage({ type: 'MINDFLOW_LAUNCH_URL', url }, '*');
+      hostWindow.postMessage({ type: 'MINDFLOW_LAUNCH_URL', url }, '*');
       return;
     } catch {
       // ignore
@@ -897,8 +913,9 @@ export async function locateItemInZotero(
     }
   }
 
-  // In an iframe without direct Zotero access, delegate to the host window.
-  if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+  // In an iframe or standalone window without direct Zotero access, delegate to the host window.
+  const hostWindow = getHostWindow();
+  if (hostWindow) {
     const requestId = `mindflow-locate-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     return new Promise((resolve) => {
       let settled = false;
@@ -910,14 +927,14 @@ export async function locateItemInZotero(
         resolve(result);
       };
       const onMessage = (event: MessageEvent) => {
-        if (event.source !== window.parent || event.data?.type !== 'MINDFLOW_LOCATE_ITEM_RESULT' ||
+        if (event.source !== hostWindow || event.data?.type !== 'MINDFLOW_LOCATE_ITEM_RESULT' ||
             event.data.requestId !== requestId) return;
         finish(event.data.success === true);
       };
       const timeout = window.setTimeout(() => finish(false), 3000);
       window.addEventListener('message', onMessage);
       try {
-        window.parent.postMessage({
+        hostWindow.postMessage({
           type: 'MINDFLOW_LOCATE_ITEM',
           requestId,
           key: itemKeyOrUri,
@@ -1051,15 +1068,40 @@ export async function openItemPdfInZotero(itemKeyOrUri: string | number, fallbac
     }
   }
 
-  // Also postMessage to parent window if running inside an iframe tab
-  if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
-    try {
-      const doi = extractDoi(String(itemKeyOrUri)) || extractDoi(fallbackText) || extractDoi(noteText);
-      window.parent.postMessage({ type: 'MINDFLOW_OPEN_PDF', key: itemKeyOrUri, doi, text: fallbackText, note: noteText }, '*');
-      return true;
-    } catch {
-      // ignore
-    }
+  // Also postMessage to host window if running inside an iframe tab or standalone window
+  const hostWindow = getHostWindow();
+  if (hostWindow) {
+    const requestId = `mindflow-pdf-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (result: boolean) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener('message', onMessage);
+        window.clearTimeout(timeout);
+        resolve(result);
+      };
+      const onMessage = (event: MessageEvent) => {
+        if (event.source !== hostWindow || event.data?.type !== 'MINDFLOW_OPEN_PDF_RESULT' ||
+            event.data.requestId !== requestId) return;
+        finish(event.data.success === true);
+      };
+      const timeout = window.setTimeout(() => finish(false), 4000);
+      window.addEventListener('message', onMessage);
+      try {
+        const doi = extractDoi(String(itemKeyOrUri)) || extractDoi(fallbackText) || extractDoi(noteText);
+        hostWindow.postMessage({
+          type: 'MINDFLOW_OPEN_PDF',
+          requestId,
+          key: itemKeyOrUri,
+          doi,
+          text: fallbackText,
+          note: noteText,
+        }, '*');
+      } catch {
+        finish(false);
+      }
+    });
   }
 
   // Fallback to locating item
@@ -1227,10 +1269,11 @@ export async function saveMindMapToZoteroAttachment(
     }
   }
 
-  // In native tabs, the Zotero window owns the API while the app runs in an
-  // iframe. Wait for the host's result so the UI does not report a save before
+  // In native tabs or standalone windows, the Zotero window owns the API while the app runs in an
+  // iframe or child window. Wait for the host's result so the UI does not report a save before
   // Zotero has actually written the attachment/note.
-  if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+  const hostWindow = getHostWindow();
+  if (hostWindow) {
     const requestId = `mindflow-save-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     return new Promise((resolve) => {
       const finish = (result: ZoteroArchiveResult) => {
@@ -1239,7 +1282,7 @@ export async function saveMindMapToZoteroAttachment(
         resolve(result);
       };
       const onMessage = (event: MessageEvent) => {
-        if (event.source !== window.parent) return;
+        if (event.source !== hostWindow) return;
         const data = event.data;
         if (data?.type !== 'MINDFLOW_SAVE_ATTACHMENT_RESULT' || data.requestId !== requestId) return;
         finish(data.result || { success: false, message: 'Zotero 未返回归档结果' });
@@ -1249,7 +1292,7 @@ export async function saveMindMapToZoteroAttachment(
       }, 30000);
       window.addEventListener('message', onMessage);
       try {
-        window.parent.postMessage(
+        hostWindow.postMessage(
           {
             type: 'MINDFLOW_SAVE_ATTACHMENT',
             requestId,

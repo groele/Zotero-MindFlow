@@ -47,27 +47,54 @@ export const Minimap: React.FC<MinimapProps> = ({
   const vpMinimapW = vpWorldW * scale;
   const vpMinimapH = vpWorldH * scale;
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+  const isDraggingRef = React.useRef(false);
+
+  const navigateToPoint = (clientX: number, clientY: number, target: HTMLDivElement) => {
+    const rect = target.getBoundingClientRect();
+    const clickX = clientX - rect.left;
+    const clickY = clientY - rect.top;
 
     // Convert click in minimap to world coordinates
     const targetWorldX = (clickX - offsetX) / scale;
     const targetWorldY = (clickY - offsetY) / scale;
 
-    // Center viewport on clicked point
+    // Center viewport on target point
     const newVpX = -(targetWorldX * viewport.scale - containerWidth / 2);
     const newVpY = -(targetWorldY * viewport.scale - containerHeight / 2);
 
     onNavigate(newVpX, newVpY);
   };
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDraggingRef.current = true;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+    navigateToPoint(e.clientX, e.clientY, e.currentTarget);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    navigateToPoint(e.clientX, e.clientY, e.currentTarget);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+  };
+
   return (
     <div
-      onClick={handleClick}
-      className="relative w-[180px] h-[120px] bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-lg overflow-hidden cursor-crosshair group"
-      title="小地图导航（点击快速平移）"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      className="relative w-[180px] h-[120px] bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-lg overflow-hidden cursor-crosshair select-none touch-none group"
+      title="小地图导航（点击或按住拖拽快速平移视野）"
     >
       <div className="absolute top-1.5 left-2 text-[10px] font-medium text-slate-400 flex items-center gap-1 pointer-events-none select-none">
         <MapPin className="w-2.5 h-2.5" /> 导航

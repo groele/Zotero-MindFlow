@@ -70,6 +70,39 @@ export function exportToMarkdown(root: MindMapNode, title: string, download?: Ex
   downloadBlob(new Blob([mdContent], { type: 'text/markdown;charset=utf-8;' }), `${title}.md`, download);
 }
 
+// Sanitize text for Mermaid mindmap node labels
+export function sanitizeMermaidText(text: string): string {
+  const singleLine = text.replace(/[\r\n]+/g, ' ').trim();
+  const escaped = singleLine.replace(/\\/g, '\\\\').replace(/"/g, "'");
+  return escaped || '未命名主题';
+}
+
+// Generate Mermaid mindmap source code
+export function generateMermaidMindmap(root: MindMapNode): string {
+  const lines: string[] = ['mindmap'];
+  lines.push(`  root(("${sanitizeMermaidText(root.text)}"))`);
+
+  function walk(node: MindMapNode, depth: number) {
+    for (const child of node.children) {
+      const indent = '  '.repeat(depth);
+      lines.push(`${indent}("${sanitizeMermaidText(child.text)}")`);
+      if (child.children && child.children.length > 0) {
+        walk(child, depth + 1);
+      }
+    }
+  }
+
+  walk(root, 2);
+  return lines.join('\n') + '\n';
+}
+
+// Export to Mermaid Mindmap syntax (.mmd)
+export function exportToMermaid(root: MindMapNode, title: string, download?: ExportDownload): void {
+  if (!confirmTextOnlyExport(root)) return;
+  const mmdContent = generateMermaidMindmap(root);
+  downloadBlob(new Blob([mmdContent], { type: 'text/vnd.mermaid;charset=utf-8;' }), `${title}.mmd`, download);
+}
+
 // Parse Markdown into MindMapNode tree (with task checkbox support)
 export function importFromMarkdown(mdContent: string): MindMapNode {
   const lines = mdContent.split(/\r?\n/).filter(line => line.trim().length > 0);
@@ -847,23 +880,57 @@ export function exportToInteractiveHTML(
 
     window.addEventListener('mouseup', () => { isDragging = false; });
 
+    let isPinching = false;
+    let initialPinchDist = 0;
+    let initialPinchScale = 1;
+    let pinchCenterX = 0, pinchCenterY = 0;
+
     container.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         isDragging = true;
+        isPinching = false;
         startX = e.touches[0].clientX - panX;
         startY = e.touches[0].clientY - panY;
+      } else if (e.touches.length === 2) {
+        isDragging = false;
+        isPinching = true;
+        initialPinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        ) || 1;
+        initialPinchScale = scale;
+        pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       }
     }, { passive: true });
 
     window.addEventListener('touchmove', (e) => {
-      if (!isDragging || e.touches.length !== 1) return;
-      panX = e.touches[0].clientX - startX;
-      panY = e.touches[0].clientY - startY;
-      updateTransform();
+      if (isPinching && e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const factor = dist / initialPinchDist;
+        const newScale = Math.min(Math.max(0.2, initialPinchScale * factor), 4);
+        panX = pinchCenterX - (pinchCenterX - panX) * (newScale / scale);
+        panY = pinchCenterY - (pinchCenterY - panY) * (newScale / scale);
+        scale = newScale;
+        updateTransform();
+      } else if (isDragging && e.touches.length === 1) {
+        panX = e.touches[0].clientX - startX;
+        panY = e.touches[0].clientY - startY;
+        updateTransform();
+      }
     }, { passive: true });
 
-    window.addEventListener('touchend', () => { isDragging = false; });
-    window.addEventListener('touchcancel', () => { isDragging = false; });
+    window.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) isPinching = false;
+      if (e.touches.length === 0) isDragging = false;
+    });
+    window.addEventListener('touchcancel', () => {
+      isDragging = false;
+      isPinching = false;
+    });
 
     container.addEventListener('wheel', (e) => {
       e.preventDefault();

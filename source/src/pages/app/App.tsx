@@ -19,12 +19,12 @@ import { HistoryManager } from '../../core/history/historyManager';
 import { DocumentConflictError, StorageService } from '../../services/storage/storageService';
 import {
   exportToPNG, exportToSVG, exportToMarkdown, exportToJSON, importFromMarkdown,
-  exportToOPML, importFromOPML, exportToInteractiveHTML, printToPDF
+  exportToOPML, importFromOPML, exportToInteractiveHTML, exportToMermaid, printToPDF
 } from '../../services/io/exporter';
 import {
   getSelectedZoteroItems, getZoteroSelectionSnapshot, convertZoteroItemToNode,
   saveMindMapToZoteroNote, saveMindMapToZoteroAttachment, extractZoteroItemData,
-  locateItemInZotero, openItemPdfInZotero, openZoteroPreferences, getZoteroInstance,
+  locateItemInZotero, openItemPdfInZotero, openExternalUrl, openZoteroPreferences, getZoteroInstance,
   ZoteroItemData, ZoteroArchiveResult
 } from '../../services/zotero/zoteroBridge';
 import { playAddNode, playDeleteNode } from '../../services/audio/soundService';
@@ -1752,6 +1752,11 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
           setIsZenMode(false);
           return;
         }
+        if (selectedId || selectedIds.length > 0) {
+          setSelectedId(null);
+          setSelectedIds([]);
+          return;
+        }
       }
 
       if (isSettingsOpen || isShortcutsOpen || isTemplateModalOpen || isWelcomeOpen || isPresentationOpen) return;
@@ -1817,6 +1822,12 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setIsSearchOpen(prev => !prev);
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        setIsSearchOpen(true);
         return;
       }
 
@@ -1901,9 +1912,24 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
         return;
       }
 
-      if (e.key === ' ' && selectedId) {
+      if ((e.key === ' ' || e.key === 'F2') && selectedId) {
         e.preventDefault();
         setEditingId(selectedId);
+        return;
+      }
+
+      // Fast toggle fold/collapse for selected node
+      if (e.key === '/' && selectedId) {
+        e.preventDefault();
+        handleToggleCollapse(selectedId);
+        return;
+      }
+
+      // Quick branch level collapse shortcuts (Alt+1, Alt+2, Alt+3, Alt+0/9)
+      if (e.altKey && !e.ctrlKey && !e.metaKey && ['1', '2', '3', '4', '9', '0'].includes(e.key)) {
+        e.preventDefault();
+        const level = e.key === '0' || e.key === '9' ? 99 : parseInt(e.key, 10);
+        handleCollapseByLevel(level);
         return;
       }
 
@@ -1936,7 +1962,7 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
     isCommandPaletteOpen, isSearchOpen, contextMenuState, canvasContextMenuState,
     persistArchiveAssociation,
     handleAddChild, handleAddSibling, handleDeleteNode, handleUndo, handleRedo,
-    handleCopyNode, handleDuplicateNode
+    handleCopyNode, handleDuplicateNode, handleToggleCollapse, handleCollapseByLevel
   ]);
 
   // The welcome-card action analyzes the selected Zotero paper/PDF. It must
@@ -2259,7 +2285,7 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
   }, [flushCurrentDocument, reloadWorkspace]);
 
   const exportBusyRef = useRef(false);
-  const handleExportCurrentDocument = useCallback(async (format: 'png' | 'svg' | 'markdown' | 'json' | 'opml' | 'html' | 'pdf') => {
+  const handleExportCurrentDocument = useCallback(async (format: 'png' | 'svg' | 'markdown' | 'json' | 'opml' | 'html' | 'pdf' | 'mermaid') => {
     if (exportBusyRef.current) {
       setSaveStatus({ state: 'warning', message: '已有导出正在进行，请先完成或取消保存对话框。' });
       return;
@@ -2294,6 +2320,7 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
       });
       if (format === 'json') exportToJSON({ ...current, relationships: latestRelationshipsRef.current }, current.title, download);
       else if (format === 'markdown') exportToMarkdown(current.root, current.title, download);
+      else if (format === 'mermaid') exportToMermaid(current.root, current.title, download);
       else if (format === 'opml') exportToOPML(current.root, current.title, download);
       else if (format === 'png') await exportToPNG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current, download });
       else if (format === 'svg') exportToSVG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current, download });
@@ -2444,6 +2471,7 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
           onExportJSON={() => { void handleExportCurrentDocument('json'); }}
           onExportOPML={() => { void handleExportCurrentDocument('opml'); }}
           onExportHTML={() => { void handleExportCurrentDocument('html'); }}
+          onExportMermaid={() => { void handleExportCurrentDocument('mermaid'); }}
           onExportPDF={isZoteroMode ? undefined : () => { void handleExportCurrentDocument('pdf'); }}
           onCollapseByLevel={handleCollapseByLevel}
           onImportFile={handleImportFile}
@@ -2455,6 +2483,10 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
           onSaveToZoteroAttachment={handleSaveToZoteroAttachment}
           onAnalyzeZoteroPaper={() => { void handleAnalyzeZoteroPaper(); }}
           isAiAnalyzing={isAiAnalyzing}
+          boundItemKey={doc.metadata?.zoteroItemKey}
+          boundItemTitle={doc.metadata?.zoteroItemTitle}
+          onLocateBoundItem={doc.metadata?.zoteroItemKey ? () => { void locateItemInZotero(doc.metadata!.zoteroItemKey, doc.metadata?.zoteroItemTitle); } : undefined}
+          onOpenBoundPdf={doc.metadata?.zoteroItemKey ? () => { void openItemPdfInZotero(doc.metadata!.zoteroItemKey, doc.metadata?.zoteroItemTitle); } : undefined}
         />
       )}
 
@@ -2732,7 +2764,13 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
           onToggleCollapse={handleToggleCollapse}
           onStartEdit={(id) => setEditingId(id)}
           onFocusSubtree={(id) => handleSelectAndCenterNode(id)}
-          onLocateZoteroItem={(uri, text, note) => locateItemInZotero(uri, text, { noteText: note })}
+          documentTargetKey={doc?.metadata?.zoteroItemKey || doc?.metadata?.zoteroUri}
+          onLocateZoteroItem={async (uri, text, note) => {
+            const located = await locateItemInZotero(uri, text, { noteText: note });
+            if (!located && (uri.startsWith('http://') || uri.startsWith('https://'))) {
+              openExternalUrl(uri);
+            }
+          }}
           onOpenZoteroPdf={(uri, text, note) => openItemPdfInZotero(uri, text, note)}
         />
       )}
@@ -2766,6 +2804,9 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
             setDoc((prev) => (prev ? { ...prev, themeId: nextTheme } : null));
           }}
           isDark={theme.isDark}
+          boundItemTitle={doc.metadata?.zoteroItemTitle}
+          onLocateZoteroItem={doc.metadata?.zoteroItemKey ? () => { void locateItemInZotero(doc.metadata!.zoteroItemKey, doc.metadata?.zoteroItemTitle); } : undefined}
+          onOpenZoteroPdf={doc.metadata?.zoteroItemKey ? () => { void openItemPdfInZotero(doc.metadata!.zoteroItemKey, doc.metadata?.zoteroItemTitle); } : undefined}
         />
       )}
 

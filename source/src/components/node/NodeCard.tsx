@@ -377,13 +377,23 @@ export const NodeCard: React.FC<NodeCardProps> = ({
               type="button"
               title={externalUrl.startsWith('zotero://open-pdf/') ? '在 Zotero PDF 阅读器中查看原批注' : '在 Zotero 中定位关联条目'}
               aria-label={externalUrl.startsWith('zotero://open-pdf/') ? '查看原 PDF 批注' : '在 Zotero 中定位关联条目'}
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation();
-                openZoteroUri(externalUrl, node.text, { noteText: node.note });
+                if (isLocating) return;
+                setIsLocating(true);
+                try {
+                  await openZoteroUri(externalUrl, node.text, { noteText: node.note });
+                } finally {
+                  setTimeout(() => setIsLocating(false), 800);
+                }
               }}
               className="flex-shrink-0 text-sky-600 hover:text-sky-800 p-0.5 rounded hover:bg-sky-100 dark:hover:bg-sky-950 transition-colors flex items-center"
             >
-              <GraduationCap className="w-3.5 h-3.5" />
+              {isLocating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <GraduationCap className="w-3.5 h-3.5" />
+              )}
             </button>
           ) : (
             <a

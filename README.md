@@ -8,12 +8,12 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Version](https://img.shields.io/badge/version-13.0.9-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.9)
+[![Version](https://img.shields.io/badge/version-13.0.10-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.10)
 [![Zotero Compatibility](https://img.shields.io/badge/Zotero-10.0--12.*-brightgreen?style=flat-square)](https://www.zotero.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
-[![Tests Passing](https://img.shields.io/badge/tests-117%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
+[![Tests Passing](https://img.shields.io/badge/tests-123%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
 
-[📦 下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.9/zotero-mindflow-13.0.9.xpi) · [📝 更新日志](docs/releases/v13.0.9.md) · [💬 问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
+[📦 下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.10/zotero-mindflow-13.0.10.xpi) · [📝 更新日志](docs/releases/v13.0.10.md) · [💬 问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
 
 [📖 产品定位](#overview) · [📦 安装与更新](#installation) · [🚀 快速开始](#quick-start) · [🛠️ 核心功能](#features) · [✨ 深度特性解析](#highlights) · [⚙️ 设置与使用](#settings) · [🔒 数据、同步与外部服务](#data) · [🧪 兼容性与验证范围](#compatibility) · [❓ 常见问题](#troubleshooting) · [💻 开发与详细文档](#development) · [🔗 系列产品](#series) · [📄 项目来源与许可](#license)
 
@@ -38,24 +38,24 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 | 规范指标 | 官方参数与要求 |
 |---|---|
 | **插件标识 (Add-on ID)** | `mindflow@groele.org` |
-| **当前正式版** | `v13.0.9` (Patch Release) |
+| **当前正式版** | `v13.0.10` (Patch Release) |
 | **宿主兼容范围** | Zotero `10.0` 至 `12.*`（全面适配 10.x / 11.x / 12.x 原生界面与亮暗主题） |
-| **安装包文件名** | `zotero-mindflow-13.0.9.xpi` |
-| **发布文件大小** | `535,303 字节` |
-| **SHA-256 校验和** | `8160d944d2f4064ba6327146b12a9de4fec2c7aa4c3415237b4c7e980f0cb03f` |
+| **安装包文件名** | `zotero-mindflow-13.0.10.xpi` |
+| **发布文件大小** | `537,783 字节` |
+| **SHA-256 校验和** | `70f7e32b5f4ba3a4d3968625437346d26cd428bb72c3972a741f494fb62ae226` |
 | **在线更新源** | [zotero/update.json](zotero/update.json) |
 
 ### 安装步骤
 
-1. 从官方 Release 下载最新的正式发布包 [zotero-mindflow-13.0.9.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.9/zotero-mindflow-13.0.9.xpi)（**当前正式版 v13.0.9**，请直接下载 XPI 文件，切勿下载 Source code 源码压缩包）。
+1. 从官方 Release 下载最新的正式发布包 [zotero-mindflow-13.0.10.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.10/zotero-mindflow-13.0.10.xpi)（**当前正式版 v13.0.10**，请直接下载 XPI 文件，切勿下载 Source code 源码压缩包）。
 2. 在 Zotero 顶部菜单依次打开 **工具 → 插件／附加组件**（Tools → Plugins / Add-ons）。
-3. 点击附加组件管理器右上角的**齿轮设置图标**，选择 **从文件安装插件...**（Install Add-on From File...），或直接将下载好的 `zotero-mindflow-13.0.9.xpi` 拖入窗口。
-4. 选中已下载的 `zotero-mindflow-13.0.9.xpi` 文件完成载入，根据系统提示重启 Zotero。
+3. 点击附加组件管理器右上角的**齿轮设置图标**，选择 **从文件安装插件...**（Install Add-on From File...），或直接将下载好的 `zotero-mindflow-13.0.10.xpi` 拖入窗口。
+4. 选中已下载的 `zotero-mindflow-13.0.10.xpi` 文件完成载入，根据系统提示重启 Zotero。
 
 > [!TIP]
 > **更新与校验说明**  
 > - **在线自动更新**：更新清单由不可变资产源托管于 [zotero/update.json](zotero/update.json)，后续可在 Zotero 插件管理器中直接自动或手动检查升级。  
-> - **文件校验和**：`8160d944d2f4064ba6327146b12a9de4fec2c7aa4c3415237b4c7e980f0cb03f` (SHA-256)。  
+> - **文件校验和**：`70f7e32b5f4ba3a4d3968625437346d26cd428bb72c3972a741f494fb62ae226` (SHA-256)。  
 > - **下载重命名提示**：部分浏览器（如 Safari 或 Edge 某些配置）可能在下载后自动将扩展名改为 `.zip`。遇到此情况请将其重新命名为 `.xpi` 后再进行安装。  
 > - **数据安全建议**：跨大版本升级前，建议在 MindFlow 设置中先导出工作区完整备份。
 

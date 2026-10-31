@@ -156,6 +156,85 @@ test('host MINDFLOW_LOCATE_ITEM matches item when DOI is stored in extra field',
   assert.equal(replied?.success, true);
 });
 
+test('host MINDFLOW_LOCATE_ITEM matches item when DOI field has different DOI but extra field has target DOI', async () => {
+  const f = fixture();
+  f.host.addToWindow(f.win);
+  f.host.openMindFlow({ mode: 'open' }, f.win);
+  const tab = f.tabs._tabs.find(t => t.type === 'mindflow');
+  const frame = f.tabs.getTabContent(tab.id).children[0];
+
+  const paper = f.paper('PAPER_SHADOW_DOI');
+  paper.setField('DOI', '10.1000/arxiv.initial');
+  paper.setField('extra', 'Publisher: Springer\nDOI: 10.1038/s41563-022-01459-z');
+  let selectedItemId = null;
+  f.win.ZoteroPane.selectItem = (id) => { selectedItemId = id; };
+  f.tabs.selectedID = 'other-tab';
+
+  const onMessage = f.listeners.get('message');
+  onMessage({
+    source: frame.contentWindow,
+    origin: 'chrome://mindflow',
+    data: {
+      type: 'MINDFLOW_LOCATE_ITEM',
+      requestId: 'req-doi-shadow-1',
+      doi: '10.1038/s41563-022-01459-z',
+    },
+  });
+
+  await new Promise((r) => setTimeout(r, 20));
+
+  assert.equal(f.tabs.selectedID, 'zotero-pane');
+  assert.equal(selectedItemId, paper.id);
+  const replied = frame.contentWindow.messages.find(m => m.type === 'MINDFLOW_LOCATE_ITEM_RESULT' && m.requestId === 'req-doi-shadow-1');
+  assert.equal(replied?.success, true);
+});
+
+test('host MINDFLOW_OPEN_PDF opens reader and replies with MINDFLOW_OPEN_PDF_RESULT', async () => {
+  const f = fixture();
+  f.host.addToWindow(f.win);
+  f.host.openMindFlow({ mode: 'open' }, f.win);
+  const tab = f.tabs._tabs.find(t => t.type === 'mindflow');
+  const frame = f.tabs.getTabContent(tab.id).children[0];
+
+  const paper = f.paper('PAPER_PDF_MSG');
+  paper.setField('DOI', '10.1038/s41563-022-01459-pdf');
+  const pdfAtt = {
+    id: 4441,
+    libraryID: paper.libraryID,
+    deleted: false,
+    isAttachment: () => true,
+    isPDFAttachment: () => true,
+    attachmentContentType: 'application/pdf',
+    attachmentFilename: 'article.pdf',
+  };
+  f.items.set(4441, pdfAtt);
+  paper.attachments.push(4441);
+  paper.getAttachments = () => [4441];
+  paper.getBestAttachment = async () => pdfAtt;
+
+  let readerOpenedId = null;
+  f.Zotero.Reader = {
+    open: async (id) => { readerOpenedId = id; return true; },
+  };
+
+  const onMessage = f.listeners.get('message');
+  onMessage({
+    source: frame.contentWindow,
+    origin: 'chrome://mindflow',
+    data: {
+      type: 'MINDFLOW_OPEN_PDF',
+      requestId: 'req-pdf-open-1',
+      doi: '10.1038/s41563-022-01459-pdf',
+    },
+  });
+
+  await new Promise((r) => setTimeout(r, 25));
+
+  assert.equal(readerOpenedId, 4441);
+  const replied = frame.contentWindow.messages.find(m => m.type === 'MINDFLOW_OPEN_PDF_RESULT' && m.requestId === 'req-pdf-open-1');
+  assert.equal(replied?.success, true);
+});
+
 test('host saveMindMapToItem resolves parent item by DOI when parentItemKey is a DOI URL', async () => {
   const f = fixture();
   const paper = f.paper('PAPER_ARCHIVE_DOI');

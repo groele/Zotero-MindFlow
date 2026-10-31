@@ -600,9 +600,11 @@
             for (const id of ids) {
               const item = Zotero.Items?.get?.(id);
               if (item && !item.deleted) {
-                const rawItemDoi = (typeof item.getField === 'function' ? (item.getField('DOI') || item.getField('extra')) : (item.doi || item.extra)) || '';
-                const itemDoi = normalizeDOI(rawItemDoi);
-                if (itemDoi === doi) {
+                const doiVal = (typeof item.getField === 'function' ? item.getField('DOI') : item.doi) || '';
+                const extraVal = (typeof item.getField === 'function' ? item.getField('extra') : item.extra) || '';
+                const itemDoi = normalizeDOI(doiVal);
+                const extraDoi = normalizeDOI(extraVal);
+                if (itemDoi === doi || extraDoi === doi || (extraVal && extraVal.toLowerCase().includes(doi))) {
                   if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
                     const parent = Zotero.Items?.get?.(item.parentItemID);
                     if (parent && !parent.deleted) return parent;
@@ -623,9 +625,11 @@
         const cached = Zotero.Items?.getAll?.(libID) || [];
         for (const item of cached) {
           if (!item || item.deleted) continue;
-          const rawItemDoi = (typeof item.getField === 'function' ? (item.getField('DOI') || item.getField('extra')) : (item.doi || item.extra)) || '';
-          const itemDoi = normalizeDOI(rawItemDoi);
-          if (itemDoi === doi) {
+          const doiVal = (typeof item.getField === 'function' ? item.getField('DOI') : item.doi) || '';
+          const extraVal = (typeof item.getField === 'function' ? item.getField('extra') : item.extra) || '';
+          const itemDoi = normalizeDOI(doiVal);
+          const extraDoi = normalizeDOI(extraVal);
+          if (itemDoi === doi || extraDoi === doi || (extraVal && extraVal.toLowerCase().includes(doi))) {
             if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
               const parent = Zotero.Items?.get?.(item.parentItemID);
               if (parent && !parent.deleted) return parent;
@@ -2442,6 +2446,18 @@
 
           // B. Open PDF Reader in Zotero
           if (data.type === 'MINDFLOW_OPEN_PDF' && (data.key || data.doi || data.text || data.note)) {
+            const reply = (success) => {
+              if (data.requestId && typeof data.requestId === 'string') {
+                try {
+                  source.postMessage({
+                    type: 'MINDFLOW_OPEN_PDF_RESULT',
+                    requestId: data.requestId,
+                    success: !!success,
+                  }, responseOrigin);
+                } catch (_) {}
+              }
+            };
+
             const rawRef = String(data.key || '').trim();
             let directOpened = false;
             if (rawRef.startsWith('zotero://open-pdf/')) {
@@ -2452,22 +2468,29 @@
                 }
               } catch (_) {}
             }
-            if (!directOpened) {
-              (async () => {
-                let item = data.key ? resolveItemReference(data.key, data.libraryID) : null;
-                if (!item) {
-                  const doi = data.doi || normalizeDOI(data.key) || normalizeDOI(data.text) || normalizeDOI(data.note);
-                  if (doi) {
-                    item = await searchItemByDoi(doi, data.libraryID);
-                  }
-                }
-                if (item) {
-                  void openPDFForItem(item);
-                }
-              })().catch((err) => {
-                Zotero.log?.('[MindFlow] MINDFLOW_OPEN_PDF error: ' + err);
-              });
+            if (directOpened) {
+              reply(true);
+              return;
             }
+
+            (async () => {
+              let item = data.key ? resolveItemReference(data.key, data.libraryID) : null;
+              if (!item) {
+                const doi = data.doi || normalizeDOI(data.key) || normalizeDOI(data.text) || normalizeDOI(data.note);
+                if (doi) {
+                  item = await searchItemByDoi(doi, data.libraryID);
+                }
+              }
+              if (item) {
+                const opened = await openPDFForItem(item);
+                reply(opened);
+                return;
+              }
+              reply(false);
+            })().catch((err) => {
+              Zotero.log?.('[MindFlow] MINDFLOW_OPEN_PDF error: ' + err);
+              reply(false);
+            });
             return;
           }
 

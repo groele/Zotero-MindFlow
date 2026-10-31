@@ -23,6 +23,7 @@ export interface ContextMenuProps {
   onDuplicateNode?: (id: string) => void;
   onPasteSubtree?: (id: string) => void;
   hasClipboardContent?: boolean;
+  documentTargetKey?: string;
   onLocateZoteroItem?: (uri: string, fallbackText?: string, noteText?: string) => void;
   onOpenZoteroPdf?: (uri: string, fallbackText?: string, noteText?: string) => void;
 }
@@ -42,6 +43,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onDuplicateNode,
   onPasteSubtree,
   hasClipboardContent = false,
+  documentTargetKey,
   onLocateZoteroItem,
   onOpenZoteroPdf,
 }) => {
@@ -115,7 +117,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           <FileText className="w-3.5 h-3.5 text-slate-500" />
           <span>编辑文本</span>
         </div>
-        <kbd className="text-[10px] font-mono text-slate-400">Space</kbd>
+        <kbd className="text-[10px] font-mono text-slate-400">Space / F2</kbd>
       </button>
 
 
@@ -210,42 +212,46 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         </div>
       </button>
 
-      {Boolean((node.link && node.link.startsWith('zotero://')) || extractDoi(node.link) || extractDoi(node.text) || extractDoi(node.note)) && (
-        <>
-          <div className="my-1 border-t border-slate-100 dark:border-slate-800/80" />
-          <div className="px-3 py-0.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
-            Zotero 伴读联动
-          </div>
-          {onLocateZoteroItem && (
-            <button
-              onClick={() => {
-                const nodeDoi = extractDoi(node.link) || extractDoi(node.text) || extractDoi(node.note);
-                const targetUri = (node.link && node.link.startsWith('zotero://') ? node.link : null) || (nodeDoi ? `https://doi.org/${nodeDoi}` : (node.link || node.text));
-                onLocateZoteroItem(targetUri, node.text, node.note);
-                onClose();
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 transition-colors text-left"
-            >
-              <MapPin className="w-3.5 h-3.5 text-sky-500" />
-              <span>在 Zotero 文库中定位</span>
-            </button>
-          )}
-          {onOpenZoteroPdf && (
-            <button
-              onClick={() => {
-                const nodeDoi = extractDoi(node.link) || extractDoi(node.text) || extractDoi(node.note);
-                const targetUri = (node.link && node.link.startsWith('zotero://') ? node.link : null) || (nodeDoi ? `https://doi.org/${nodeDoi}` : (node.link || node.text));
-                onOpenZoteroPdf(targetUri, node.text, node.note);
-                onClose();
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 transition-colors text-left"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-sky-500" />
-              <span>打开 PDF 阅读器</span>
-            </button>
-          )}
-        </>
-      )}
+      {(() => {
+        const nodeDoi = extractDoi(node.link) || extractDoi(node.text) || extractDoi(node.note);
+        const nodeSpecificTarget = (node.link && node.link.startsWith('zotero://') ? node.link : null) || (nodeDoi ? `https://doi.org/${nodeDoi}` : null);
+        const effectiveTarget = nodeSpecificTarget || documentTargetKey || (node.link ? node.link : null);
+        if (!effectiveTarget) return null;
+        const isDocumentFallback = !nodeSpecificTarget && Boolean(documentTargetKey);
+
+        return (
+          <>
+            <div className="my-1 border-t border-slate-100 dark:border-slate-800/80" />
+            <div className="px-3 py-0.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+              Zotero 伴读联动
+            </div>
+            {onLocateZoteroItem && (
+              <button
+                onClick={() => {
+                  onLocateZoteroItem(effectiveTarget, node.text, node.note);
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 transition-colors text-left"
+              >
+                <MapPin className="w-3.5 h-3.5 text-sky-500" />
+                <span>在 Zotero 文库中定位{isDocumentFallback ? '所属文献' : '条目'}</span>
+              </button>
+            )}
+            {onOpenZoteroPdf && (
+              <button
+                onClick={() => {
+                  onOpenZoteroPdf(effectiveTarget, node.text, node.note);
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 transition-colors text-left"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-sky-500" />
+                <span>打开文献 PDF 阅读器</span>
+              </button>
+            )}
+          </>
+        );
+      })()}
 
       <div className="my-1 border-t border-slate-100 dark:border-slate-800/80" />
 

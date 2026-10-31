@@ -5,7 +5,7 @@ import {
   HelpCircle, Maximize2, Minimize2, ZoomIn, ZoomOut,
   ChevronDown, Check, Inbox, Sparkles, Command, Settings,
   Presentation, Search as SearchIcon, Scan, Layers, ImagePlus, GraduationCap,
-  MoreHorizontal, Expand, GitBranch, Image, Shapes, FileText, Braces, ListTree as ListTreeIcon, Globe, Paperclip
+  MoreHorizontal, Expand, GitBranch, Image, Shapes, FileText, Braces, ListTree as ListTreeIcon, Globe, Paperclip, Code2
 } from 'lucide-react';
 import { LayoutType, ThemeColors } from '../../core/model/types';
 import { THEMES } from '../../core/theme/themes';
@@ -58,6 +58,7 @@ interface ToolbarProps {
   onExportJSON: () => void;
   onExportOPML?: () => void;
   onExportHTML?: () => void;
+  onExportMermaid?: () => void;
   onExportPDF?: () => void;
   onCollapseByLevel?: (level: number) => void;
   onImportFile: (file: File) => void;
@@ -69,6 +70,10 @@ interface ToolbarProps {
   onSaveToZoteroAttachment?: () => void;
   onAnalyzeZoteroPaper?: () => void;
   isAiAnalyzing?: boolean;
+  boundItemKey?: string;
+  boundItemTitle?: string;
+  onLocateBoundItem?: () => void;
+  onOpenBoundPdf?: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -113,6 +118,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onExportJSON,
   onExportOPML,
   onExportHTML,
+  onExportMermaid,
   onExportPDF,
   onCollapseByLevel,
   onImportFile,
@@ -124,6 +130,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onSaveToZoteroAttachment,
   onAnalyzeZoteroPaper,
   isAiAnalyzing = false,
+  boundItemKey,
+  boundItemTitle,
+  onLocateBoundItem,
+  onOpenBoundPdf,
 }) => {
   const buttons = toolbarButtons || {
     history: true,
@@ -454,18 +464,28 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2"><Expand className="w-3.5 h-3.5" />展开全部节点</span>
+                  <kbd className="text-[10px] font-mono text-slate-400">Alt+0</kbd>
+                </button>
+                <button
+                  onClick={() => { onCollapseByLevel(3); setIsLevelMenuOpen(false); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2"><GitBranch className="w-3.5 h-3.5" />展开至 3 级分支</span>
+                  <kbd className="text-[10px] font-mono text-slate-400">Alt+3</kbd>
                 </button>
                 <button
                   onClick={() => { onCollapseByLevel(2); setIsLevelMenuOpen(false); }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2"><GitBranch className="w-3.5 h-3.5" />展开至 2 级分支</span>
+                  <kbd className="text-[10px] font-mono text-slate-400">Alt+2</kbd>
                 </button>
                 <button
                   onClick={() => { onCollapseByLevel(1); setIsLevelMenuOpen(false); }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2"><ListTreeIcon className="w-3.5 h-3.5" />仅显示 1 级主干</span>
+                  <kbd className="text-[10px] font-mono text-slate-400">Alt+1</kbd>
                 </button>
               </div>
             )}
@@ -571,9 +591,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 </button>
                 <button
                   onClick={() => { onExportHTML?.(); setIsExportMenuOpen(false); }}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center"
                 >
                   <Globe className="mr-2 w-4 h-4" />独立离线交互网页 (.html)
+                </button>
+                <button
+                  onClick={() => { onExportMermaid?.(); setIsExportMenuOpen(false); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center"
+                >
+                  <Code2 className="mr-2 w-4 h-4" />Mermaid 语法 (.mmd) · 知识库通用
                 </button>
                 {!isZoteroMode && onExportPDF && <>
                 <button
@@ -659,6 +685,37 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   {isZoteroMode ? '已连接 Zotero' : '独立演示模式'}
                 </span>
               </div>
+
+              {boundItemKey && (
+                <div className="px-3 py-2 bg-sky-50/70 dark:bg-sky-950/30 border-b border-sky-100 dark:border-sky-900/40">
+                  <div className="text-[10px] text-sky-600 dark:text-sky-400 font-medium">当前导图关联文献</div>
+                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate mt-0.5" title={boundItemTitle || boundItemKey}>
+                    {boundItemTitle || '已绑定文献条目'}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    {onLocateBoundItem && (
+                      <button
+                        type="button"
+                        onClick={() => { onLocateBoundItem(); setIsZoteroMenuOpen(false); }}
+                        className="flex-1 py-1 px-2 text-[11px] bg-white dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 rounded flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <GraduationCap className="w-3 h-3 text-sky-500" />
+                        <span>文库定位</span>
+                      </button>
+                    )}
+                    {onOpenBoundPdf && (
+                      <button
+                        type="button"
+                        onClick={() => { onOpenBoundPdf(); setIsZoteroMenuOpen(false); }}
+                        className="flex-1 py-1 px-2 text-[11px] bg-white dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 rounded flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <FileText className="w-3 h-3 text-sky-500" />
+                        <span>打开 PDF</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {isZoteroMode && onAnalyzeZoteroPaper && (
                 <button

@@ -3,7 +3,7 @@ import { useContextMenu } from './useContextMenu';
 import {
   Focus, RotateCcw, Plus,
   Grid, CircleDot, Square, Moon, Sun,
-  Maximize2, ClipboardPaste
+  Maximize2, ClipboardPaste, GraduationCap, FileText
 } from 'lucide-react';
 
 export interface CanvasContextMenuProps {
@@ -20,6 +20,9 @@ export interface CanvasContextMenuProps {
   onChangeCanvasBackground: (bg: 'dots' | 'grid' | 'blank') => void;
   onToggleTheme?: () => void;
   isDark?: boolean;
+  onLocateZoteroItem?: () => void;
+  onOpenZoteroPdf?: () => void;
+  boundItemTitle?: string;
 }
 
 export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
@@ -36,6 +39,9 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   onChangeCanvasBackground,
   onToggleTheme,
   isDark = false,
+  onLocateZoteroItem,
+  onOpenZoteroPdf,
+  boundItemTitle,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -130,6 +136,41 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
           </div>
           <kbd className="text-[10px] font-mono text-purple-400">Ctrl+V</kbd>
         </button>
+      )}
+
+      {onLocateZoteroItem && (
+        <>
+          <div className="my-1 border-t border-slate-100 dark:border-slate-800/80" />
+          <div className="px-3 py-0.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider truncate" title={boundItemTitle || '当前导图关联文献'}>
+            {boundItemTitle ? `文献 · ${boundItemTitle}` : '关联文献联动'}
+          </div>
+          <button
+            onClick={() => {
+              onLocateZoteroItem();
+              onClose();
+            }}
+            className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-slate-700 dark:text-slate-200 hover:text-sky-600 dark:hover:text-sky-400 transition-colors text-left"
+          >
+            <div className="flex items-center gap-2">
+              <GraduationCap className="w-3.5 h-3.5 text-sky-500" />
+              <span>在文库中定位文献</span>
+            </div>
+          </button>
+          {onOpenZoteroPdf && (
+            <button
+              onClick={() => {
+                onOpenZoteroPdf();
+                onClose();
+              }}
+              className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-slate-700 dark:text-slate-200 hover:text-sky-600 dark:hover:text-sky-400 transition-colors text-left"
+            >
+              <div className="flex items-center gap-2">
+                <FileText className="w-3.5 h-3.5 text-sky-500" />
+                <span>打开全文 PDF 阅读器</span>
+              </div>
+            </button>
+          )}
+        </>
       )}
 
       <div className="my-1 border-t border-slate-100 dark:border-slate-800/80" />

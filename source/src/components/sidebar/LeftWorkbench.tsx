@@ -9,6 +9,7 @@ import {
   Trash2, Check, Download, Upload, History, RotateCcw,
   FileText, PanelLeftClose, PanelLeftOpen, ArrowRight, HardDrive, ArrowLeftRight, X, Settings, Tag, GraduationCap
 } from 'lucide-react';
+import { locateItemInZotero } from '../../services/zotero/zoteroBridge';
 
 export type WorkbenchTab = 'docs' | 'outline' | 'tags' | 'inbox' | 'backup';
 
@@ -490,12 +491,17 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
                               {d.title}
                             </span>
                             {d.zoteroItemKey && (
-                              <span
-                                className="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 font-medium leading-none"
-                                title={d.zoteroItemTitle ? `已关联 Zotero 文献: ${d.zoteroItemTitle}` : '已关联 Zotero 文献'}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void locateItemInZotero(d.zoteroItemKey!, d.zoteroItemTitle);
+                                }}
+                                className="shrink-0 inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full bg-sky-100 hover:bg-sky-200 dark:bg-sky-900/60 dark:hover:bg-sky-800 text-sky-700 dark:text-sky-300 font-medium leading-none transition-colors cursor-pointer"
+                                title={d.zoteroItemTitle ? `已关联 Zotero 文献: ${d.zoteroItemTitle} (点击在文库中定位)` : '已关联 Zotero 文献 (点击在文库中定位)'}
                               >
                                 <GraduationCap className="mr-0.5 h-2.5 w-2.5" />Zotero
-                              </span>
+                              </button>
                             )}
                           </div>
                           <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">

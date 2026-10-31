@@ -6,9 +6,9 @@ import { DocumentSummary, StorageService } from '../../services/storage/storageS
 import {
   X, Tag, Link, FileText, Palette, Shapes,
   Star, Flag, CheckCircle2, HelpCircle, Plus, Link2, ImagePlus, Trash2,
-  MapPin, BookOpen, GraduationCap, RefreshCw, Check
+  MapPin, BookOpen, GraduationCap, RefreshCw, Check, Loader2
 } from 'lucide-react';
-import { extractDoi, locateItemInZotero, openItemPdfInZotero, saveMindMapToZoteroAttachment } from '../../services/zotero/zoteroBridge';
+import { extractDoi, locateItemInZotero, openItemPdfInZotero, saveMindMapToZoteroAttachment, openExternalUrl } from '../../services/zotero/zoteroBridge';
 
 interface PropertySidebarProps {
   selectedNode: MindMapNode | null;
@@ -48,6 +48,7 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
   const [targetSearch, setTargetSearch] = useState('');
   const [isSyncingToZotero, setIsSyncingToZotero] = useState(false);
   const [isOpeningPdf, setIsOpeningPdf] = useState(false);
+  const [isLocatingItem, setIsLocatingItem] = useState(false);
   const [syncStatusMsg, setSyncStatusMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -356,6 +357,28 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
 
           if (!zoteroTargetKey) return null;
 
+          const handleLocateItem = async () => {
+            if (isLocatingItem) return;
+            setIsLocatingItem(true);
+            try {
+              const success = await locateItemInZotero(zoteroTargetKey, selectedNode.text, { noteText: selectedNode.note });
+              if (!success) {
+                if (zoteroTargetKey.startsWith('http://') || zoteroTargetKey.startsWith('https://')) {
+                  openExternalUrl(zoteroTargetKey);
+                  setSyncStatusMsg('未在文献库中找到对应条目，已在默认浏览器中打开外部链接');
+                } else {
+                  setSyncStatusMsg('未在当前文献库中检索到对应条目');
+                }
+                setTimeout(() => setSyncStatusMsg(null), 3500);
+              }
+            } catch (err: any) {
+              setSyncStatusMsg('定位条目失败: ' + (err?.message || err));
+              setTimeout(() => setSyncStatusMsg(null), 3500);
+            } finally {
+              setTimeout(() => setIsLocatingItem(false), 800);
+            }
+          };
+
           const handleOpenPdf = async () => {
             setIsOpeningPdf(true);
             try {
@@ -414,11 +437,21 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => locateItemInZotero(zoteroTargetKey, selectedNode.text, { noteText: selectedNode.note })}
-                  className="flex-1 py-1.5 px-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                  onClick={handleLocateItem}
+                  disabled={isLocatingItem}
+                  className="flex-1 py-1.5 px-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer disabled:opacity-75"
                 >
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>文库定位</span>
+                  {isLocatingItem ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>正在定位...</span>
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>文库定位</span>
+                    </>
+                  )}
                 </button>
                 <button
                   type="button"

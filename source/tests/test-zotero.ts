@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { planIncomingDocument, sameDocumentSource, detachedMetadata } from '../src/services/zotero/documentIdentity';
-import { resolveZoteroItem, extractDoi, searchItemByDoi, locateItemInZotero, extractZoteroItemData } from '../src/services/zotero/zoteroBridge';
+import { resolveZoteroItem, extractDoi, searchItemByDoi, locateItemInZotero, extractZoteroItemData, getHostWindow, openItemPdfInZotero } from '../src/services/zotero/zoteroBridge';
 import { safeExternalUrl } from '../src/core/model/links';
 import { StorageService, DocumentConflictError } from '../src/services/storage/storageService';
 import vm from 'node:vm';
@@ -542,6 +542,76 @@ await run('searchItemByDoi in-memory fallback resolves attachment items to paren
   };
   const found = await searchItemByDoi('10.1038/s41586-parent-test', mockZ);
   assert.equal(found?.id, 101);
+});
+await run('searchItemByDoi matches item when DOI field has different/outdated DOI but Extra field contains target DOI', async () => {
+  const itemMock = {
+    id: 555,
+    getField: (f: string) => (f === 'DOI' ? '10.1000/old-shadowed-doi' : (f === 'extra' ? 'Archive: arXiv\nDOI: 10.1038/s41586-correct-target' : '')),
+  };
+  const mockZ = {
+    Search: class {
+      conditions: any[] = [];
+      addCondition(field: string, op: string, val: string) { this.conditions.push({ field, op, val }); }
+      async search() {
+        const extraCond = this.conditions.find(c => c.field === 'extra');
+        if (extraCond && extraCond.val.toLowerCase() === '10.1038/s41586-correct-target') return [555];
+        return [];
+      }
+    },
+    Items: { get: (id: number) => (id === 555 ? itemMock : null) },
+  };
+  const found = await searchItemByDoi('10.1038/s41586-correct-target', mockZ);
+  assert.equal(found?.id, 555);
+});
+await run('getHostWindow resolves opener in standalone window mode', () => {
+  const prevWindow = (globalThis as any).window;
+  const mockOpener: any = { postMessage: () => {} };
+  const mockStandalone: any = { opener: mockOpener };
+  mockStandalone.parent = mockStandalone;
+  (globalThis as any).window = mockStandalone;
+  try {
+    assert.equal(getHostWindow(), mockOpener);
+  } finally {
+    (globalThis as any).window = prevWindow;
+  }
+});
+await run('openItemPdfInZotero dispatches MINDFLOW_OPEN_PDF and awaits MINDFLOW_OPEN_PDF_RESULT response', async () => {
+  const prevWindow = (globalThis as any).window;
+  const listeners: Record<string, (e: any) => void> = {};
+  let postedMessage: any = null;
+  const mockParent: any = {
+    postMessage: (data: any) => {
+      postedMessage = data;
+      if (listeners['message']) {
+        setTimeout(() => {
+          listeners['message']({
+            source: mockParent,
+            data: {
+              type: 'MINDFLOW_OPEN_PDF_RESULT',
+              requestId: data.requestId,
+              success: true,
+            },
+          });
+        }, 10);
+      }
+    },
+  };
+  const mockWin: any = {
+    parent: mockParent,
+    addEventListener: (type: string, fn: any) => { listeners[type] = fn; },
+    removeEventListener: (type: string) => { delete listeners[type]; },
+    setTimeout: (fn: any, ms: number) => setTimeout(fn, ms),
+    clearTimeout: (id: any) => clearTimeout(id),
+  };
+  (globalThis as any).window = mockWin;
+  try {
+    const success = await openItemPdfInZotero('10.1038/test-pdf-open', 'Fallback Title');
+    assert.equal(success, true);
+    assert.equal(postedMessage?.type, 'MINDFLOW_OPEN_PDF');
+    assert.equal(postedMessage?.doi, '10.1038/test-pdf-open');
+  } finally {
+    (globalThis as any).window = prevWindow;
+  }
 });
 console.log(`${count} frontend data-chain tests passed`);
 
