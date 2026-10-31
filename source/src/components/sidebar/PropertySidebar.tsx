@@ -114,7 +114,7 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
   const handleLinkBlur = () => {
     const trimmed = linkText.trim();
     if (trimmed && !safeExternalUrl(trimmed)) {
-      setLinkError('仅支持 HTTPS、HTTP、mailto 或 zotero 链接');
+      setLinkError('仅支持 HTTPS、HTTP、DOI、mailto 或 zotero 链接');
       return;
     }
     setLinkError('');

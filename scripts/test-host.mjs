@@ -54,6 +54,96 @@ test('inbox write verification failure is reported rather than a successful oper
   f.IOUtils.writeUTF8 = async (...args) => { await write(...args); f.disk.set(args[0], '[]'); };
   await assert.rejects(() => f.host.workspaceStorage('mutateInbox', { additions: [{ id: 'v', text: 'v', createdAt: 1, isProcessed: false }] }), /校验失败/);
 });
+
+test('host MINDFLOW_LOCATE_ITEM selects database item by DOI and switches to library tab', async () => {
+  const f = fixture();
+  f.host.addToWindow(f.win);
+  f.host.openMindFlow({ mode: 'open' }, f.win);
+  const tab = f.tabs._tabs.find(t => t.type === 'mindflow');
+  const frame = f.tabs.getTabContent(tab.id).children[0];
+
+  const paper = f.paper('PAPER_DOI');
+  paper.setField('DOI', '10.1038/s41563-022-01459-z');
+  let selectedItemId = null;
+  f.win.ZoteroPane.selectItem = (id) => { selectedItemId = id; };
+  f.tabs.selectedID = 'other-tab';
+
+  const onMessage = f.listeners.get('message');
+  assert.ok(typeof onMessage === 'function', 'message listener registered');
+
+  onMessage({
+    source: frame.contentWindow,
+    origin: 'chrome://mindflow',
+    data: {
+      type: 'MINDFLOW_LOCATE_ITEM',
+      requestId: 'req-doi-1',
+      key: 'https://doi.org/10.1038/s41563-022-01459-z',
+      text: 'DOI: 10.1038/s41563-022-01459-z',
+    },
+  });
+
+  await new Promise((r) => setTimeout(r, 20));
+
+  assert.equal(f.tabs.selectedID, 'zotero-pane');
+  assert.equal(selectedItemId, paper.id);
+  const replied = frame.contentWindow.messages.find(m => m.type === 'MINDFLOW_LOCATE_ITEM_RESULT');
+  assert.equal(replied?.success, true);
+  assert.equal(replied?.requestId, 'req-doi-1');
+});
+
+test('host MINDFLOW_LOCATE_ITEM selects database item by key', async () => {
+  const f = fixture();
+  f.host.addToWindow(f.win);
+  f.host.openMindFlow({ mode: 'open' }, f.win);
+  const tab = f.tabs._tabs.find(t => t.type === 'mindflow');
+  const frame = f.tabs.getTabContent(tab.id).children[0];
+
+  const paper = f.paper('KEY12345');
+  let selectedItemId = null;
+  f.win.ZoteroPane.selectItem = (id) => { selectedItemId = id; };
+  f.tabs.selectedID = 'other-tab';
+
+  const onMessage = f.listeners.get('message');
+  onMessage({
+    source: frame.contentWindow,
+    origin: 'chrome://mindflow',
+    data: {
+      type: 'MINDFLOW_LOCATE_ITEM',
+      requestId: 'req-key-1',
+      key: 'KEY12345',
+    },
+  });
+
+  await new Promise((r) => setTimeout(r, 20));
+
+  assert.equal(f.tabs.selectedID, 'zotero-pane');
+  assert.equal(selectedItemId, paper.id);
+  const replied = frame.contentWindow.messages.find(m => m.type === 'MINDFLOW_LOCATE_ITEM_RESULT');
+  assert.equal(replied?.success, true);
+});
+
+test('host MINDFLOW_LAUNCH_URL invokes Zotero.launchURL for external links', () => {
+  const f = fixture();
+  f.host.addToWindow(f.win);
+  f.host.openMindFlow({ mode: 'open' }, f.win);
+  const tab = f.tabs._tabs.find(t => t.type === 'mindflow');
+  const frame = f.tabs.getTabContent(tab.id).children[0];
+
+  let launchedUrl = null;
+  f.Zotero.launchURL = (url) => { launchedUrl = url; };
+
+  const onMessage = f.listeners.get('message');
+  onMessage({
+    source: frame.contentWindow,
+    origin: 'chrome://mindflow',
+    data: {
+      type: 'MINDFLOW_LAUNCH_URL',
+      url: 'https://doi.org/10.1038/s41563-022-01459-z',
+    },
+  });
+
+  assert.equal(launchedUrl, 'https://doi.org/10.1038/s41563-022-01459-z');
+});
 function hangingTurn(_request, _onEvent, { signal }) {
   return new Promise((_resolve, reject) => {
     const abort = () => reject(Object.assign(new Error('cancelled'), { name: 'AbortError' }));
@@ -132,6 +222,21 @@ function fixture(options = {}) {
     setTimeout() { return 1; }, clearTimeout() {} };
   const Zotero = { log() {}, logError() {}, getMainWindow: () => win, getActiveZoteroPane: () => win.ZoteroPane,
     File: { getContentsFromURL: async () => fs.readFileSync(path.join(root, 'chrome/content/research-templates.json'), 'utf8') },
+    Search: class {
+      constructor() { this.conditions = []; this.libraryID = 1; }
+      addCondition(field, operator, val) { this.conditions.push({ field, operator, val }); }
+      async search() {
+        const doiCond = this.conditions.find(c => c.field === 'DOI');
+        if (doiCond) {
+          const matched = [...items.values()].filter(i => {
+            const itDoi = (typeof i.getField === 'function' ? i.getField('DOI') : (i.doi || i.fields?.DOI));
+            return itDoi && String(itDoi).toLowerCase() === String(doiCond.val).toLowerCase();
+          });
+          return matched.map(m => m.id);
+        }
+        return [];
+      }
+    },
     Items: { get: id => items.get(id), getByLibraryAndKey: (lib,key) => [...items.values()].find(i => i.libraryID === lib && i.key === key) },
     Libraries: { userLibraryID: 1, get: id => ({ libraryID:id, groupID:id===2?55:undefined, editable:true, filesEditable:true }),
       getAll: () => [{libraryID:1},{libraryID:2}] }, Groups: { getLibraryIDFromGroupID: id => id===55?2:null },
@@ -166,8 +271,10 @@ function fixture(options = {}) {
   vm.runInNewContext(runtime.replace('  Zotero.MindFlow.init();','  Zotero.MindFlow._testLLMRequest = callLLMForZotero;'), ctx);
   const host = Zotero.MindFlow;
   function paper(key, libraryID=1) {
-    const item = { id:nextID++, key, libraryID, attachments:[], notes:[], title:key,
-      isRegularItem:()=>true, isAttachment:()=>false, getField(k) {return k==='title'?this.title:'';},
+    const item = { id:nextID++, key, libraryID, attachments:[], notes:[], title:key, fields:{},
+      isRegularItem:()=>true, isAttachment:()=>false,
+      getField(k) {return k==='title'?this.title:(this.fields?.[k]||'');},
+      setField(k,v) {this.fields=this.fields||{};this.fields[k]=v;},
       getAttachments() {return this.attachments;}, getNotes() {return this.notes;}, getCreators:()=>[], getTags:()=>[] };
     items.set(item.id,item); return item;
   }

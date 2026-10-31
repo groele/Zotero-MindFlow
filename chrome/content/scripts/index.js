@@ -533,6 +533,88 @@
       .filter((item) => item && !item.deleted);
     return found.length === 1 ? found[0] : null;
   };
+
+  const normalizeDOI = (value) => {
+    if (!value || typeof value !== 'string') return '';
+    let clean = value
+      .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
+      .replace(/[\uFF01-\uFF5E]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+      .trim()
+      .toLowerCase();
+    const urlMatch = clean.match(/https?:\/\/(?:dx\.)?doi\.org\/[^\s]+/i)?.[0];
+    if (urlMatch) {
+      clean = urlMatch.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '').split(/[?#]/, 1)[0];
+    }
+    try {
+      clean = decodeURIComponent(clean).toLowerCase();
+    } catch (_) {}
+    clean = clean.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '');
+    clean = clean.replace(/^doi:\s*/i, '');
+    const match = clean.match(/10\.\d{4,9}\/[^\s"'`\\]+/);
+    if (!match) return '';
+    let result = match[0].replace(/[.,;:，。；：、]+$/, '');
+    for (const [open, close] of [['(', ')'], ['[', ']'], ['{', '}'], ['<', '>']]) {
+      while (result.endsWith(close) && result.split(close).length > result.split(open).length) {
+        result = result.slice(0, -1);
+      }
+    }
+    return /^10\.\d{4,9}\/.+/.test(result) ? result : '';
+  };
+
+  const searchItemByDoi = async (doiInput, libraryID = null) => {
+    const doi = normalizeDOI(doiInput);
+    if (!doi) return null;
+
+    let scope = libraryID == null ? null : Number(libraryID);
+    if (scope !== null && (!Number.isSafeInteger(scope) || scope <= 0)) scope = null;
+
+    const scopes = scope !== null ? [scope] :
+      (Zotero.Libraries?.getAll?.() || []).map((lib) => lib.libraryID);
+    if (!scopes.length && Zotero.Libraries?.userLibraryID) {
+      scopes.push(Zotero.Libraries.userLibraryID);
+    }
+    if (!scopes.length) {
+      scopes.push(1);
+    }
+
+    if (typeof Zotero.Search === 'function') {
+      for (const libID of scopes) {
+        try {
+          const s = new Zotero.Search();
+          s.libraryID = libID;
+          s.addCondition('DOI', 'is', doi);
+          const ids = await s.search();
+          if (Array.isArray(ids) && ids.length > 0) {
+            for (const id of ids) {
+              const item = Zotero.Items?.get?.(id);
+              if (item && !item.deleted) {
+                if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
+                  const parent = Zotero.Items?.get?.(item.parentItemID);
+                  if (parent && !parent.deleted) return parent;
+                }
+                return item;
+              }
+            }
+          }
+        } catch (e) {
+          Zotero.log?.('[MindFlow] DOI search failed for library ' + libID + ': ' + e);
+        }
+      }
+    }
+
+    try {
+      for (const libID of scopes) {
+        const cached = Zotero.Items?.getAll?.(libID) || [];
+        for (const item of cached) {
+          if (!item || item.deleted) continue;
+          const itemDoi = normalizeDOI(typeof item.getField === 'function' ? item.getField('DOI') : item.doi);
+          if (itemDoi === doi) return item;
+        }
+      }
+    } catch (_) {}
+
+    return null;
+  };
   const tabContainer = (tabs, tab, win) => tab?.container ||
     tabs?.getTabContent?.(tab?.id) || tabs?.getTabContainer?.(tab?.id) ||
     win?.document?.getElementById?.(tab?.id);
@@ -2280,21 +2362,50 @@
           }
 
           // A. Locate and highlight item in Library
-          if (data.type === 'MINDFLOW_LOCATE_ITEM' && data.key) {
-            const tabs = window.Zotero_Tabs;
-            if (tabs && Array.isArray(tabs._tabs)) {
-              const libTab = tabs._tabs.find((t) => t && (t.type === 'library' || t.id === 'zotero-pane'));
-              if (libTab) tabs.select(libTab.id);
-            }
-            const item = resolveItemReference(data.key, data.libraryID);
-            if (item && window.ZoteroPane) {
-              window.ZoteroPane.selectItem(item.id);
-            }
+          if (data.type === 'MINDFLOW_LOCATE_ITEM' && (data.key || data.doi || data.text)) {
+            const reply = (success) => {
+              if (data.requestId && typeof data.requestId === 'string') {
+                try {
+                  source.postMessage({
+                    type: 'MINDFLOW_LOCATE_ITEM_RESULT',
+                    requestId: data.requestId,
+                    success: !!success,
+                  }, responseOrigin);
+                } catch (_) {}
+              }
+            };
+
+            (async () => {
+              let item = data.key ? resolveItemReference(data.key, data.libraryID) : null;
+              if (!item) {
+                const doi = data.doi || normalizeDOI(data.key) || normalizeDOI(data.text);
+                if (doi) {
+                  item = await searchItemByDoi(doi, data.libraryID);
+                }
+              }
+              if (item) {
+                const tabs = window.Zotero_Tabs;
+                if (tabs && Array.isArray(tabs._tabs)) {
+                  const libTab = tabs._tabs.find((t) => t && (t.type === 'library' || t.id === 'zotero-pane'));
+                  if (libTab) tabs.select(libTab.id);
+                }
+                if (window.ZoteroPane) {
+                  await window.ZoteroPane.selectItem(item.id);
+                }
+                reply(true);
+                return;
+              }
+              reply(false);
+            })().catch((err) => {
+              Zotero.log?.('[MindFlow] MINDFLOW_LOCATE_ITEM error: ' + err);
+              reply(false);
+            });
+            return;
           }
 
           // B. Open PDF Reader in Zotero
-          if (data.type === 'MINDFLOW_OPEN_PDF' && data.key) {
-            const rawRef = String(data.key).trim();
+          if (data.type === 'MINDFLOW_OPEN_PDF' && (data.key || data.doi || data.text)) {
+            const rawRef = String(data.key || '').trim();
             let directOpened = false;
             if (rawRef.startsWith('zotero://open-pdf/')) {
               try {
@@ -2305,11 +2416,36 @@
               } catch (_) {}
             }
             if (!directOpened) {
-              const item = resolveItemReference(data.key, data.libraryID);
-              if (item) {
-                void openPDFForItem(item);
-              }
+              (async () => {
+                let item = data.key ? resolveItemReference(data.key, data.libraryID) : null;
+                if (!item) {
+                  const doi = data.doi || normalizeDOI(data.key) || normalizeDOI(data.text);
+                  if (doi) {
+                    item = await searchItemByDoi(doi, data.libraryID);
+                  }
+                }
+                if (item) {
+                  void openPDFForItem(item);
+                }
+              })().catch((err) => {
+                Zotero.log?.('[MindFlow] MINDFLOW_OPEN_PDF error: ' + err);
+              });
             }
+            return;
+          }
+
+          // C. Launch external URL in default browser
+          if (data.type === 'MINDFLOW_LAUNCH_URL' && typeof data.url === 'string') {
+            try {
+              if (typeof Zotero.launchURL === 'function') {
+                Zotero.launchURL(data.url);
+              } else if (typeof window.open === 'function') {
+                window.open(data.url, '_blank');
+              }
+            } catch (err) {
+              Zotero.log?.('[MindFlow] MINDFLOW_LAUNCH_URL error: ' + err);
+            }
+            return;
           }
 
           // Titles and routing data belong only to the exact sending frame.

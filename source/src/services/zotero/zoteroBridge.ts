@@ -694,16 +694,151 @@ export async function saveMindMapToZoteroNote(doc: MindMapDocument): Promise<{ s
 }
 
 /**
- * Locate and highlight an item in the Zotero library pane
+ * Extract a clean DOI from a string, URL, or node text
  */
-export function locateItemInZotero(itemKeyOrUri: string | number): boolean {
-  const Zotero = getZoteroInstance();
+export function extractDoi(input: string | null | undefined): string | null {
+  if (!input || typeof input !== 'string') return null;
+  let clean = input
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
+    .replace(/[\uFF01-\uFF5E]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .trim()
+    .toLowerCase();
+  const urlMatch = clean.match(/https?:\/\/(?:dx\.)?doi\.org\/[^\s]+/i)?.[0];
+  if (urlMatch) {
+    clean = urlMatch.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '').split(/[?#]/, 1)[0];
+  }
+  try {
+    clean = decodeURIComponent(clean).toLowerCase();
+  } catch {
+    // ignore
+  }
+  clean = clean.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '');
+  clean = clean.replace(/^doi:\s*/i, '');
+  const match = clean.match(/10\.\d{4,9}\/[^\s"'`\\]+/);
+  if (!match) return null;
+  let result = match[0].replace(/[.,;:，。；：、]+$/, '');
+  for (const [open, close] of [['(', ')'], ['[', ']'], ['{', '}'], ['<', '>']]) {
+    while (result.endsWith(close) && result.split(close).length > result.split(open).length) {
+      result = result.slice(0, -1);
+    }
+  }
+  return /^10\.\d{4,9}\/.+/.test(result) ? result : null;
+}
 
-  // Prefer a direct Zotero API call. Sending both this and a host message
-  // selects the same item twice and can race tab switching.
+/**
+ * Search the Zotero library database for an item matching a given DOI
+ */
+export async function searchItemByDoi(doiInput: string, Zotero: any, libraryID?: number): Promise<any | null> {
+  const doi = extractDoi(doiInput);
+  if (!doi || !Zotero) return null;
+
+  let scope = libraryID == null ? null : Number(libraryID);
+  if (scope !== null && (!Number.isSafeInteger(scope) || scope <= 0)) scope = null;
+
+  const scopes = scope !== null ? [scope] :
+    (Zotero.Libraries?.getAll?.() || []).map((lib: any) => lib.libraryID);
+  if (!scopes.length && Zotero.Libraries?.userLibraryID) {
+    scopes.push(Zotero.Libraries.userLibraryID);
+  }
+  if (!scopes.length) {
+    scopes.push(1);
+  }
+
+  // 1. Zotero.Search
+  if (typeof Zotero.Search === 'function') {
+    for (const libID of scopes) {
+      try {
+        const s = new Zotero.Search();
+        s.libraryID = libID;
+        s.addCondition('DOI', 'is', doi);
+        const ids = await s.search();
+        if (Array.isArray(ids) && ids.length > 0) {
+          for (const id of ids) {
+            const item = Zotero.Items?.get?.(id);
+            if (item && !item.deleted) {
+              if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
+                const parent = Zotero.Items?.get?.(item.parentItemID);
+                if (parent && !parent.deleted) return parent;
+              }
+              return item;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[MindFlow] searchItemByDoi failed for library', libID, e);
+      }
+    }
+  }
+
+  // 2. In-memory fallback
+  try {
+    for (const libID of scopes) {
+      const cached = Zotero.Items?.getAll?.(libID) || [];
+      for (const item of cached) {
+        if (!item || item.deleted) continue;
+        const itemDoi = extractDoi(typeof item.getField === 'function' ? item.getField('DOI') : item.doi);
+        if (itemDoi === doi) return item;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
+/**
+ * Open external URL in system browser
+ */
+export function openExternalUrl(url: string): void {
+  if (!url) return;
+  const Zotero = getZoteroInstance();
+  if (Zotero && typeof Zotero.launchURL === 'function') {
+    try {
+      Zotero.launchURL(url);
+      return;
+    } catch {
+      // ignore
+    }
+  }
+  if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+    try {
+      window.parent.postMessage({ type: 'MINDFLOW_LAUNCH_URL', url }, '*');
+      return;
+    } catch {
+      // ignore
+    }
+  }
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
+/**
+ * Locate and highlight an item in the Zotero library pane.
+ * Accepts:
+ * - 8-character item key
+ * - Numeric item ID
+ * - zotero://select/... URI
+ * - DOI URL (https://doi.org/10.xxxx/...)
+ * - Raw DOI string or text containing DOI
+ */
+export async function locateItemInZotero(
+  itemKeyOrUri: string | number,
+  fallbackText?: string,
+  options?: { libraryID?: number }
+): Promise<boolean> {
+  const Zotero = getZoteroInstance();
+  const raw = String(itemKeyOrUri ?? '').trim();
+  const doi = extractDoi(raw) || extractDoi(fallbackText);
+
+  // Prefer a direct Zotero API call when available
   if (Zotero) {
     try {
-      const item = resolveZoteroItem(itemKeyOrUri, Zotero);
+      let item = resolveZoteroItem(itemKeyOrUri, Zotero, options?.libraryID);
+      if (!item && doi) {
+        item = await searchItemByDoi(doi, Zotero, options?.libraryID);
+      }
 
       const win = (typeof window !== 'undefined' && window.parent !== window ? window.parent : null) || Zotero.getMainWindow?.();
       if (win?.Zotero_Tabs) {
@@ -711,7 +846,7 @@ export function locateItemInZotero(itemKeyOrUri: string | number): boolean {
         if (libTab) win.Zotero_Tabs.select(libTab.id);
       }
       if (item && win?.ZoteroPane) {
-        win.ZoteroPane.selectItem(item.id);
+        await win.ZoteroPane.selectItem(item.id);
         return true;
       }
     } catch (e) {
@@ -721,20 +856,45 @@ export function locateItemInZotero(itemKeyOrUri: string | number): boolean {
 
   // In an iframe without direct Zotero access, delegate to the host window.
   if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
-    try {
-      window.parent.postMessage({ type: 'MINDFLOW_LOCATE_ITEM', key: itemKeyOrUri }, '*');
-      return true;
-    } catch {
-      // ignore
-    }
+    const requestId = `mindflow-locate-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (result: boolean) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener('message', onMessage);
+        window.clearTimeout(timeout);
+        resolve(result);
+      };
+      const onMessage = (event: MessageEvent) => {
+        if (event.source !== window.parent || event.data?.type !== 'MINDFLOW_LOCATE_ITEM_RESULT' ||
+            event.data.requestId !== requestId) return;
+        finish(event.data.success === true);
+      };
+      const timeout = window.setTimeout(() => finish(false), 3000);
+      window.addEventListener('message', onMessage);
+      try {
+        window.parent.postMessage({
+          type: 'MINDFLOW_LOCATE_ITEM',
+          requestId,
+          key: itemKeyOrUri,
+          doi,
+          text: fallbackText,
+          libraryID: options?.libraryID,
+        }, '*');
+      } catch {
+        finish(false);
+      }
+    });
   }
+
   return false;
 }
 
 /**
  * Open the PDF reader for a given Zotero item
  */
-export function openItemPdfInZotero(itemKeyOrUri: string | number): boolean {
+export async function openItemPdfInZotero(itemKeyOrUri: string | number, fallbackText?: string): Promise<boolean> {
   const Zotero = getZoteroInstance();
   let directOpened = false;
 
@@ -750,7 +910,13 @@ export function openItemPdfInZotero(itemKeyOrUri: string | number): boolean {
         } catch (_) {}
       }
 
-      const item = resolveZoteroItem(itemKeyOrUri, Zotero);
+      let item = resolveZoteroItem(itemKeyOrUri, Zotero);
+      if (!item) {
+        const doi = extractDoi(raw) || extractDoi(fallbackText);
+        if (doi) {
+          item = await searchItemByDoi(doi, Zotero);
+        }
+      }
 
       if (item) {
         const isPdf = (att: any) => {
@@ -844,7 +1010,8 @@ export function openItemPdfInZotero(itemKeyOrUri: string | number): boolean {
   // Also postMessage to parent window if running inside an iframe tab
   if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
     try {
-      window.parent.postMessage({ type: 'MINDFLOW_OPEN_PDF', key: itemKeyOrUri }, '*');
+      const doi = extractDoi(String(itemKeyOrUri)) || extractDoi(fallbackText);
+      window.parent.postMessage({ type: 'MINDFLOW_OPEN_PDF', key: itemKeyOrUri, doi, text: fallbackText }, '*');
       return true;
     } catch {
       // ignore
@@ -852,28 +1019,26 @@ export function openItemPdfInZotero(itemKeyOrUri: string | number): boolean {
   }
 
   // Fallback to locating item
-  return locateItemInZotero(itemKeyOrUri);
+  return locateItemInZotero(itemKeyOrUri, fallbackText);
 }
 
 /**
- * Open / Navigate to a Zotero URI
+ * Open / Navigate to a Zotero URI or DOI
  */
-export function openZoteroUri(uri: string): void {
+export async function openZoteroUri(uri: string, fallbackText?: string): Promise<boolean> {
   if (uri.startsWith('zotero://open-pdf/')) {
-    if (openItemPdfInZotero(uri)) return;
+    if (await openItemPdfInZotero(uri, fallbackText)) return true;
   }
   if (uri.startsWith('zotero://select/') && uri.includes('/items/')) {
-    if (locateItemInZotero(uri)) return;
+    if (await locateItemInZotero(uri, fallbackText)) return true;
+  }
+  const doi = extractDoi(uri) || extractDoi(fallbackText);
+  if (doi) {
+    if (await locateItemInZotero(uri, fallbackText)) return true;
   }
 
-  const Zotero = getZoteroInstance();
-  if (Zotero && typeof Zotero.launchURL === 'function') {
-    Zotero.launchURL(uri);
-    return;
-  }
-  if (typeof window !== 'undefined') {
-    window.location.href = uri;
-  }
+  openExternalUrl(uri);
+  return false;
 }
 
 /**

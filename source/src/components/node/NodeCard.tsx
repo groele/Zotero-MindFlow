@@ -3,7 +3,7 @@ import { LayoutNode } from '../../core/model/types';
 import { safeExternalUrl } from '../../core/model/links';
 import { imageDisplayHeight, isSafeNodeImage } from '../../core/model/nodeImage';
 import { ExternalLink, FileText, ChevronRight, ChevronDown, Tag, Star, Flag, CheckCircle2, HelpCircle, Link2, GraduationCap, Plus, Circle, Clock3 } from 'lucide-react';
-import { openZoteroUri } from '../../services/zotero/zoteroBridge';
+import { openZoteroUri, locateItemInZotero, openExternalUrl, extractDoi, isZoteroEnvironment } from '../../services/zotero/zoteroBridge';
 
 interface NodeCardProps {
   layoutNode: LayoutNode;
@@ -88,9 +88,33 @@ export const NodeCard: React.FC<NodeCardProps> = ({
   };
 
   const hasChildren = node.children && node.children.length > 0;
-  const externalUrl = safeExternalUrl(node.link);
+  const rawDoi = extractDoi(node.link) || extractDoi(node.text);
+  const externalUrl = safeExternalUrl(node.link) || (rawDoi ? `https://doi.org/${rawDoi}` : null);
+  const isDoi = Boolean(rawDoi);
   const nodeImage = isSafeNodeImage(node.image) ? node.image : null;
   const isCollapsed = node.isExpanded === false;
+
+  const handleExternalClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!externalUrl) return;
+
+    // Ctrl/Cmd/Alt click: bypass Zotero locate and directly open web URL
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      if (isZoteroEnvironment()) {
+        e.preventDefault();
+        openExternalUrl(externalUrl);
+      }
+      return;
+    }
+
+    if (isDoi || isZoteroEnvironment()) {
+      e.preventDefault();
+      const located = await locateItemInZotero(externalUrl, node.text);
+      if (!located) {
+        openExternalUrl(externalUrl);
+      }
+    }
+  };
 
   // Visual shape style
   let shapeClasses = 'rounded-xl';
@@ -340,7 +364,7 @@ export const NodeCard: React.FC<NodeCardProps> = ({
               aria-label={externalUrl.startsWith('zotero://open-pdf/') ? '查看原 PDF 批注' : '在 Zotero 中定位关联条目'}
               onClick={(e) => {
                 e.stopPropagation();
-                openZoteroUri(externalUrl);
+                openZoteroUri(externalUrl, node.text);
               }}
               className="flex-shrink-0 text-sky-600 hover:text-sky-800 p-0.5 rounded hover:bg-sky-100 dark:hover:bg-sky-950 transition-colors flex items-center"
             >
@@ -351,8 +375,9 @@ export const NodeCard: React.FC<NodeCardProps> = ({
               href={externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              title={externalUrl}
-              onClick={(e) => e.stopPropagation()}
+              title={isDoi ? `在 Zotero 数据库中定位对应条目（未找到或按住 Ctrl 点击打开网页）\n${externalUrl}` : externalUrl}
+              aria-label={isDoi ? '在 Zotero 数据库中定位对应条目' : '打开外部链接'}
+              onClick={handleExternalClick}
               className="flex-shrink-0 text-blue-500 hover:text-blue-700 p-0.5 rounded hover:bg-blue-50 transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5" />

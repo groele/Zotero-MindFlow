@@ -6,6 +6,7 @@ import {
   MapPin, BookOpen
 } from 'lucide-react';
 import { MindMapNode } from '../../core/model/types';
+import { extractDoi } from '../../services/zotero/zoteroBridge';
 
 export interface ContextMenuProps {
   x: number;
@@ -22,8 +23,8 @@ export interface ContextMenuProps {
   onDuplicateNode?: (id: string) => void;
   onPasteSubtree?: (id: string) => void;
   hasClipboardContent?: boolean;
-  onLocateZoteroItem?: (uri: string) => void;
-  onOpenZoteroPdf?: (uri: string) => void;
+  onLocateZoteroItem?: (uri: string, fallbackText?: string) => void;
+  onOpenZoteroPdf?: (uri: string, fallbackText?: string) => void;
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
@@ -209,7 +210,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         </div>
       </button>
 
-      {node.link && node.link.startsWith('zotero://') && (
+      {Boolean((node.link && node.link.startsWith('zotero://')) || extractDoi(node.link) || extractDoi(node.text)) && (
         <>
           <div className="my-1 border-t border-slate-100 dark:border-slate-800/80" />
           <div className="px-3 py-0.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
@@ -218,7 +219,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           {onLocateZoteroItem && (
             <button
               onClick={() => {
-                onLocateZoteroItem(node.link!);
+                onLocateZoteroItem(node.link || node.text, node.text);
                 onClose();
               }}
               className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 transition-colors text-left"
@@ -230,7 +231,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           {onOpenZoteroPdf && (
             <button
               onClick={() => {
-                onOpenZoteroPdf(node.link!);
+                onOpenZoteroPdf(node.link || node.text, node.text);
                 onClose();
               }}
               className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-sky-700 dark:text-sky-300 transition-colors text-left"

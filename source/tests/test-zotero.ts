@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { planIncomingDocument, sameDocumentSource, detachedMetadata } from '../src/services/zotero/documentIdentity';
-import { resolveZoteroItem } from '../src/services/zotero/zoteroBridge';
+import { resolveZoteroItem, extractDoi, searchItemByDoi, locateItemInZotero } from '../src/services/zotero/zoteroBridge';
+import { safeExternalUrl } from '../src/core/model/links';
 import { StorageService, DocumentConflictError } from '../src/services/storage/storageService';
 import vm from 'node:vm';
 import { safeStorage } from '../src/services/storage/safeStorage';
@@ -433,4 +434,73 @@ await run('created research document records intensity level in note and support
     assert.match(doc.root.note || '', /仅引言/);
   }
 });
+await run('extractDoi extracts clean DOI from raw string, prefix, url, and node text', () => {
+  assert.equal(extractDoi('10.1038/s41563-022-01459-z'), '10.1038/s41563-022-01459-z');
+  assert.equal(extractDoi('doi:10.1038/s41563-022-01459-z'), '10.1038/s41563-022-01459-z');
+  assert.equal(extractDoi('https://doi.org/10.1038/s41563-022-01459-z'), '10.1038/s41563-022-01459-z');
+  assert.equal(extractDoi('DOI: 10.1038/s41563-022-01459-z\n-z'), '10.1038/s41563-022-01459-z');
+  assert.equal(extractDoi('Not a DOI at all'), null);
+  assert.equal(extractDoi(''), null);
+});
+await run('safeExternalUrl normalizes raw DOI and doi: prefix to https://doi.org/...', () => {
+  assert.equal(safeExternalUrl('10.1038/s41563-022-01459-z'), 'https://doi.org/10.1038/s41563-022-01459-z');
+  assert.equal(safeExternalUrl('doi:10.1038/s41563-022-01459-z'), 'https://doi.org/10.1038/s41563-022-01459-z');
+  assert.equal(safeExternalUrl('https://example.com'), 'https://example.com/');
+  assert.equal(safeExternalUrl('javascript:alert(1)'), null);
+});
+await run('searchItemByDoi queries Zotero search and finds matching item', async () => {
+  const itemMock = { id: 999, getField: (f: string) => (f === 'DOI' ? '10.1038/s41563-022-01459-z' : '') };
+  const mockZ = {
+    Search: class {
+      conditions: any[] = [];
+      addCondition(field: string, op: string, val: string) { this.conditions.push({ field, op, val }); }
+      async search() {
+        const cond = this.conditions.find(c => c.field === 'DOI');
+        if (cond && cond.val.toLowerCase() === '10.1038/s41563-022-01459-z') return [999];
+        return [];
+      }
+    },
+    Items: { get: (id: number) => (id === 999 ? itemMock : null) },
+  };
+  const found = await searchItemByDoi('https://doi.org/10.1038/s41563-022-01459-z', mockZ);
+  assert.equal(found?.id, 999);
+});
+await run('locateItemInZotero selects item and switches to library tab in direct environment', async () => {
+  let selectedTab = 'other-tab';
+  let selectedId = null;
+  const previousWin = (globalThis as any).window;
+  const itemMock = { id: 888, getField: (f: string) => (f === 'DOI' ? '10.1038/test-locate' : '') };
+  const mockWin: any = {
+    Zotero_Tabs: {
+      _tabs: [{ id: 'zotero-pane', type: 'zotero-pane' }, { id: 'other-tab', type: 'mindflow' }],
+      get selectedID() { return selectedTab; },
+      select: (id: string) => { selectedTab = id; },
+    },
+    ZoteroPane: {
+      selectItem: async (id: number) => { selectedId = id; },
+    },
+  };
+  const mockZ = {
+    getMainWindow: () => mockWin,
+    getActiveZoteroPane: () => mockWin.ZoteroPane,
+    Search: class {
+      conditions: any[] = [];
+      addCondition(field: string, op: string, val: string) { this.conditions.push({ field, op, val }); }
+      async search() { return [888]; }
+    },
+    Items: { get: (id: number) => (id === 888 ? itemMock : null) },
+  };
+  mockWin.Zotero = mockZ;
+  (globalThis as any).window = mockWin;
+
+  try {
+    const success = await locateItemInZotero('10.1038/test-locate');
+    assert.equal(success, true);
+    assert.equal(selectedTab, 'zotero-pane');
+    assert.equal(selectedId, 888);
+  } finally {
+    (globalThis as any).window = previousWin;
+  }
+});
 console.log(`${count} frontend data-chain tests passed`);
+
