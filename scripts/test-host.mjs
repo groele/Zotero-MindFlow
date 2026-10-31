@@ -91,6 +91,38 @@ test('host MINDFLOW_LOCATE_ITEM selects database item by DOI and switches to lib
   assert.equal(replied?.requestId, 'req-doi-1');
 });
 
+test('host MINDFLOW_LOCATE_ITEM matches item even if library DOI field contains full URL prefix', async () => {
+  const f = fixture();
+  f.host.addToWindow(f.win);
+  f.host.openMindFlow({ mode: 'open' }, f.win);
+  const tab = f.tabs._tabs.find(t => t.type === 'mindflow');
+  const frame = f.tabs.getTabContent(tab.id).children[0];
+
+  const paper = f.paper('PAPER_FULL_URL_DOI');
+  paper.setField('DOI', 'https://doi.org/10.1038/s41563-022-01459-z');
+  let selectedItemId = null;
+  f.win.ZoteroPane.selectItem = (id) => { selectedItemId = id; };
+  f.tabs.selectedID = 'other-tab';
+
+  const onMessage = f.listeners.get('message');
+  onMessage({
+    source: frame.contentWindow,
+    origin: 'chrome://mindflow',
+    data: {
+      type: 'MINDFLOW_LOCATE_ITEM',
+      requestId: 'req-doi-url-1',
+      key: '10.1038/s41563-022-01459-z',
+    },
+  });
+
+  await new Promise((r) => setTimeout(r, 20));
+
+  assert.equal(f.tabs.selectedID, 'zotero-pane');
+  assert.equal(selectedItemId, paper.id);
+  const replied = frame.contentWindow.messages.find(m => m.type === 'MINDFLOW_LOCATE_ITEM_RESULT' && m.requestId === 'req-doi-url-1');
+  assert.equal(replied?.success, true);
+});
+
 test('host MINDFLOW_LOCATE_ITEM selects database item by key', async () => {
   const f = fixture();
   f.host.addToWindow(f.win);
@@ -230,7 +262,10 @@ function fixture(options = {}) {
         if (doiCond) {
           const matched = [...items.values()].filter(i => {
             const itDoi = (typeof i.getField === 'function' ? i.getField('DOI') : (i.doi || i.fields?.DOI));
-            return itDoi && String(itDoi).toLowerCase() === String(doiCond.val).toLowerCase();
+            if (!itDoi) return false;
+            const targetVal = String(doiCond.val).toLowerCase();
+            const fieldVal = String(itDoi).toLowerCase();
+            return doiCond.operator === 'contains' ? fieldVal.includes(targetVal) : fieldVal === targetVal;
           });
           return matched.map(m => m.id);
         }

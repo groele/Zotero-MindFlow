@@ -41,8 +41,8 @@ As an integral pillar of the **Zotero Flow** series, MindFlow operates completel
 | **Current Stable Release** | `v13.0.6` (Patch Release) |
 | **Host Compatibility** | Zotero `10.0` through `12.*` (fully adaptive across 10.x / 11.x / 12.x light and dark themes) |
 | **Package File** | `zotero-mindflow-13.0.6.xpi` |
-| **File Size** | `534,100 bytes` |
-| **SHA-256 Checksum** | `f1307e7a4c4f888767e05af3fe03a7fbb7e032057eef3648de92d5181310441d` |
+| **File Size** | `534,240 bytes` |
+| **SHA-256 Checksum** | `c957343e3d94f0919bd2aa66474723ebd0eba9de7440f192a947669bed5551d9` |
 | **Online Update Feed** | [zotero/update.json](zotero/update.json) |
 
 ### Installation Steps
@@ -55,7 +55,7 @@ As an integral pillar of the **Zotero Flow** series, MindFlow operates completel
 > [!TIP]
 > **Update Feeds and Verification**  
 > - **Online Update Manifest**: Hosted as an immutable asset feed at [zotero/update.json](zotero/update.json) with Add-on ID `mindflow@groele.org`.  
-> - **SHA-256 Checksum**: `f1307e7a4c4f888767e05af3fe03a7fbb7e032057eef3648de92d5181310441d`.  
+> - **SHA-256 Checksum**: `c957343e3d94f0919bd2aa66474723ebd0eba9de7440f192a947669bed5551d9`.  
 > - **Browser Renaming Note**: Certain browsers (such as Safari or Edge) may occasionally rename downloaded files to `.zip`. If this occurs, simply rename the file back to `.xpi` before loading into Zotero.  
 > - Subsequent updates can be detected and applied directly through the Zotero Add-on Manager. Backing up the workspace before major version upgrades is always recommended.
 

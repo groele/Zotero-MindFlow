@@ -107,12 +107,20 @@ export const NodeCard: React.FC<NodeCardProps> = ({
       return;
     }
 
-    if (isDoi || isZoteroEnvironment()) {
+    // When DOI is present, prioritize jumping to the local Zotero library database item
+    if (isDoi) {
       e.preventDefault();
       const located = await locateItemInZotero(externalUrl, node.text);
       if (!located) {
         openExternalUrl(externalUrl);
       }
+      return;
+    }
+
+    // For general non-DOI web links inside Zotero, open via launchURL
+    if (isZoteroEnvironment()) {
+      e.preventDefault();
+      openExternalUrl(externalUrl);
     }
   };
 

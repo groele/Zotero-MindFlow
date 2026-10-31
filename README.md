@@ -41,8 +41,8 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 | **当前正式版** | `v13.0.6` (Patch Release) |
 | **宿主兼容范围** | Zotero `10.0` 至 `12.*`（全面适配 10.x / 11.x / 12.x 原生界面与亮暗主题） |
 | **安装包文件名** | `zotero-mindflow-13.0.6.xpi` |
-| **发布文件大小** | `534,100 字节` |
-| **SHA-256 校验和** | `f1307e7a4c4f888767e05af3fe03a7fbb7e032057eef3648de92d5181310441d` |
+| **发布文件大小** | `534,240 字节` |
+| **SHA-256 校验和** | `c957343e3d94f0919bd2aa66474723ebd0eba9de7440f192a947669bed5551d9` |
 | **在线更新源** | [zotero/update.json](zotero/update.json) |
 
 ### 安装步骤
@@ -55,7 +55,7 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 > [!TIP]
 > **更新与校验说明**  
 > - **在线自动更新**：更新清单由不可变资产源托管于 [zotero/update.json](zotero/update.json)，后续可在 Zotero 插件管理器中直接自动或手动检查升级。  
-> - **文件校验和**：`f1307e7a4c4f888767e05af3fe03a7fbb7e032057eef3648de92d5181310441d` (SHA-256)。  
+> - **文件校验和**：`c957343e3d94f0919bd2aa66474723ebd0eba9de7440f192a947669bed5551d9` (SHA-256)。  
 > - **下载重命名提示**：部分浏览器（如 Safari 或 Edge 某些配置）可能在下载后自动将扩展名改为 `.zip`。遇到此情况请将其重新命名为 `.xpi` 后再进行安装。  
 > - **数据安全建议**：跨大版本升级前，建议在 MindFlow 设置中先导出工作区完整备份。
 

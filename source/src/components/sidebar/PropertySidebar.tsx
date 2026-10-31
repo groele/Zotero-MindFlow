@@ -8,7 +8,7 @@ import {
   Star, Flag, CheckCircle2, HelpCircle, Plus, Link2, ImagePlus, Trash2,
   MapPin, BookOpen, GraduationCap, RefreshCw, Check
 } from 'lucide-react';
-import { locateItemInZotero, openItemPdfInZotero, saveMindMapToZoteroAttachment } from '../../services/zotero/zoteroBridge';
+import { extractDoi, locateItemInZotero, openItemPdfInZotero, saveMindMapToZoteroAttachment } from '../../services/zotero/zoteroBridge';
 
 interface PropertySidebarProps {
   selectedNode: MindMapNode | null;
@@ -345,17 +345,19 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
 
         {/* Zotero Item Link Action Box */}
         {(() => {
+          const nodeDoi = extractDoi(selectedNode.link) || extractDoi(selectedNode.text);
           const zoteroTargetKey =
             currentDoc.metadata?.zoteroItemKey ||
             currentDoc.metadata?.zoteroUri ||
-            (selectedNode.link && selectedNode.link.startsWith('zotero://') ? selectedNode.link : null);
+            (selectedNode.link && selectedNode.link.startsWith('zotero://') ? selectedNode.link : null) ||
+            (nodeDoi ? `https://doi.org/${nodeDoi}` : null);
 
           if (!zoteroTargetKey) return null;
 
           const handleOpenPdf = async () => {
             setIsOpeningPdf(true);
             try {
-              const success = openItemPdfInZotero(zoteroTargetKey);
+              const success = await openItemPdfInZotero(zoteroTargetKey, selectedNode.text);
               if (!success) {
                 setSyncStatusMsg('未检测到 PDF 附件，已在文库中定位文献');
                 setTimeout(() => setSyncStatusMsg(null), 3500);
@@ -410,7 +412,7 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => locateItemInZotero(zoteroTargetKey)}
+                  onClick={() => locateItemInZotero(zoteroTargetKey, selectedNode.text)}
                   className="flex-1 py-1.5 px-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
                 >
                   <MapPin className="w-3.5 h-3.5" />
