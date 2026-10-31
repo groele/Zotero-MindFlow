@@ -70,7 +70,10 @@ export class ResearchPresetService {
     const store = this.read();
     if (id && !store.presets.some(p => p.id === id)) throw new Error('该预设已被删除，请另存为新预设。');
     if (!id && store.presets.length >= 30) throw new Error('最多保存 30 个预设，请先删除不再使用的预设。');
-    const preset = { id: id || `preset_${crypto.randomUUID()}`, name: name.trim(), ...validated };
+    const randomId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    const preset = { id: id || `preset_${randomId}`, name: name.trim(), ...validated };
     store.presets = id ? store.presets.map(p => p.id === id ? preset : p) : [...store.presets, preset];
     this.write(store);
     return store;

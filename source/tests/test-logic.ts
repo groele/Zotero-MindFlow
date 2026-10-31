@@ -261,16 +261,20 @@ await run('queued WebDAV upload freezes credentials, destination and document co
     }
   } finally { globalThis.fetch = original; }
 });
-await run('importFromMarkdown successfully parses and preserves zotero:// internal links', () => {
-  const md = `# 文献综述导图\n- 核心论点 [🔗](zotero://select/library/items/ABC12345)\n  - 实验证据 [🔗](https://doi.org/10.1000/182)`;
+await run('importFromMarkdown successfully parses and preserves zotero://, web, file:// and attachment:// links', () => {
+  const md = `# 文献综述导图\n- 核心论点 [🔗](zotero://select/library/items/ABC12345)\n  - 实验证据 [🔗](https://doi.org/10.1000/182)\n  - 本地PDF [🔗](file:///C:/Users/papers/example.pdf)\n  - 内部附件 [🔗](attachment://att_xyz987)`;
   const parsed = importFromMarkdown(md);
   assert.equal(parsed.text, '文献综述导图');
   assert.equal(parsed.children.length, 1);
   assert.equal(parsed.children[0].text, '核心论点');
   assert.equal(parsed.children[0].link, 'zotero://select/library/items/ABC12345');
-  assert.equal(parsed.children[0].children.length, 1);
+  assert.equal(parsed.children[0].children.length, 3);
   assert.equal(parsed.children[0].children[0].text, '实验证据');
   assert.equal(parsed.children[0].children[0].link, 'https://doi.org/10.1000/182');
+  assert.equal(parsed.children[0].children[1].text, '本地PDF');
+  assert.equal(parsed.children[0].children[1].link, 'file:///C:/Users/papers/example.pdf');
+  assert.equal(parsed.children[0].children[2].text, '内部附件');
+  assert.equal(parsed.children[0].children[2].link, 'attachment://att_xyz987');
 });
 await run('SettingsService sanitizes invalid layout and out-of-range numerical settings', async () => {
   const sanitized = sanitizeSettings({

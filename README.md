@@ -8,12 +8,12 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Version](https://img.shields.io/badge/version-13.0.4-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.4)
+[![Version](https://img.shields.io/badge/version-13.0.5-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.5)
 [![Zotero Compatibility](https://img.shields.io/badge/Zotero-10.0--12.*-brightgreen?style=flat-square)](https://www.zotero.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
 [![Tests Passing](https://img.shields.io/badge/tests-111%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
 
-[📦 下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.4/zotero-mindflow-13.0.4.xpi) · [📝 更新日志](docs/releases/v13.0.4.md) · [💬 问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
+[📦 下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.5/zotero-mindflow-13.0.5.xpi) · [📝 更新日志](docs/releases/v13.0.5.md) · [💬 问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
 
 [📖 产品定位](#overview) · [📦 安装与更新](#installation) · [🚀 快速开始](#quick-start) · [🛠️ 核心功能](#features) · [✨ 深度特性解析](#highlights) · [⚙️ 设置与使用](#settings) · [🔒 数据、同步与外部服务](#data) · [🧪 兼容性与验证范围](#compatibility) · [❓ 常见问题](#troubleshooting) · [💻 开发与详细文档](#development) · [🔗 系列产品](#series) · [📄 项目来源与许可](#license)
 
@@ -38,11 +38,11 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 | 规范指标 | 官方参数与要求 |
 |---|---|
 | **插件标识 (Add-on ID)** | `mindflow@groele.org` |
-| **当前正式版** | `v13.0.4` (Patch Release) |
+| **当前正式版** | `v13.0.5` (Patch Release) |
 | **宿主兼容范围** | Zotero `10.0` 至 `12.*`（全面适配 10.x / 11.x / 12.x 原生界面与亮暗主题） |
-| **安装包文件名** | `zotero-mindflow-13.0.4.xpi` |
-| **发布文件大小** | `531,690 字节` |
-| **SHA-256 校验和** | `8011d282dc59ecc54305f5625c43c97b0afbf336a4fa214b3c0b612fbb1ba895` |
+| **安装包文件名** | `zotero-mindflow-13.0.5.xpi` |
+| **发布文件大小** | `531,875 字节` |
+| **SHA-256 校验和** | `876909c46a66dcfe2ea26fcb254e5ed21fb33cf61cc2e2e10af4d07d90a42bc1` |
 | **在线更新源** | [zotero/update.json](zotero/update.json) |
 
 ### 安装步骤
@@ -247,7 +247,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [审查文档索引 / Audit documentation](docs/README.md)
-- [最新版本说明 / Release notes v13.0.4](docs/releases/v13.0.4.md)
+- [最新版本说明 / Release notes v13.0.5](docs/releases/v13.0.5.md)
 - [产品品牌定位 / Brand specifications](docs/brand/PRODUCT.md)
 - [发布标签与版本策略 / Release tag policy](docs/release-tag-policy.md)
 - [原详细功能指南与致谢 · Reference](docs/reference/README.md)

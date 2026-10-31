@@ -8,12 +8,12 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Version](https://img.shields.io/badge/version-13.0.4-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.4)
+[![Version](https://img.shields.io/badge/version-13.0.5-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.5)
 [![Zotero Compatibility](https://img.shields.io/badge/Zotero-10.0--12.*-brightgreen?style=flat-square)](https://www.zotero.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
 [![Tests Passing](https://img.shields.io/badge/tests-111%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
 
-[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.4/zotero-mindflow-13.0.4.xpi) · [📝 Release Notes](docs/releases/v13.0.4.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
+[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.0.5/zotero-mindflow-13.0.5.xpi) · [📝 Release Notes](docs/releases/v13.0.5.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
 
 [📖 Overview](#overview) · [📦 Installation and updates](#installation) · [🚀 Quick start](#quick-start) · [🛠️ Key features](#features) · [✨ In-depth highlights](#highlights) · [⚙️ Settings](#settings) · [🔒 Data, sync, and services](#data) · [🧪 Compatibility and validation](#compatibility) · [❓ Troubleshooting](#troubleshooting) · [💻 Development and documentation](#development) · [🔗 The Flow series](#series) · [📄 Origin and license](#license)
 
@@ -38,11 +38,11 @@ As an integral pillar of the **Zotero Flow** series, MindFlow operates completel
 | Specification | Official Parameter & Requirement |
 |---|---|
 | **Add-on ID** | `mindflow@groele.org` |
-| **Current Stable Release** | `v13.0.4` (Patch Release) |
+| **Current Stable Release** | `v13.0.5` (Patch Release) |
 | **Host Compatibility** | Zotero `10.0` through `12.*` (fully adaptive across 10.x / 11.x / 12.x light and dark themes) |
-| **Package File** | `zotero-mindflow-13.0.4.xpi` |
-| **File Size** | `531,690 bytes` |
-| **SHA-256 Checksum** | `8011d282dc59ecc54305f5625c43c97b0afbf336a4fa214b3c0b612fbb1ba895` |
+| **Package File** | `zotero-mindflow-13.0.5.xpi` |
+| **File Size** | `531,875 bytes` |
+| **SHA-256 Checksum** | `876909c46a66dcfe2ea26fcb254e5ed21fb33cf61cc2e2e10af4d07d90a42bc1` |
 | **Online Update Feed** | [zotero/update.json](zotero/update.json) |
 
 ### Installation Steps
@@ -247,7 +247,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [Audit Documentation Index](docs/README.md)
-- [Release Notes v13.0.4](docs/releases/v13.0.4.md)
+- [Release Notes v13.0.5](docs/releases/v13.0.5.md)
 - [Brand & Product Specifications](docs/brand/PRODUCT.md)
 - [Release Tag Policy](docs/release-tag-policy.md)
 - [Historical Reference Guide & Acknowledgments](docs/reference/README.md)

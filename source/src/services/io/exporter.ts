@@ -130,8 +130,8 @@ export function importFromMarkdown(mdContent: string): MindMapNode {
       cleanText = cleanText.replace(noteMatch[0], '').trim();
     }
 
-    // Parse link if any (supports web links and Zotero internal links)
-    const linkMatch = cleanText.match(/\[.*?\]\(((?:https?|zotero):\/\/[^\s)]+)\)/);
+    // Parse link if any (supports web links, Zotero internal links, local files, and attachments)
+    const linkMatch = cleanText.match(/\[.*?\]\(((?:https?|zotero|file|attachment):\/\/[^\s)]+)\)/);
     if (linkMatch) {
       link = linkMatch[1];
       cleanText = cleanText.replace(linkMatch[0], '').trim();
@@ -846,6 +846,24 @@ export function exportToInteractiveHTML(
     });
 
     window.addEventListener('mouseup', () => { isDragging = false; });
+
+    container.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        startX = e.touches[0].clientX - panX;
+        startY = e.touches[0].clientY - panY;
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging || e.touches.length !== 1) return;
+      panX = e.touches[0].clientX - startX;
+      panY = e.touches[0].clientY - startY;
+      updateTransform();
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => { isDragging = false; });
+    window.addEventListener('touchcancel', () => { isDragging = false; });
 
     container.addEventListener('wheel', (e) => {
       e.preventDefault();

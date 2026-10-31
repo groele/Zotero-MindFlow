@@ -2,13 +2,14 @@
 
 [返回双语 README / Bilingual README](../README.md)
 
-当前正式发布 / Current release：[13.0.4 快捷键面板与时序校准 / In-app shortcuts modal and matrix calibration](releases/v13.0.4.md) · [13.0.3 全功能审计与规范校准 / Audit calibration and specification alignment](releases/v13.0.3.md) · [13.0.2 规范与文档完善 / Audit refinement and card enhancement](releases/v13.0.2.md) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](releases/v13.0.1.md) · [13.0.0 大版本更新 / Major release](releases/v13.0.0.md)
+当前正式发布 / Current release：[13.0.5 导入导出与触控体验优化 / IO links and touch refinement](releases/v13.0.5.md) · [13.0.4 快捷键面板与时序校准 / In-app shortcuts modal and matrix calibration](releases/v13.0.4.md) · [13.0.3 全功能审计与规范校准 / Audit calibration and specification alignment](releases/v13.0.3.md) · [13.0.2 规范与文档完善 / Audit refinement and card enhancement](releases/v13.0.2.md) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](releases/v13.0.1.md) · [13.0.0 大版本更新 / Major release](releases/v13.0.0.md)
 
 ## 版本与证据 / Versions and evidence
 
 | 阶段 / Stage | 状态 / Status | 说明 / Description |
 | --- | --- | --- |
-| 13.0.4 / Add-on patch | 当前发布 / Current release | 全局快捷键面板与设置文案优化、文档索引时序与版本表校准 / In-app shortcuts modal & settings copy refinement, audit documentation chronology and matrix calibration |
+| 13.0.5 / Add-on patch | 当前发布 / Current release | Markdown 导入支持本地文件与附件协议、离线交互导图支持触控漫游手势、预设 ID 生成安全防御与文档时序中英对齐 / Support file/attachment link protocols in Markdown import, touch panning gestures for interactive HTML export, guarded preset UUID generation, and aligned bilingual audit chronology |
+| 13.0.4 / Add-on patch | 历史发布 / Historical release | 全局快捷键面板与设置文案优化、文档索引时序与版本表校准 / In-app shortcuts modal & settings copy refinement, audit documentation chronology and matrix calibration |
 | 13.0.3 / Add-on patch | 历史发布 / Historical release | 全功能特性与快捷键审计校准、设置面板与研读模板对齐、品牌体系规范化 / Full shortcut audit, settings & template alignment, brand restoration |
 | 13.0.2 / Add-on patch | 历史发布 / Historical release | 全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新 / Full documentation & badges audit, enhanced installation card, updated audit documentation index |
 | 13.0.1 / Add-on patch | 历史发布 / Historical release | 宿主生命周期样式卸载防御性修复、关于面板生态品牌对齐、AI 论文读取安全钳位 / Defensive unmount cleanup, About branding alignment, AI read page limit safety clamp |
@@ -37,6 +38,7 @@
 
 ## 中文索引
 
+- [13.0.5 发布记录](releases/v13.0.5.md)：Markdown 导入支持本地文件与附件协议、离线交互导图支持触控漫游手势、预设 ID 生成安全防御与文档时序中英对齐。
 - [13.0.4 发布记录](releases/v13.0.4.md)：全局快捷键面板与设置文案优化、文档索引时序与版本表校准。
 - [13.0.3 发布记录](releases/v13.0.3.md)：全功能特性与快捷键审计校准、设置面板与研读模板对齐、品牌体系规范化。
 - [13.0.2 发布记录](releases/v13.0.2.md)：全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新。
@@ -57,9 +59,9 @@
 - [11.1.0 发布记录](release-v11.1.0.md)：侧栏便捷操作与 AI 研读工作流。
 
 - [11.0.0 大版本发布记录](release-v11.0.0.md)：校验、存储、任务与 MindFlow 侧栏改进，以及验证结果。
-- [10.0.5 发布记录](release-v10.0.5.md)：备份恢复版本校验、快照完整性与回滚输入保护。
-- [10.0.6 发布记录](release-v10.0.6.md)：附件重开身份、WebDAV 取消与响应上限、备份队列快照和工作区恢复并发修复。
 - [10.0.7 发布记录](release-v10.0.7.md)：WebDAV 目录、上传预检与设置页并发处理，以及旧模块清理。
+- [10.0.6 发布记录](release-v10.0.6.md)：附件重开身份、WebDAV 取消与响应上限、备份队列快照和工作区恢复并发修复。
+- [10.0.5 发布记录](release-v10.0.5.md)：备份恢复版本校验、快照完整性与回滚输入保护。
 
 - [2026-10-07 深度逻辑审查与修复](深度逻辑审查与修复-20261007.md)：备份版本竞争、快照校验、冲突链接与恢复输入保护。
 
@@ -78,6 +80,7 @@
 
 ## English index
 
+- [13.0.5 release record](releases/v13.0.5.md): support file/attachment link protocols in Markdown import, touch panning gestures for interactive HTML export, guarded preset UUID generation, and aligned bilingual audit chronology.
 - [13.0.4 release record](releases/v13.0.4.md): in-app shortcuts modal & settings copy refinement, audit documentation chronology and matrix calibration.
 - [13.0.3 release record](releases/v13.0.3.md): full shortcut audit, settings & template alignment, brand restoration.
 - [13.0.2 release record](releases/v13.0.2.md): full documentation & badges audit, enhanced installation card, updated audit documentation index.
@@ -91,14 +94,18 @@
 - [12.2.0 release record](release-v12.2.0.md): historical release record.
 - [12.0.0 major milestone report](release-v12.0.0.md): brand-new visual identity system (Zotero MindFlow & Fluid Origami Wing), full-touchpoint vector rendering, and high-DPI scaling.
 - [11.2.0 release report](release-v11.2.0.md): reusable prompt and presentation presets, AI mind-map workflow, and verification limits.
+
+- [2026-10-16 full-workflow audit and optimization suggestions](插件全流程审查与优化建议-20261016.md): step-by-step implementation, reproduced issues, optimization priorities, prompt/presentation presets, and verification boundaries.
 - [11.1.2 patch report](release-v11.1.2.md): fix blank item-pane actions and restored collapse state.
 - [11.1.1 patch report](release-v11.1.1.md): expand the MindFlow item-pane actions on first open.
 - [11.1.0 release report](release-v11.1.0.md): item-pane quick actions and the AI reading workflow.
 
 - [11.0.0 major release report](release-v11.0.0.md): validation, storage, task, and MindFlow sidebar improvements with verification results.
-- [10.0.5 release report](release-v10.0.5.md): guarded backup restoration, snapshot validation, and protected editor input during rollback.
-- [10.0.6 release report](release-v10.0.6.md): attachment reopen identity, WebDAV cancellation and response limits, queued backup snapshots, and workspace restore concurrency fixes.
 - [10.0.7 release report](release-v10.0.7.md): WebDAV folders, upload preflight, settings concurrency, and unused module cleanup.
+- [10.0.6 release report](release-v10.0.6.md): attachment reopen identity, WebDAV cancellation and response limits, queued backup snapshots, and workspace restore concurrency fixes.
+- [10.0.5 release report](release-v10.0.5.md): guarded backup restoration, snapshot validation, and protected editor input during rollback.
+
+- [2026-10-07 in-depth logic audit and repair](深度逻辑审查与修复-20261007.md): backup version race, snapshot validation, conflicting links, and restore input guards.
 
 - [10.0.3 release report](release-v10.0.3.md): installation, fixes, and validation for public 10.0.3.
 - [10.0.2 detailed workflow audit and evidence](操作逻辑审查与修复-10.0.2.md): 29 issues and hardening items, baseline failures, fixes, and verification limits, including [package verification](logic-audit-package-10.0.2.json) and [native results](logic-audit-native-10.0.2.json).
