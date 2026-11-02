@@ -2,7 +2,7 @@
 
 [返回双语 README / Bilingual README](../README.md)
 
-当前正式发布 / Current release：[13.0.10 DOI 级联检索穿透、PDF 异步打开响应链路与独立窗口宿主代理 / DOI cascade resolution, async PDF open response & standalone window proxy](releases/v13.0.10.md) · [13.0.9 独立窗口特权消息响应、集合自动切换聚焦与节点文献优先级 / Standalone window messaging, collection switch & node locator priority](releases/v13.0.9.md) · [13.0.8 历史首选项冗余脱卸与稳健性加固 / Legacy preference cleanup, schema bounds & resilience](releases/v13.0.8.md) · [13.0.7 交互动效与多格式 DOI 识别完善 / Visual loading feedback, Extra DOI lookup & parent resolution](releases/v13.0.7.md) · [13.0.6 节点 DOI 按钮条目定位与外部回退 / DOI database locator and fallback launch](releases/v13.0.6.md) · [13.0.5 导入导出与触控体验优化 / IO links and touch refinement](releases/v13.0.5.md) · [13.0.4 快捷键面板与时序校准 / In-app shortcuts modal and matrix calibration](releases/v13.0.4.md) · [13.0.3 全功能审计与规范校准 / Audit calibration and specification alignment](releases/v13.0.3.md) · [13.0.2 规范与文档完善 / Audit refinement and card enhancement](releases/v13.0.2.md) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](releases/v13.0.1.md) · [13.0.0 大版本更新 / Major release](releases/v13.0.0.md)
+当前正式发布 / Current release：[13.0.10 DOI 级联检索穿透、PDF 异步打开响应链路与独立窗口宿主代理 / DOI cascade resolution, async PDF open response & standalone window proxy](releases/v13.0.10.md) · [13.0.9 独立窗口特权消息响应、集合自动切换聚焦与节点文献优先级 / Standalone window messaging, collection switch & node locator priority](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.9) · [13.0.8 历史首选项冗余脱卸与稳健性加固 / Legacy preference cleanup, schema bounds & resilience](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.8) · [13.0.7 交互动效与多格式 DOI 识别完善 / Visual loading feedback, Extra DOI lookup & parent resolution](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.7) · [13.0.6 节点 DOI 按钮条目定位与外部回退 / DOI database locator and fallback launch](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.6) · [13.0.5 导入导出与触控体验优化 / IO links and touch refinement](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.5) · [13.0.4 快捷键面板与时序校准 / In-app shortcuts modal and matrix calibration](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.4) · [13.0.3 全功能审计与规范校准 / Audit calibration and specification alignment](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.3) · [13.0.2 规范与文档完善 / Audit refinement and card enhancement](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.2) · [13.0.1 维护加固与修复 / Maintenance hardening and fixes](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.1) · [13.0.0 大版本更新 / Major release](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.0)
 
 ## 版本与证据 / Versions and evidence
 
@@ -44,18 +44,18 @@
 ## 中文索引
 
 - [13.0.10 发布记录](releases/v13.0.10.md)：DOI 级联检索穿透修复、PDF 异步打开响应链路、独立窗口宿主消息代理、右键菜单导图文献回退与属性栏加载反馈。
-- [13.0.9 发布记录](releases/v13.0.9.md)：独立窗口特权消息响应打通、文献集合跨分类切换聚焦、内存 DOI 附件父条目解析与属性栏文献目标判定对齐。
-- [13.0.8 发布记录](releases/v13.0.8.md)：历史首选项冗余脱卸、Extra 字段双向解析、备份架构版本约束与外链稳健性。
-- [13.0.7 发布记录](releases/v13.0.7.md)：完善节点条目跳转交互动效、Extra 字段与多格式 DOI 识别、条目附件归档深度绑定。
-- [13.0.6 发布记录](releases/v13.0.6.md)：节点 DOI 按钮一键跳转定位数据库条目、外部浏览器智能回退与快捷定位联动。
-- [13.0.5 发布记录](releases/v13.0.5.md)：Markdown 导入支持本地文件与附件协议、离线交互导图支持触控漫游手势、预设 ID 生成安全防御与文档时序中英对齐。
-- [13.0.4 发布记录](releases/v13.0.4.md)：全局快捷键面板与设置文案优化、文档索引时序与版本表校准。
-- [13.0.3 发布记录](releases/v13.0.3.md)：全功能特性与快捷键审计校准、设置面板与研读模板对齐、品牌体系规范化。
-- [13.0.2 发布记录](releases/v13.0.2.md)：全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新。
-- [13.0.1 发布记录](releases/v13.0.1.md)：宿主侧样式卸载防御性清理、关于面板生态品牌对齐、AI 论文读取安全钳位。
-- [13.0.0 大版本发布记录](releases/v13.0.0.md)：兼容版本上限跃升至 12.*、设置系统强类型校验清洗、Schema v2 备份门禁与研读预设随备份迁移。
-- [12.7.1 发布记录](releases/v12.7.1.md)：文献侧栏 ItemPane 规范重构（Soft Functional Accents 色系、响应式自适应布局）。
-- [12.7.0 发布记录](releases/v12.7.0.md)：宿主兼容上限提升至 12.*、底层侧栏防抖刷新机制与 PDF 异步回退加固。
+- [13.0.9 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.9)：独立窗口特权消息响应打通、文献集合跨分类切换聚焦、内存 DOI 附件父条目解析与属性栏文献目标判定对齐。
+- [13.0.8 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.8)：历史首选项冗余脱卸、Extra 字段双向解析、备份架构版本约束与外链稳健性。
+- [13.0.7 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.7)：完善节点条目跳转交互动效、Extra 字段与多格式 DOI 识别、条目附件归档深度绑定。
+- [13.0.6 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.6)：节点 DOI 按钮一键跳转定位数据库条目、外部浏览器智能回退与快捷定位联动。
+- [13.0.5 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.5)：Markdown 导入支持本地文件与附件协议、离线交互导图支持触控漫游手势、预设 ID 生成安全防御与文档时序中英对齐。
+- [13.0.4 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.4)：全局快捷键面板与设置文案优化、文档索引时序与版本表校准。
+- [13.0.3 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.3)：全功能特性与快捷键审计校准、设置面板与研读模板对齐、品牌体系规范化。
+- [13.0.2 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.2)：全维度文档与徽标精细化审计、安装校验卡片强化、审查文档索引更新。
+- [13.0.1 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.1)：宿主侧样式卸载防御性清理、关于面板生态品牌对齐、AI 论文读取安全钳位。
+- [13.0.0 大版本发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.0)：兼容版本上限跃升至 12.*、设置系统强类型校验清洗、Schema v2 备份门禁与研读预设随备份迁移。
+- [12.7.1 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.7.1)：文献侧栏 ItemPane 规范重构（Soft Functional Accents 色系、响应式自适应布局）。
+- [12.7.0 发布记录](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.7.0)：宿主兼容上限提升至 12.*、底层侧栏防抖刷新机制与 PDF 异步回退加固。
 - [12.3.2 发布记录](release-v12.3.2.md)：统一配色、折叠样式与原生控件。
 - [12.3.1 发布记录](release-v12.3.1.md)：复选框尺寸、字体与间距优化。
 - [12.3.0 发布记录](release-v12.3.0.md)：统一偏好页样式与可折叠一级分组。
@@ -91,18 +91,18 @@
 ## English index
 
 - [13.0.10 release record](releases/v13.0.10.md): independent multi-field DOI cascade query resolution, asynchronous host PDF open response, unified standalone window message delegation, and universal document target fallback.
-- [13.0.9 release record](releases/v13.0.9.md): standalone window message routing, collection switch & focus, in-memory DOI attachment parent resolution, and inspector priority alignment.
-- [13.0.8 release record](releases/v13.0.8.md): legacy preference cleanup on durable write, extra field DOI extraction parity, backup schemaVersion bounds, and external URL resilience.
-- [13.0.7 release record](releases/v13.0.7.md): visual loading feedback for database locator, Extra field DOI cascading search, universal DOI casing tolerance, and deep parent item resolution for mind map archiving.
-- [13.0.6 release record](releases/v13.0.6.md): node DOI button direct jump to database item, fallback web launch, and enhanced locator bridge.
-- [13.0.5 release record](releases/v13.0.5.md): support file/attachment link protocols in Markdown import, touch panning gestures for interactive HTML export, guarded preset UUID generation, and aligned bilingual audit chronology.
-- [13.0.4 release record](releases/v13.0.4.md): in-app shortcuts modal & settings copy refinement, audit documentation chronology and matrix calibration.
-- [13.0.3 release record](releases/v13.0.3.md): full shortcut audit, settings & template alignment, brand restoration.
-- [13.0.2 release record](releases/v13.0.2.md): full documentation & badges audit, enhanced installation card, updated audit documentation index.
-- [13.0.1 release record](releases/v13.0.1.md): defensive unmount cleanup, About branding alignment, AI read page limit safety clamp.
-- [13.0.0 major release report](releases/v13.0.0.md): bump max version to 12.*, settings sanitization, Schema v2 backup migration.
-- [12.7.1 release report](releases/v12.7.1.md): ItemPane sidebar redesign with Soft Functional Accents and responsive wrapping.
-- [12.7.0 release report](releases/v12.7.0.md): bump max version to 12.*, sidebar debounce refresh, and hardened PDF async fallback.
+- [13.0.9 release record](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.9): standalone window message routing, collection switch & focus, in-memory DOI attachment parent resolution, and inspector priority alignment.
+- [13.0.8 release record](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.8): legacy preference cleanup on durable write, extra field DOI extraction parity, backup schemaVersion bounds, and external URL resilience.
+- [13.0.7 release record](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.7): visual loading feedback for database locator, Extra field DOI cascading search, universal DOI casing tolerance, and deep parent item resolution for mind map archiving.
+- [13.0.6 release record](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.6): node DOI button direct jump to database item, fallback web launch, and enhanced locator bridge.
+- [13.0.5 release record](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.5): support file/attachment link protocols in Markdown import, touch panning gestures for interactive HTML export, guarded preset UUID generation, and aligned bilingual audit chronology.
+- [13.0.4 release record](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.4): in-app shortcuts modal & settings copy refinement, audit documentation chronology and matrix calibration.
+- [13.0.3 release record](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.3): full shortcut audit, settings & template alignment, brand restoration.
+- [13.0.2 release record](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.2): full documentation & badges audit, enhanced installation card, updated audit documentation index.
+- [13.0.1 release record](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.1): defensive unmount cleanup, About branding alignment, AI read page limit safety clamp.
+- [13.0.0 major release report](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.0.0): bump max version to 12.*, settings sanitization, Schema v2 backup migration.
+- [12.7.1 release report](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.7.1): ItemPane sidebar redesign with Soft Functional Accents and responsive wrapping.
+- [12.7.0 release report](https://github.com/groele/Zotero-MindFlow/releases/tag/v12.7.0): bump max version to 12.*, sidebar debounce refresh, and hardened PDF async fallback.
 - [12.3.2 release record](release-v12.3.2.md): unified colors, disclosure cards, and native controls.
 - [12.3.1 release record](release-v12.3.1.md): checkbox sizing, typography, and spacing refinements.
 - [12.3.0 release record](release-v12.3.0.md): unified preferences styling and collapsible top-level groups.

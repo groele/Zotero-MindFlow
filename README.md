@@ -247,7 +247,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [审查文档索引 / Audit documentation](docs/README.md)
-- [最新版本说明 / Release notes v13.0.9](docs/releases/v13.0.9.md)
+- [最新版本说明 / Release notes v13.0.10](docs/releases/v13.0.10.md)
 - [产品品牌定位 / Brand specifications](docs/brand/PRODUCT.md)
 - [发布标签与版本策略 / Release tag policy](docs/release-tag-policy.md)
 - [原详细功能指南与致谢 · Reference](docs/reference/README.md)

@@ -247,7 +247,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [Audit Documentation Index](docs/README.md)
-- [Release Notes v13.0.9](docs/releases/v13.0.9.md)
+- [Release Notes v13.0.10](docs/releases/v13.0.10.md)
 - [Brand & Product Specifications](docs/brand/PRODUCT.md)
 - [Release Tag Policy](docs/release-tag-policy.md)
 - [Historical Reference Guide & Acknowledgments](docs/reference/README.md)
