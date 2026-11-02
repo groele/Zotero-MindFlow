@@ -71,3 +71,6 @@ mindflow-item-pane-action-failed = 操作失败，请重试。
 mindflow-item-pane-linked-maps-title = 已关联导图
 mindflow-item-pane-quick-create-title = 快速新建导图
 mindflow-item-pane-template-create = 按所选模板生成导图
+mindflow-item-pane-readonly-badge = 只读文献
+mindflow-item-pane-readonly-hint = 当前文献为只读（或在回收站中），导图仅保存在本地工作区，不会写入附件。
+

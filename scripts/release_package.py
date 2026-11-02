@@ -15,7 +15,7 @@ def require(condition, message):
 def metadata(root):
     manifest = read_json(root / "manifest.json")
     version = manifest["version"]
-    for name in ("zotero/manifest.json", "source/package.json", "docs/brand/product.json"):
+    for name in ("package.json", "zotero/manifest.json", "source/package.json", "docs/brand/product.json"):
         file = root / name
         if file.is_file():
             require(read_json(file)["version"] == version, f"{name}: version mismatch")

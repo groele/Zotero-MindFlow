@@ -1690,3 +1690,65 @@ test('native export saves verified bytes, preserves extensions, and handles canc
   await assert.rejects(() => f.host.saveExportFile(source, payload), /校验失败/);
   await assert.rejects(() => f.host.saveExportFile({closed:false}, payload), /来源/);
 });
+
+test('serializeZoteroItem reflects read-only and deleted status in isEditable flag', () => {
+  const f = fixture();
+  const normal = f.paper('NORMAL_ITEM');
+  normal.isEditable = () => true;
+  const serializedNormal = f.host.serializeZoteroItem(normal);
+  assert.equal(serializedNormal.isEditable, true);
+
+  const readonly = f.paper('READONLY_ITEM');
+  readonly.isEditable = () => false;
+  const serializedReadonly = f.host.serializeZoteroItem(readonly);
+  assert.equal(serializedReadonly.isEditable, false);
+
+  const deleted = f.paper('DELETED_ITEM');
+  deleted.deleted = true;
+  delete deleted.isEditable;
+  const serializedDeleted = f.host.serializeZoteroItem(deleted);
+  assert.equal(serializedDeleted.isEditable, false);
+});
+
+test('saveMindMapToItem protects read-only and deleted items against writes', async () => {
+  const f = fixture();
+  const roPaper = f.paper('ROARCH01');
+  roPaper.isEditable = () => false;
+  const doc = f.map('doc_ro_guard', 'Readonly Map');
+
+  const resultRo = await f.host.saveMindMapToItem({ doc, parentItemKey: roPaper.key });
+  assert.equal(resultRo.success, false);
+  assert.match(resultRo.message, /只读/);
+  assert.equal(roPaper.attachments.length, 0);
+
+  const delPaper = f.paper('DELARC01');
+  delPaper.deleted = true;
+  delete delPaper.isEditable;
+
+  const resultDel = await f.host.saveMindMapToItem({ doc, parentItemKey: delPaper.key });
+  assert.equal(resultDel.success, false);
+  assert.equal(delPaper.attachments.length, 0);
+});
+
+test('item-pane onRender displays read-only badge and disables creation controls on read-only items', () => {
+  const f = fixture();
+  f.host.registerItemPaneSection();
+  const section = f.Zotero.ItemPaneManager.sections.get(f.host.itemPaneSectionID);
+
+  const roPaper = f.paper('RO_UI_ITEM');
+  roPaper.isEditable = () => false;
+
+  const body = f.doc.createElement('div');
+  section.onRender({ body, item: roPaper });
+
+  const all = node => [node, ...node.children.flatMap(all)];
+  const allNodes = all(body);
+
+  const roBadge = allNodes.find(node => node.className && node.className.includes('mf-status-readonly'));
+  assert.ok(roBadge, 'Read-only badge must be present');
+
+  const createBtn = allNodes.find(node => node.localName === 'button' && node.className && node.className.includes('mf-btn-primary'));
+  assert.ok(createBtn, 'Primary create button must exist');
+  assert.equal(createBtn.disabled, true, 'Primary create button must be disabled on read-only item');
+});
+

@@ -72,3 +72,6 @@ mindflow-item-pane-action-failed = The action failed. Please try again.
 mindflow-item-pane-linked-maps-title = Linked Maps
 mindflow-item-pane-quick-create-title = Quick Create Map
 mindflow-item-pane-template-create = Generate from Template
+mindflow-item-pane-readonly-badge = Read-only Item
+mindflow-item-pane-readonly-hint = This item is read-only or in Trash. Maps are kept in local workspace and will not be saved as attachments.
+

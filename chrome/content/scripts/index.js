@@ -1274,6 +1274,7 @@
           .mf-pane-wrap .mf-header-card { display: flex; flex-direction: column; gap: 4px; padding: 0 0 2px; }
           .mf-pane-wrap .mf-header-top { display: flex; align-items: center; justify-content: space-between; }
           .mf-pane-wrap .mf-status-badge { font-weight: 600; font-size: 14px; color: var(--fill-primary, CanvasText); }
+          .mf-pane-wrap .mf-status-readonly { color: var(--mf-amber); font-weight: 600; }
           .mf-pane-wrap .mf-header-meta { color: var(--mf-muted); font-size: 12px; flex-shrink: 0; }
           .mf-pane-wrap .mf-target-title {
             display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
@@ -1704,9 +1705,15 @@
             const headerCard = createEl('div', 'mf-header-card');
             const headerTop = createEl('div', 'mf-header-top');
 
-            const statusBadge = createEl('span', `mf-status-badge ${totalMaps > 0 ? 'mf-status-active' : 'mf-status-empty'}`);
-            statusBadge.textContent = totalMaps > 0 ? `${T('已关联导图', 'Linked maps')} (${totalMaps})` : T('暂无导图', 'No maps yet');
-            statusBadge.setAttribute('data-l10n-id', totalMaps > 0 ? 'mindflow-item-pane-linked-maps-title' : 'mindflow-item-pane-no-map');
+            const isEditable = Boolean(target && !target.deleted && (typeof target.isEditable !== 'function' || target.isEditable()));
+            const statusBadge = createEl('span', `mf-status-badge ${!isEditable ? 'mf-status-readonly' : (totalMaps > 0 ? 'mf-status-active' : 'mf-status-empty')}`);
+            if (!isEditable) {
+              statusBadge.textContent = T('只读文献', 'Read-only');
+              statusBadge.setAttribute('data-l10n-id', 'mindflow-item-pane-readonly-badge');
+            } else {
+              statusBadge.textContent = totalMaps > 0 ? `${T('已关联导图', 'Linked maps')} (${totalMaps})` : T('暂无导图', 'No maps yet');
+              statusBadge.setAttribute('data-l10n-id', totalMaps > 0 ? 'mindflow-item-pane-linked-maps-title' : 'mindflow-item-pane-no-map');
+            }
             headerTop.appendChild(statusBadge);
 
             const selectedPDF = item?.isPDFAttachment?.() || /\.pdf$/i.test(item?.attachmentFilename || '') ? item : null;
@@ -1729,8 +1736,14 @@
             // 2. Primary Action Button (Matching TaskFlow top capsule "+ 添加到论文研读")
             const primaryBtn = createEl('button', 'mf-btn-primary');
             primaryBtn.type = 'button';
-            primaryBtn.textContent = totalMaps > 0 ? T('＋ 按所选模板新增导图', '＋ Add map with template') : T('＋ 一键生成文献思维导图', '＋ Create map for this item');
-            primaryBtn.setAttribute('data-l10n-id', totalMaps > 0 ? 'mindflow-item-pane-add-from-template' : 'mindflow-item-pane-generate-map');
+            if (!isEditable) {
+              primaryBtn.disabled = true;
+              primaryBtn.textContent = T('文献只读，无法新增导图', 'Read-only item, cannot add map');
+              primaryBtn.title = T('当前文献为只读（或在回收站中）', 'This item is read-only or in Trash');
+            } else {
+              primaryBtn.textContent = totalMaps > 0 ? T('＋ 按所选模板新增导图', '＋ Add map with template') : T('＋ 一键生成文献思维导图', '＋ Create map for this item');
+              primaryBtn.setAttribute('data-l10n-id', totalMaps > 0 ? 'mindflow-item-pane-add-from-template' : 'mindflow-item-pane-generate-map');
+            }
             primaryBtn.addEventListener('click', async (e) => {
               e.preventDefault(); e.stopPropagation();
               if (primaryBtn.disabled) return;
@@ -1748,8 +1761,14 @@
             });
             wrapper.appendChild(primaryBtn);
 
-            const primaryHint = createEl('div', 'mf-add-hint', T('点击即可创建思维导图并关联当前文献 · 支持双向同步', 'Click to create a mind map linked to this item · syncs automatically'));
-            primaryHint.setAttribute('data-l10n-id', 'mindflow-item-pane-choose-template-hint');
+            const primaryHint = createEl('div', 'mf-add-hint', !isEditable
+              ? T('当前文献为只读（或在回收站中），导图仅保存在本地工作区，不会写入附件。', 'This item is read-only or in Trash. Maps are kept in local workspace and will not be saved as attachments.')
+              : T('点击即可创建思维导图并关联当前文献 · 支持双向同步', 'Click to create a mind map linked to this item · syncs automatically'));
+            if (!isEditable) {
+              primaryHint.setAttribute('data-l10n-id', 'mindflow-item-pane-readonly-hint');
+            } else {
+              primaryHint.setAttribute('data-l10n-id', 'mindflow-item-pane-choose-template-hint');
+            }
             wrapper.appendChild(primaryHint);
 
             // 3. Quick Create Map Section (Matching TaskFlow "快速新建待办" + template + green action button)
@@ -1785,9 +1804,13 @@
             const templateDesc = createEl('div', 'mf-hint-text', T('选择预设学术模板，一键生成结构化文献研读导图', 'Select an academic template to generate a structured map'));
             templateBox.appendChild(templateDesc);
 
-            const templateCreateBtn = createEl('button', 'mf-btn-template-create', T('按所选模板生成导图', 'Generate map from template'));
+            const templateCreateBtn = createEl('button', 'mf-btn-template-create', !isEditable ? T('文献只读，无法按模板生成', 'Read-only item, cannot generate') : T('按所选模板生成导图', 'Generate map from template'));
             templateCreateBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-template-create');
             templateCreateBtn.type = 'button';
+            if (!isEditable) {
+              templateCreateBtn.disabled = true;
+              templateCreateBtn.title = T('当前文献为只读（或在回收站中）', 'This item is read-only or in Trash');
+            }
             templateCreateBtn.addEventListener('click', async (e) => {
               e.preventDefault(); e.stopPropagation();
               if (templateCreateBtn.disabled) return;
@@ -3579,6 +3602,7 @@
           tags,
           notes,
           annotations,
+          isEditable: typeof target.isEditable === 'function' ? target.isEditable() : (target.deleted ? false : true),
           sourceReadWarnings: { noteReadErrors, annotationReadErrors },
           zoteroUri: itemSelectUri(target),
         };
@@ -4408,13 +4432,14 @@
         }
 
         if (parentItem) {
+          const isItemEditable = typeof parentItem.isEditable === 'function' ? parentItem.isEditable() : (parentItem.deleted ? false : true);
           const library = Zotero.Libraries?.get?.(parentItem.libraryID);
-          if (library?.editable === false || library?.filesEditable === false) {
+          if (!isItemEditable || library?.editable === false || library?.filesEditable === false) {
             return {
               success: false,
               savedPath,
-              message: library.editable === false
-                ? '目标 Zotero 群组库为只读；导图仅保存在本地，未写入该文献。'
+              message: (!isItemEditable || library?.editable === false)
+                ? '目标文献或所在群组库为只读（或已删除）；导图仅保存在本地，未写入该文献。'
                 : '目标 Zotero 群组库不允许上传附件；导图仅保存在本地，未写入该文献。',
             };
           }
