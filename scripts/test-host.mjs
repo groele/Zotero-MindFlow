@@ -479,7 +479,24 @@ function fixture(options = {}) {
     remove: async p => { for (const k of disk.keys()) if (k===p||k.startsWith(p+'/')) disk.delete(k); } };
   IOUtils.write = async (path, bytes) => disk.set(path, new Uint8Array(bytes));
   IOUtils.read = async path => disk.get(path);
-  const ctx = { Zotero, window:win, ChromeUtils: { importESModule: () => ({ FilePicker: options.exportPicker }) }, Services: { wm: { addListener() {}, removeListener() {}, getEnumerator: () => ({hasMoreElements:()=>false}) } },
+  const scriptloader = {
+    loadSubScript(url, targetCtx) {
+      const scope = targetCtx || ctx;
+      let resolvedPath;
+      if (url.startsWith('chrome://mindflow/content/')) {
+        resolvedPath = path.join(root, 'chrome/content', url.slice('chrome://mindflow/content/'.length));
+      } else if (url.startsWith('file://')) {
+        resolvedPath = fileURLToPath(url);
+      } else if (path.isAbsolute(url)) {
+        resolvedPath = url;
+      } else {
+        resolvedPath = path.join(root, 'chrome/content', String(url).replace(/^.*?chrome\/content\//, ''));
+      }
+      const code = fs.readFileSync(resolvedPath, 'utf8');
+      vm.runInNewContext(code, scope);
+    }
+  };
+  const ctx = { Zotero, window:win, ChromeUtils: { importESModule: () => ({ FilePicker: options.exportPicker }) }, Services: { scriptloader, wm: { addListener() {}, removeListener() {}, getEnumerator: () => ({hasMoreElements:()=>false}) } },
     IOUtils, PathUtils: { join: (...parts)=>parts.join('/'), parent:p=>p.slice(0,p.lastIndexOf('/')), filename:p=>p.split('/').pop(), tempDir:'/tmp' },
     URL, setTimeout, clearTimeout, console };
   if (options.omitWindow) delete ctx.window;

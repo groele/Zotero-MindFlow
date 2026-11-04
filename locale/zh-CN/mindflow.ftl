@@ -187,3 +187,19 @@ mindflow-pref-webdav-password-desc = 强烈建议使用云盘提供的应用独�
 mindflow-pref-webdav-autoSyncOnSave = 本地保存时自动推送云端备份
 mindflow-pref-webdav-autoSyncOnSave-desc = 每次在工作台保存导图时，静默上传工作区增量备份
 
+
+mindflow-pref-version = v13.2.0
+mindflow-pref-release-notes-text = 13.2.0：宿主单文件巨石架构解耦、加固大纲笔记只读防护与设置面板全对称本地化
+mindflow-pref-release-date = 2026-11-04
+mindflow-pref-release-xpi = zotero-mindflow-13.2.0.xpi
+mindflow-pref-release-repo = github.com/groele/Zotero-MindFlow
+mindflow-pref-release-aria = 版本信息
+mindflow-pref-notice-backup = 提示：额外保存文件夹不代替文献条目下的 .mindflow 附件。历史快照与完整版本回溯可在导图工作台顶栏的「历史」面板中直接浏览与一键恢复。
+mindflow-pref-notice-webdav = 提示：WebDAV 作为独立于 Zotero 原生同步的工作区级二次容灾备份。连接测试、手动上传和版本恢复请在工作台操作。
+mindflow-pref-btn-choose-folder = 选择文件夹
+mindflow-pref-btn-toggle-token = 显示 / 隐藏密钥
+mindflow-pref-btn-open-llm = 打开 llm-for-zotero 设置
+mindflow-pref-status-loaded = 设置已就绪
+mindflow-pref-status-saved = 设置已保存
+mindflow-pref-status-reset = 已恢复默认设置
+mindflow-pref-notice-literature = 提示：导图源文件 (.mindflow) 自动作为附件归档在对应文献条目下；跨设备同步遵从 Zotero 文件同步策略。

@@ -188,3 +188,20 @@ mindflow-pref-webdav-password-desc = Using an app-specific password or token is 
 mindflow-pref-webdav-autoSyncOnSave = Push cloud backup on local save
 mindflow-pref-webdav-autoSyncOnSave-desc = Silently upload workspace incremental backup on each manual save
 
+
+mindflow-pref-version = v13.2.0
+mindflow-pref-release-notes-text = 13.2.0: Host monolith decoupled into modules, reinforced read-only note guard, and fully symmetric Fluent localization
+mindflow-pref-release-date = 2026-11-04
+mindflow-pref-release-xpi = zotero-mindflow-13.2.0.xpi
+mindflow-pref-release-repo = github.com/groele/Zotero-MindFlow
+mindflow-pref-release-aria = Version Information
+mindflow-pref-notice-backup = Tip: The extra backup folder does not replace attachments. History snapshots and rollbacks can be viewed and restored in the workspace "History" panel.
+mindflow-pref-notice-webdav = Tip: WebDAV serves as an independent secondary disaster recovery backup. Connection tests and manual uploads can be performed in the workspace.
+mindflow-pref-btn-choose-folder = Choose Folder
+mindflow-pref-btn-toggle-token = Show / Hide token
+mindflow-pref-btn-open-llm = Open llm-for-zotero Preferences
+mindflow-pref-status-loaded = Settings ready
+mindflow-pref-status-saved = Settings saved
+mindflow-pref-status-reset = Default settings restored
+mindflow-pref-notice-literature = Tip: MindFlow map files (.mindflow) are automatically archived as attachments under items. Multi-device sync follows Zotero file synchronization rules.
+

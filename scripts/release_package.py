@@ -75,6 +75,7 @@ def verify(root, output, repo, feeds, identities, update=False):
         for path, contents in expected.items():
             require(archive.read(path) == contents, f"Stale XPI resource: {path}")
     digest = hashlib.sha256(output.read_bytes()).hexdigest()
+    digest512 = hashlib.sha512(output.read_bytes()).hexdigest()
     link = f"https://github.com/groele/{repo}/releases/download/v{version}/{name}"
     documents = []
     for feed in feeds:
@@ -90,17 +91,21 @@ def verify(root, output, repo, feeds, identities, update=False):
             for key in ("strict_min_version", "strict_max_version"):
                 require(entry["applications"]["zotero"][key] == manifest["applications"]["zotero"][key],
                         f"{feed}: compatibility mismatch")
+            existing_hash = entry.get("update_hash", "")
+            use_sha512 = existing_hash.startswith("sha512:")
+            target_hash = f"sha512:{digest512}" if use_sha512 else f"sha256:{digest}"
             if update:
-                entry["update_hash"] = f"sha256:{digest}"
+                entry["update_hash"] = target_hash
             else:
-                require(entry.get("update_hash") == f"sha256:{digest}", f"{feed}: installer SHA-256 mismatch")
+                mismatch_label = "SHA-512" if use_sha512 else "SHA-256"
+                require(entry.get("update_hash") == target_hash, f"{feed}: installer {mismatch_label} mismatch")
         documents.append((path, data))
     # Validate every entry before updating any feed; the feed is not in the XPI.
     if update:
         for path, data in documents:
             path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     return {"version": version, "file": name, "size": output.stat().st_size,
-            "sha256": digest, "entries": len(expected), "payloadVerifiedAgainstWorkspace": True,
+            "sha256": digest, "sha512": digest512, "entries": len(expected), "payloadVerifiedAgainstWorkspace": True,
             "updateFeedsVerified": list(feeds), "testHarnessIncluded": False,
             "reproducibleZipMetadata": True, "textLineEndings": "LF"}
 
@@ -124,4 +129,6 @@ def main(root, repo, feeds, identities, default_report):
         report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n")
         output.with_name("SHA256SUMS.txt").write_text(
             f"{report['sha256']}  {name}\n", encoding="utf-8", newline="\n")
+        output.with_name("SHA512SUMS.txt").write_text(
+            f"{report['sha512']}  {name}\n", encoding="utf-8", newline="\n")
     print(json.dumps(report, indent=2))

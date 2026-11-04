@@ -403,6 +403,16 @@ window.MindFlow_Preferences = (() => {
     return node;
   }
 
+  const SUBORDINATE_PATHS = new Set([
+    'webdav.serverUrl',
+    'webdav.basePath',
+    'webdav.username',
+    'webdav.password',
+    'webdav.autoSyncOnSave',
+    'autoSnapshotIntervalMinutes',
+    'maxSnapshotsPerDoc',
+  ]);
+
   function status(doc, message, error = false) {
     const node = doc.getElementById('mindflow-pref-status');
     if (node) {
@@ -411,8 +421,56 @@ window.MindFlow_Preferences = (() => {
     }
   }
 
-  function appendNotice(doc, container, text) {
-    container.appendChild(element(doc, 'div', 'mindflow-notice', text));
+  function appendNotice(doc, container, text, l10nId) {
+    const el = element(doc, 'div', 'mindflow-notice', text);
+    if (l10nId) el.setAttribute('data-l10n-id', l10nId);
+    container.appendChild(el);
+  }
+
+  function updateDependencies(doc) {
+    if (!doc) return;
+    const settings = readSettings();
+
+    // 1. WebDAV dependencies
+    const webdavEnabled = Boolean(settings.webdav?.enabled);
+    const webdavDeps = [
+      'webdav.serverUrl',
+      'webdav.basePath',
+      'webdav.username',
+      'webdav.password',
+      'webdav.autoSyncOnSave',
+    ];
+    for (const depPath of webdavDeps) {
+      const input = doc.getElementById('mindflow-pref-' + depPath.replace(/\./g, '-'));
+      if (input) {
+        input.disabled = !webdavEnabled;
+        input.setAttribute('aria-disabled', String(!webdavEnabled));
+        const row = input.closest('.mindflow-form-row') || input.closest('.mindflow-check-option');
+        if (row) {
+          row.classList.toggle('is-disabled', !webdavEnabled);
+          row.classList.add('subordinate-row');
+        }
+      }
+    }
+
+    // 2. Snapshot dependencies
+    const snapshotEnabled = Boolean(settings.autoSnapshotEnabled);
+    const snapshotDeps = [
+      'autoSnapshotIntervalMinutes',
+      'maxSnapshotsPerDoc',
+    ];
+    for (const depPath of snapshotDeps) {
+      const input = doc.getElementById('mindflow-pref-' + depPath.replace(/\./g, '-'));
+      if (input) {
+        input.disabled = !snapshotEnabled;
+        input.setAttribute('aria-disabled', String(!snapshotEnabled));
+        const row = input.closest('.mindflow-form-row');
+        if (row) {
+          row.classList.toggle('is-disabled', !snapshotEnabled);
+          row.classList.add('subordinate-row');
+        }
+      }
+    }
   }
 
   function attachInputListener(doc, input, field) {
@@ -438,6 +496,7 @@ window.MindFlow_Preferences = (() => {
           writeSettings(latest, path);
         }
         status(doc, T('已保存。已打开的导图工作台在重新获得焦点后更新。', 'Saved. Open workspaces will refresh upon focus.'));
+        updateDependencies(doc);
       } catch (error) {
         const previous = native ? prefGet(PREFIX + path, NATIVE_DEFAULTS[path]) : getPath(readSettings(), path);
         if (type === 'check') input.checked = Boolean(previous);
@@ -471,6 +530,7 @@ window.MindFlow_Preferences = (() => {
 
     if (type === 'check') {
       const optionWrap = element(doc, 'div', 'mindflow-check-option');
+      if (SUBORDINATE_PATHS.has(path)) optionWrap.classList.add('subordinate-row');
       const label = element(doc, 'label', 'mindflow-check-row');
       const input = element(doc, 'input', 'mindflow-control');
       input.type = 'checkbox';
@@ -493,6 +553,7 @@ window.MindFlow_Preferences = (() => {
     }
 
     const row = element(doc, 'div', 'mindflow-form-row');
+    if (SUBORDINATE_PATHS.has(path)) row.classList.add('subordinate-row');
     const labelWrap = element(doc, 'div', 'mindflow-form-label-wrap');
     const label = element(doc, 'label', 'mindflow-form-label', title);
     label.htmlFor = inputId;
@@ -526,6 +587,7 @@ window.MindFlow_Preferences = (() => {
       const eyeBtn = element(doc, 'button', 'mindflow-icon-btn', '👁');
       eyeBtn.type = 'button';
       eyeBtn.title = T('显示 / 隐藏密钥', 'Show / Hide token');
+      eyeBtn.setAttribute('data-l10n-id', 'mindflow-pref-btn-toggle-token');
       eyeBtn.addEventListener('click', () => {
         input.type = input.type === 'password' ? 'text' : 'password';
       });
@@ -536,6 +598,7 @@ window.MindFlow_Preferences = (() => {
       group.appendChild(input);
       const folderBtn = element(doc, 'button', 'mindflow-btn-secondary', T('选择文件夹', 'Choose Folder'));
       folderBtn.type = 'button';
+      folderBtn.setAttribute('data-l10n-id', 'mindflow-pref-btn-choose-folder');
       folderBtn.addEventListener('click', () => {
         try {
           const picker = Components.classes['@mozilla.org/filepicker;1']
@@ -597,6 +660,7 @@ window.MindFlow_Preferences = (() => {
         else if (input !== doc.activeElement) input.value = String(value ?? '');
       }
     }
+    updateDependencies(doc);
   }
 
   function init(win) {
@@ -614,7 +678,7 @@ window.MindFlow_Preferences = (() => {
           appendNotice(doc, container, T(
             '提示：导图源文件 (.mindflow) 自动作为附件归档在对应文献条目下；跨设备同步遵从 Zotero 文件同步策略。',
             'Tip: MindFlow map files (.mindflow) are automatically archived as attachments under items. Multi-device sync follows Zotero file synchronization rules.'
-          ));
+          ), 'mindflow-pref-notice-literature');
         }
         if (group === 'ai') {
           const notice = element(doc, 'div', 'mindflow-notice');
@@ -644,6 +708,7 @@ window.MindFlow_Preferences = (() => {
 
           const button = element(doc, 'button', 'mindflow-btn-open-llm', T('打开 llm-for-zotero 设置', 'Open llm-for-zotero Preferences'));
           button.type = 'button';
+          button.setAttribute('data-l10n-id', 'mindflow-pref-btn-open-llm');
           button.addEventListener('click', () => {
             const pane = 'zotero-llm@github.com.yilewang';
             try {
@@ -672,15 +737,17 @@ window.MindFlow_Preferences = (() => {
           appendNotice(doc, container, T(
             '提示：额外保存文件夹不代替文献条目下的 .mindflow 附件。历史快照与完整版本回溯可在导图工作台顶栏的「历史」面板中直接浏览与一键恢复。',
             'Tip: The extra backup folder does not replace attachments. History snapshots and rollbacks can be viewed and restored in the workspace "History" panel.'
-          ));
+          ), 'mindflow-pref-notice-backup');
         }
         if (group === 'webdav') {
           appendNotice(doc, container, T(
             '提示：WebDAV 作为独立于 Zotero 原生同步的工作区级二次容灾备份。连接测试、手动上传和版本恢复请在工作台操作。',
             'Tip: WebDAV serves as an independent secondary disaster recovery backup. Connection tests and manual uploads can be performed in the workspace.'
-          ));
+          ), 'mindflow-pref-notice-webdav');
         }
       }
+
+      updateDependencies(doc);
 
       const openButton = doc.getElementById('mindflow-btn-open-workspace');
       if (openButton) {

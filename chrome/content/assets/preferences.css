@@ -148,11 +148,25 @@
 }
 .mindflow-form-desc {
   margin: 2px 0 0 0;
-  margin-inline-start: 24px;
+  margin-inline-start: 0;
   color: var(--flow-pref-muted);
   font-size: 13px;
   line-height: 1.6;
   overflow-wrap: anywhere;
+}
+
+.subordinate-row {
+  margin-inline-start: 24px !important;
+}
+.subordinate-row.is-disabled,
+.mindflow-form-row.is-disabled,
+.mindflow-check-option.is-disabled {
+  opacity: 0.55;
+}
+.subordinate-row.is-disabled :is(input, select, button),
+.mindflow-form-row.is-disabled :is(input, select, button),
+.mindflow-check-option.is-disabled input {
+  pointer-events: none;
 }
 
 .mindflow-check-option {

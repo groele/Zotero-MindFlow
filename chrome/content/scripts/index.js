@@ -9,6 +9,44 @@
     return;
   }
 
+  const _globalScope = (typeof globalThis !== 'undefined' ? globalThis : this);
+  const loadHostModule = (name) => {
+    if (typeof Services !== 'undefined' && Services.scriptloader?.loadSubScript) {
+      const base = (typeof rootURI !== 'undefined' && rootURI) ? rootURI : 'chrome://mindflow/content/';
+      const url = base.endsWith('/') ? `${base}chrome/content/scripts/modules/${name}` : `${base}/chrome/content/scripts/modules/${name}`;
+      try {
+        Services.scriptloader.loadSubScript(url, _globalScope);
+      } catch (_) {
+        try {
+          const alt = (typeof rootURI !== 'undefined' && rootURI) ? `${rootURI}scripts/modules/${name}` : `chrome://mindflow/content/scripts/modules/${name}`;
+          Services.scriptloader.loadSubScript(alt, _globalScope);
+        } catch (err) {
+          Zotero.log?.('[MindFlow] Load module note: ' + name + ' (' + err + ')');
+        }
+      }
+    }
+  };
+
+  loadHostModule('constants.js');
+  loadHostModule('storage.js');
+  loadHostModule('item-pane.js');
+  loadHostModule('note-sync.js');
+  loadHostModule('bridge.js');
+
+  const mfConstants = _globalScope.MindFlowConstants || null;
+  const mfStorage = _globalScope.MindFlowStorage
+    ? _globalScope.MindFlowStorage.createStorageModule({ Zotero, PathUtils, IOUtils, constants: mfConstants, get host() { return Zotero.MindFlow; } })
+    : null;
+  const mfItemPane = _globalScope.MindFlowItemPane
+    ? _globalScope.MindFlowItemPane.createItemPaneModule({ Zotero, constants: mfConstants, get host() { return Zotero.MindFlow; } })
+    : null;
+  const mfNoteSync = _globalScope.MindFlowNoteSync
+    ? _globalScope.MindFlowNoteSync.createNoteSyncModule({ Zotero, PathUtils, IOUtils, constants: mfConstants, get host() { return Zotero.MindFlow; } })
+    : null;
+  const mfBridge = _globalScope.MindFlowBridge
+    ? _globalScope.MindFlowBridge.createBridgeModule({ Zotero, constants: mfConstants, get host() { return Zotero.MindFlow; } })
+    : null;
+
   const ADDON_ID = 'mindflow@groele.org';
   const CHROME_ROOT = 'chrome://mindflow/content/';
   const T = (zh, en) => /^en/i.test(String(Zotero.locale || '')) ? en : zh;
@@ -757,6 +795,13 @@
   let windowListener = null;
 
   Zotero.MindFlow = {
+    Modules: {
+      constants: mfConstants,
+      storage: mfStorage,
+      itemPane: mfItemPane,
+      noteSync: mfNoteSync,
+      bridge: mfBridge,
+    },
     async saveExportFile(source, payload) {
       if (!this.ownsWorkspaceWindow(source)) throw new Error('导出来源未连接到当前工作台');
       const bytes = payload?.bytes;
@@ -854,6 +899,7 @@
     // Durable, per-key workspace files live in Zotero's data directory. Old
     // preference values remain readable and migrate on the next normal save.
     async workspaceStorage(action, payload = {}) {
+      if (mfStorage) return mfStorage.workspaceStorage(action, payload);
       const root = Zotero.DataDirectory?.dir;
       if (!root) throw new Error('无法确定 Zotero 数据目录；拒绝仅在内存中保存导图');
       const directory = PathUtils.join(root, 'mindflow', 'workspace');
@@ -2041,13 +2087,16 @@
                 exportBtn.type = 'button';
                 if (!isEditable) {
                   exportBtn.disabled = true;
+                  exportBtn.setAttribute('aria-disabled', 'true');
                   exportBtn.title = T('当前文献处于只读库或回收站中，无法导出大纲笔记', 'Parent item is read-only or in Trash, cannot export outline note');
+                  exportBtn.setAttribute('aria-label', exportBtn.title);
                 } else {
+                  exportBtn.removeAttribute('aria-disabled');
                   exportBtn.title = T('将思维导图结构一键导出为 Zotero 文献子笔记', 'Export the map outline as a Zotero child note');
                 }
                 exportBtn.addEventListener('click', async (e) => {
                   e.preventDefault(); e.stopPropagation();
-                  if (exportBtn.disabled) return;
+                  if (exportBtn.disabled || !isEditable) return;
                   exportBtn.disabled = true;
                   try {
                     await this.exportAttachmentToNote(att, win);
@@ -2055,6 +2104,7 @@
                     Zotero.logError?.('[MindFlow] Export attachment to note failed: ' + err);
                   } finally {
                     exportBtn.disabled = !isEditable;
+                    if (isEditable) exportBtn.removeAttribute('aria-disabled');
                   }
                 });
                 cardActions.appendChild(exportBtn);
@@ -2095,14 +2145,17 @@
       try {
         const parentID = attachment.parentItemID;
         const parentItem = parentID ? Zotero.Items.get(parentID) : null;
-        if (!parentItem || parentItem.deleted) {
-          throw new Error(T('未找到关联的有效文献主条目或条目已被删除', 'Parent literature item not found or has been deleted'));
-        }
-        const isItemEditable = typeof parentItem.isEditable === 'function' ? parentItem.isEditable() : !parentItem.deleted;
-        const library = Zotero.Libraries?.get?.(parentItem.libraryID);
-        if (!isItemEditable || library?.editable === false || library?.filesEditable === false) {
+        if (!parentItem || parentItem.deleted || (typeof parentItem.isEditable === 'function' && !parentItem.isEditable())) {
           targetWindow?.ZoteroPane?.displayCannotEditLibraryMessage?.();
           throw new Error(T('当前文献处于只读库或回收站中，无法导出大纲笔记', 'Parent item is read-only or in Trash, cannot export outline note'));
+        }
+        const library = Zotero.Libraries?.get?.(parentItem.libraryID);
+        if (library?.editable === false || library?.filesEditable === false) {
+          targetWindow?.ZoteroPane?.displayCannotEditLibraryMessage?.();
+          throw new Error(T('当前文献处于只读库或回收站中，无法导出大纲笔记', 'Parent item is read-only or in Trash, cannot export outline note'));
+        }
+        if (mfNoteSync) {
+          return await mfNoteSync.exportAttachmentToNote(attachment, win);
         }
 
         const path = await attachment.getFilePathAsync?.();
