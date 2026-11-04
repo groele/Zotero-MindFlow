@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 import zipfile
 
@@ -25,7 +26,9 @@ def metadata(root):
         require(data["version"] == version and data["packages"][""]["version"] == version,
                 "source/package-lock.json: version mismatch")
     prefs = (root / "chrome/content/preferences.xhtml").read_text(encoding="utf-8")
-    require(f">v{version}<" in prefs, "Settings version badge mismatch")
+    localized_badge = re.search(r'data-l10n-id="mindflow-pref-version"[^>]*data-l10n-args=\'([^\']+)\'', prefs)
+    require((localized_badge and json.loads(localized_badge[1]).get('version') == version) or
+            f">v{version}<" in prefs, "Settings version badge mismatch")
     index = root / 'chrome/content/index.html'
     if index.is_file():
         html = index.read_text(encoding='utf-8')
@@ -62,7 +65,11 @@ def build(root, output):
             info.external_attr = 0o100644 << 16
             archive.writestr(info, payload(file), compresslevel=9)
 
-def verify(root, output, repo, feeds, identities, update=False):
+def verify(root, output, repo, feeds, identities, update=False, candidate=False):
+    require(not (candidate and update), "Candidate builds cannot update release feeds")
+    if candidate:
+        require(read_json(root / 'docs/brand/product.json').get('releaseStatus') == 'unreleased',
+                "Candidate builds require unreleased metadata")
     manifest = metadata(root)
     version = manifest["version"]
     name = f"zotero-{repo.removeprefix('Zotero-').lower()}-{version}.xpi"
@@ -78,7 +85,7 @@ def verify(root, output, repo, feeds, identities, update=False):
     digest512 = hashlib.sha512(output.read_bytes()).hexdigest()
     link = f"https://github.com/groele/{repo}/releases/download/v{version}/{name}"
     documents = []
-    for feed in feeds:
+    for feed in (() if candidate else feeds):
         path = root / feed
         data = read_json(path)
         require(set(data["addons"]) == set(identities), f"{feed}: add-on identities mismatch")
@@ -106,7 +113,8 @@ def verify(root, output, repo, feeds, identities, update=False):
             path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     return {"version": version, "file": name, "size": output.stat().st_size,
             "sha256": digest, "sha512": digest512, "entries": len(expected), "payloadVerifiedAgainstWorkspace": True,
-            "updateFeedsVerified": list(feeds), "testHarnessIncluded": False,
+            "updateFeedsVerified": [] if candidate else list(feeds), "testHarnessIncluded": False,
+            "candidate": candidate,
             "reproducibleZipMetadata": True, "textLineEndings": "LF"}
 
 def main(root, repo, feeds, identities, default_report):
@@ -115,6 +123,7 @@ def main(root, repo, feeds, identities, default_report):
     parser.add_argument("--report", default=default_report)
     parser.add_argument("--update-feeds", action="store_true", help="Synchronize all update hashes after building")
     parser.add_argument("--verify-only", action="store_true", help="Check existing XPI without rebuilding it")
+    parser.add_argument("--candidate", action="store_true", help="Verify an unreleased local XPI without changing or validating the published feed")
     args = parser.parse_args()
     require(not (args.verify_only and args.update_feeds), "Verify-only cannot update feeds")
     version = read_json(root / "manifest.json")["version"]
@@ -122,7 +131,7 @@ def main(root, repo, feeds, identities, default_report):
     output = root / (args.output or name)
     if not args.verify_only:
         build(root, output)
-    report = verify(root, output, repo, feeds, identities, update=args.update_feeds)
+    report = verify(root, output, repo, feeds, identities, update=args.update_feeds, candidate=args.candidate)
     if not args.verify_only:
         report_path = root / args.report
         report_path.parent.mkdir(parents=True, exist_ok=True)

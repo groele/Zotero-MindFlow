@@ -188,7 +188,7 @@ mindflow-pref-webdav-autoSyncOnSave = 本地保存时自动推送云端备份
 mindflow-pref-webdav-autoSyncOnSave-desc = 每次在工作台保存导图时，静默上传工作区增量备份
 
 
-mindflow-pref-version = v13.2.0
+mindflow-pref-version = v{ $version }（本地候选版）
 mindflow-pref-release-notes-text = 13.2.0：宿主单文件巨石架构解耦、加固大纲笔记只读防护与设置面板全对称本地化
 mindflow-pref-release-date = 2026-11-04
 mindflow-pref-release-xpi = zotero-mindflow-13.2.0.xpi
@@ -203,3 +203,12 @@ mindflow-pref-status-loaded = 设置已就绪
 mindflow-pref-status-saved = 设置已保存
 mindflow-pref-status-reset = 已恢复默认设置
 mindflow-pref-notice-literature = 提示：导图源文件 (.mindflow) 自动作为附件归档在对应文献条目下；跨设备同步遵从 Zotero 文件同步策略。
+
+mindflow-pref-key-0 = Tab
+mindflow-pref-key-1 = Enter
+mindflow-pref-key-2 = Space / F2
+mindflow-pref-key-3 = Delete / Backspace
+mindflow-pref-key-4 = /
+mindflow-pref-key-5 = Alt + 1~3
+mindflow-pref-key-6 = Ctrl + H
+mindflow-pref-key-7 = ?

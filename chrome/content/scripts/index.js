@@ -11,20 +11,9 @@
 
   const _globalScope = (typeof globalThis !== 'undefined' ? globalThis : this);
   const loadHostModule = (name) => {
-    if (typeof Services !== 'undefined' && Services.scriptloader?.loadSubScript) {
-      const base = (typeof rootURI !== 'undefined' && rootURI) ? rootURI : 'chrome://mindflow/content/';
-      const url = base.endsWith('/') ? `${base}chrome/content/scripts/modules/${name}` : `${base}/chrome/content/scripts/modules/${name}`;
-      try {
-        Services.scriptloader.loadSubScript(url, _globalScope);
-      } catch (_) {
-        try {
-          const alt = (typeof rootURI !== 'undefined' && rootURI) ? `${rootURI}scripts/modules/${name}` : `chrome://mindflow/content/scripts/modules/${name}`;
-          Services.scriptloader.loadSubScript(alt, _globalScope);
-        } catch (err) {
-          Zotero.log?.('[MindFlow] Load module note: ' + name + ' (' + err + ')');
-        }
-      }
-    }
+    // chrome resources are registered before this script runs. A missing domain
+    // module must abort startup, never select a second, divergent implementation.
+    Services.scriptloader.loadSubScript('chrome://mindflow/content/scripts/modules/' + name, _globalScope);
   };
 
   loadHostModule('constants.js');
@@ -32,6 +21,8 @@
   loadHostModule('item-pane.js');
   loadHostModule('note-sync.js');
   loadHostModule('bridge.js');
+  loadHostModule('workspace-lifecycle.js');
+  loadHostModule('item-pane-visibility.js');
 
   const mfConstants = _globalScope.MindFlowConstants || null;
   const mfStorage = _globalScope.MindFlowStorage
@@ -81,72 +72,7 @@
     const date = new Date(`${value}T00:00:00.000Z`);
     return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
   };
-  const validateHostDocument = (doc) => {
-    if (!doc || !/^[a-zA-Z0-9_-]{1,148}$/.test(doc.id) || typeof doc.title !== 'string' ||
-        typeof doc.themeId !== 'string' ||
-        !Number.isFinite(doc.createdAt) || !Number.isFinite(doc.updatedAt) ||
-        (doc.revision !== undefined && (!Number.isSafeInteger(doc.revision) || doc.revision < 0)) ||
-        (doc.metadata !== undefined && (!doc.metadata || typeof doc.metadata !== 'object' || Array.isArray(doc.metadata))) ||
-        !['mindmap', 'logic-right', 'org-down'].includes(doc.layoutType) ||
-        !doc.root || typeof doc.root !== 'object' || Array.isArray(doc.root)) throw new Error('导图身份或结构无效');
-    const ids = new Set(), stack = [[doc.root, 0]];
-    while (stack.length) {
-      const [node, depth] = stack.pop();
-      if (!node || typeof node.id !== 'string' || !node.id || typeof node.text !== 'string' ||
-          !Array.isArray(node.children) || depth > 256 || ids.size >= 25000 || ids.has(node.id) ||
-          (node.note !== undefined && typeof node.note !== 'string') ||
-          (node.link !== undefined && typeof node.link !== 'string') ||
-          (node.isExpanded !== undefined && typeof node.isExpanded !== 'boolean') ||
-          (node.type !== undefined && !['topic', 'text', 'task', 'link', 'image', 'note'].includes(node.type)) ||
-          (node.shape !== undefined && !['rounded', 'pill', 'rectangle', 'underline'].includes(node.shape)) ||
-          (node.color !== undefined && typeof node.color !== 'string') ||
-          (node.textColor !== undefined && typeof node.textColor !== 'string') ||
-          (node.tags !== undefined && (!Array.isArray(node.tags) || !node.tags.every(tag => typeof tag === 'string'))) ||
-          (node.icons !== undefined && (!Array.isArray(node.icons) || !node.icons.every(icon => typeof icon === 'string')))) {
-        throw new Error('导图节点无效、重复或超出安全上限');
-      }
-      if (node.internalLink !== undefined && (!node.internalLink || typeof node.internalLink !== 'object' ||
-          Array.isArray(node.internalLink) || typeof node.internalLink.documentId !== 'string' || !node.internalLink.documentId ||
-          (node.internalLink.nodeId !== undefined && typeof node.internalLink.nodeId !== 'string'))) {
-        throw new Error('导图跨导图链接无效');
-      }
-      if (node.image !== undefined) {
-        const image = node.image;
-        if (!image || typeof image !== 'object' || typeof image.dataUrl !== 'string' || image.dataUrl.length > 300000 ||
-            !/^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(image.dataUrl) ||
-            !Number.isFinite(image.width) || image.width < 80 || image.width > 480 ||
-            !Number.isFinite(image.aspectRatio) || image.aspectRatio <= 0 || image.aspectRatio > 100) {
-          throw new Error('导图节点图片格式或尺寸无效');
-        }
-      }
-      if (node.task !== undefined) {
-        const task = node.task;
-        if (!task || typeof task !== 'object' || Array.isArray(task) ||
-            !['todo', 'doing', 'done'].includes(String(task.status)) ||
-            (task.priority !== undefined && ![1, 2, 3].includes(task.priority)) ||
-            (task.dueDate !== undefined && !isCalendarDate(task.dueDate)) ||
-            (task.progress !== undefined && (typeof task.progress !== 'number' || !Number.isFinite(task.progress) || task.progress < 0 || task.progress > 100))) {
-          throw new Error('导图节点任务属性无效');
-        }
-      }
-      ids.add(node.id);
-      for (const child of node.children) stack.push([child, depth + 1]);
-    }
-    if (doc.relationships !== undefined) {
-      if (!Array.isArray(doc.relationships)) throw new Error('导图关系线数据无效');
-      const relationshipIds = new Set();
-      for (const relation of doc.relationships) {
-        if (!relation || typeof relation !== 'object' || Array.isArray(relation) ||
-            typeof relation.id !== 'string' || !relation.id || relationshipIds.has(relation.id) ||
-            typeof relation.fromId !== 'string' || typeof relation.toId !== 'string' ||
-            (relation.label !== undefined && typeof relation.label !== 'string') ||
-            (relation.color !== undefined && typeof relation.color !== 'string') ||
-            (relation.style !== undefined && !['dashed', 'solid'].includes(relation.style)) ||
-            !ids.has(relation.fromId) || !ids.has(relation.toId)) throw new Error('导图关系线属性无效、目标不存在或 ID 重复');
-        relationshipIds.add(relation.id);
-      }
-    }
-  };
+  const validateHostDocument = mfConstants.validateHostDocument;
 
   const AI_SECTION_KEYS = ['background', 'gap', 'question', 'system', 'conditions', 'method', 'mechanism', 'findings',
     'resolution', 'significance', 'limitations', 'nextSteps', 'assumptions', 'predictions', 'validation', 'alternatives', 'taxonomy', 'conflicts'];
@@ -794,7 +720,10 @@
   const pendingWindowLoads = new Map();
   let windowListener = null;
 
+  const workspaceLifecycle = _globalScope.MindFlowWorkspaceLifecycle.createWorkspaceLifecycle({ Zotero, storage: mfStorage, injectedElements });
+
   Zotero.MindFlow = {
+    ...workspaceLifecycle,
     Modules: {
       constants: mfConstants,
       storage: mfStorage,
@@ -899,319 +828,7 @@
     // Durable, per-key workspace files live in Zotero's data directory. Old
     // preference values remain readable and migrate on the next normal save.
     async workspaceStorage(action, payload = {}) {
-      if (mfStorage) return mfStorage.workspaceStorage(action, payload);
-      const root = Zotero.DataDirectory?.dir;
-      if (!root) throw new Error('无法确定 Zotero 数据目录；拒绝仅在内存中保存导图');
-      const directory = PathUtils.join(root, 'mindflow', 'workspace');
-      const checkedKey = (key) => {
-        if (typeof key !== 'string' || !/^mindflow_[a-zA-Z0-9_-]{1,160}$/.test(key)) {
-          throw new Error('无效的 MindFlow 存储键');
-        }
-        return key;
-      };
-      const fileFor = (key) => PathUtils.join(directory, `${checkedKey(key)}.json`);
-      const readFile = async (key) => {
-        // The durable tombstone is the logical deletion point, including when
-        // physical cleanup was interrupted. Never fall back to a legacy copy.
-        if (key.startsWith('mindflow_doc_')) {
-          const markerKey = `mindflow_deleted_doc_${key.slice('mindflow_doc_'.length)}`;
-          if (await IOUtils.exists(fileFor(markerKey)) || Zotero.Prefs?.get?.(`mindflow.${markerKey}`, true)) return null;
-        }
-        const path = fileFor(key);
-        if (await IOUtils.exists(path)) {
-          try {
-            const content = await IOUtils.readUTF8(path);
-            if (key.startsWith('mindflow_doc_')) {
-              const parsed = JSON.parse(content);
-              if (key !== `mindflow_doc_${parsed?.id}` || !parsed?.root?.id) throw new Error('导图文件名与内容身份不一致');
-              validateHostDocument(parsed);
-            }
-            return content;
-          }
-          catch (error) {
-            const backup = `${path}.bak`;
-            if (await IOUtils.exists(backup)) {
-              const backupContent = await IOUtils.readUTF8(backup);
-              if (key.startsWith('mindflow_doc_')) {
-                const parsed = JSON.parse(backupContent);
-                if (key !== `mindflow_doc_${parsed?.id}` || !parsed?.root?.id) throw new Error(`导图主文件和备份身份不一致：${key}`);
-                validateHostDocument(parsed);
-              }
-              if (!this._workspaceRecoveredKeys) this._workspaceRecoveredKeys = new Set();
-              this._workspaceRecoveredKeys.add(key);
-              return backupContent;
-            }
-            throw new Error(`导图本地文件不可读取：${key}；${error?.message || error}`);
-          }
-        }
-        try {
-          const legacy = Zotero.Prefs?.get?.(`mindflow.${key}`, true);
-          if (typeof legacy === 'string' && key.startsWith('mindflow_doc_') &&
-              key !== `mindflow_doc_${JSON.parse(legacy)?.id}`) throw new Error('旧版导图存储键与内容 ID 不一致');
-          return typeof legacy === 'string' ? legacy : null;
-        } catch (error) { throw new Error(`旧版导图读取失败：${key}；${error}`); }
-      };
-      if (action === 'get') return readFile(checkedKey(payload.key));
-      if (action === 'mutateInbox') {
-        const key = 'mindflow_inbox_items';
-        const patch = JSON.parse(JSON.stringify(payload));
-        const validate = (items) => {
-          if (!Array.isArray(items)) throw new Error('收集箱数据不是列表');
-          const ids = new Set();
-          for (const item of items) {
-            if (!item || typeof item.id !== 'string' || !item.id || typeof item.text !== 'string' ||
-                !Number.isFinite(item.createdAt) || typeof item.isProcessed !== 'boolean' ||
-                ['title', 'url', 'favIconUrl'].some(field => item[field] !== undefined && typeof item[field] !== 'string')) {
-              throw new Error('收集箱包含格式无效的记录');
-            }
-            if (ids.has(item.id)) throw new Error('收集箱包含重复的记录 ID');
-            ids.add(item.id);
-          }
-          return items;
-        };
-        validate(patch.additions || []);
-        const operation = (this._workspaceWriteQueue || Promise.resolve()).catch(() => {}).then(async () => {
-          const raw = await readFile(key);
-          let items = validate(raw ? JSON.parse(raw) : []);
-          items = items.filter(item => item.id !== patch.removeId && !(patch.clearProcessed && item.isProcessed));
-          if (patch.processedId) items = items.map(item => item.id === patch.processedId ? { ...item, isProcessed: patch.isProcessed === true } : item);
-          const ids = new Set(items.map(item => item.id));
-          for (const item of patch.additions || []) {
-            if (!ids.has(item.id)) { items.unshift(item); ids.add(item.id); }
-          }
-          const path = fileFor(key), serialized = JSON.stringify(items);
-          await IOUtils.makeDirectory(directory, { createAncestors: true, ignoreExisting: true });
-          await IOUtils.writeUTF8(path, serialized, { tmpPath: `${path}.tmp`, backupFile: `${path}.bak`, flush: true });
-          if (await IOUtils.readUTF8(path) !== serialized) throw new Error('收集箱写入后校验失败');
-          try { Zotero.Prefs?.clear?.('mindflow.mindflow_inbox_items', true); } catch (_) {}
-          return items;
-        });
-        this._workspaceWriteQueue = operation.catch(() => {});
-        return operation;
-      }
-      if (action === 'mutateSnapshots') {
-        const key = checkedKey(`mindflow_snapshots_${payload.docId}`);
-        const additions = JSON.parse(JSON.stringify(payload.snapshots || []));
-        const validateSnapshots = snapshots => {
-          if (!Array.isArray(snapshots)) throw new Error('快照存储数据损坏');
-          const ids = new Set();
-          for (const snapshot of snapshots) {
-            if (!snapshot || typeof snapshot.id !== 'string' || !snapshot.id ||
-                snapshot.docId !== payload.docId || typeof snapshot.title !== 'string' ||
-                typeof snapshot.data !== 'string' || !Number.isFinite(snapshot.timestamp) || snapshot.timestamp < 0 ||
-                (snapshot.nodeCount !== undefined && (!Number.isSafeInteger(snapshot.nodeCount) || snapshot.nodeCount < 1))) {
-              throw new Error('快照身份或属性无效');
-            }
-            if (ids.has(snapshot.id)) throw new Error('快照包含重复的 ID');
-            ids.add(snapshot.id);
-            const doc = JSON.parse(snapshot.data);
-            validateHostDocument(doc);
-            if (doc.id !== payload.docId) throw new Error('快照身份与所属导图不一致');
-          }
-          return snapshots;
-        };
-        validateSnapshots(additions);
-        const operation = (this._workspaceWriteQueue || Promise.resolve()).catch(() => {}).then(async () => {
-          const raw = await readFile(key);
-          let snapshots = validateSnapshots(raw ? JSON.parse(raw) : []);
-          snapshots = snapshots.filter(s => s.id !== payload.removeSnapshotId);
-          for (const snapshot of additions) {
-            if (!snapshots.some(s => s.id === snapshot.id)) snapshots.push(snapshot);
-          }
-          snapshots.sort((a,b) => b.timestamp - a.timestamp);
-          if (Number.isInteger(payload.limit)) snapshots = snapshots.slice(0, Math.max(10, Math.min(50, payload.limit)));
-          const path = fileFor(key), serialized = JSON.stringify(snapshots);
-          await IOUtils.makeDirectory(directory, { createAncestors: true, ignoreExisting: true });
-          await IOUtils.writeUTF8(path, serialized, { tmpPath: `${path}.tmp`, backupFile: `${path}.bak`, flush: true });
-          if (await IOUtils.readUTF8(path) !== serialized) throw new Error('快照写入后校验失败');
-          try { Zotero.Prefs?.clear?.(`mindflow.${key}`, true); } catch (_) {}
-          return snapshots;
-        });
-        this._workspaceWriteQueue = operation.catch(() => {});
-        return operation;
-      }
-      if (action === 'deleteDocument') {
-        const key = checkedKey(`mindflow_doc_${payload.id}`);
-        const operation = (this._workspaceWriteQueue || Promise.resolve()).catch(() => {}).then(async () => {
-          const raw = await readFile(key);
-          if (!raw || (Number(JSON.parse(raw).revision) || 0) !== payload.expectedRevision) {
-            throw new Error('MINDFLOW_REVISION_CONFLICT: 导图已被其他窗口修改或删除');
-          }
-          const markerPath = fileFor(`mindflow_deleted_doc_${payload.id}`);
-          await IOUtils.writeUTF8(markerPath, JSON.stringify({ deletedAt: Date.now(), revision: payload.expectedRevision }),
-            { tmpPath: `${markerPath}.tmp`, flush: true });
-          // Retain .bak for deliberate recovery. Readers always honor marker.
-          try {
-            if (await IOUtils.exists(fileFor(key))) await IOUtils.remove(fileFor(key));
-            Zotero.Prefs?.clear?.(`mindflow.${key}`, true);
-          } catch (error) { Zotero.logError?.('[MindFlow] Deleted document cleanup deferred: ' + error); }
-          return true;
-        });
-        this._workspaceWriteQueue = operation.catch(() => {});
-        return operation;
-      }
-      if (action === 'setMany' || action === 'commitDocument') {
-        const committing = action === 'commitDocument';
-        const commitSnapshot = committing ? JSON.parse(JSON.stringify(payload.doc)) : null;
-        let entries = committing ? [] : Object.entries(payload.items || {});
-        if (!committing && !entries.length) return true;
-        for (const [key, value] of entries) {
-          checkedKey(key);
-          if (typeof value !== 'string') throw new Error('MindFlow 本地保存内容必须是文本');
-        }
-        const operation = (this._workspaceWriteQueue || Promise.resolve()).catch(() => {}).then(async () => {
-          await IOUtils.makeDirectory(directory, { createAncestors: true, ignoreExisting: true });
-          let savedDocument = null;
-          if (committing) {
-            validateHostDocument(commitSnapshot);
-            const key = checkedKey(`mindflow_doc_${commitSnapshot?.id}`);
-            const currentRaw = await readFile(key);
-            const currentRevision = currentRaw ? Number(JSON.parse(currentRaw).revision) || 0 : 0;
-            if (payload.force !== true && currentRevision !== payload.expectedRevision) {
-              throw new Error('MINDFLOW_REVISION_CONFLICT: 导图已被其他窗口修改');
-            }
-            savedDocument = { ...commitSnapshot, revision: currentRevision + 1, updatedAt: Date.now() };
-            entries = [[key, JSON.stringify(savedDocument)]];
-          }
-          const recreatedIds = [];
-          for (const [key, value] of entries) {
-            if (!key.startsWith('mindflow_doc_')) continue;
-            let incoming;
-            try { incoming = JSON.parse(value); }
-            catch (_) { throw new Error('导图 JSON 无法解析；拒绝保存'); }
-            if (key !== `mindflow_doc_${incoming?.id}` || !incoming?.root?.id) {
-              throw new Error('导图文件名与文档身份不一致；拒绝覆盖');
-            }
-            validateHostDocument(incoming);
-            const currentRaw = await readFile(key);
-            const deletionMarker = await readFile(`mindflow_deleted_doc_${key.slice('mindflow_doc_'.length)}`);
-            if (deletionMarker && !(committing && (payload.force === true || payload.restoreDeleted === true))) {
-              throw new Error('MINDFLOW_REVISION_CONFLICT: 此导图已删除；请保留为新导图或明确从备份恢复');
-            }
-            let currentRevision = 0;
-            if (currentRaw) {
-              try { currentRevision = Number(JSON.parse(currentRaw)?.revision) || 0; }
-              catch (_) { throw new Error(`原导图数据损坏：${key}；拒绝覆盖`); }
-            }
-            if (!Number.isSafeInteger(incoming?.revision) ||
-                incoming.revision !== currentRevision + 1) {
-              throw new Error(`MINDFLOW_REVISION_CONFLICT: 其他窗口已修改导图（磁盘版本 ${currentRevision}，待写版本 ${incoming?.revision}）`);
-            }
-            if (!currentRaw && deletionMarker) recreatedIds.push(key.slice('mindflow_doc_'.length));
-          }
-          for (const [key, value] of entries) {
-            const path = fileFor(key);
-            const recovering = this._workspaceRecoveredKeys?.has(key);
-            if (recovering && await IOUtils.exists(path)) {
-              await IOUtils.move(path, `${path}.corrupt-${Date.now()}`);
-            }
-            await IOUtils.writeUTF8(path, value, recovering
-              ? { tmpPath: `${path}.tmp`, flush: true }
-              : { tmpPath: `${path}.tmp`, backupFile: `${path}.bak`, flush: true });
-            if (await IOUtils.readUTF8(path) !== value) {
-              throw new Error(`Zotero 数据目录写入后校验失败：${key}`);
-            }
-            this._workspaceRecoveredKeys?.delete(key);
-            try { Zotero.Prefs?.clear?.(`mindflow.${key}`, true); } catch (_) {}
-          }
-          for (const id of recreatedIds) {
-            const markerKey = `mindflow_deleted_doc_${id}`;
-            const markerPath = fileFor(markerKey);
-            if (await IOUtils.exists(markerPath)) await IOUtils.remove(markerPath);
-            try { Zotero.Prefs?.clear?.(`mindflow.${markerKey}`, true); } catch (_) {}
-          }
-          return savedDocument || true;
-        });
-        this._workspaceWriteQueue = operation.catch(() => {});
-        return operation;
-      }
-      if (action === 'remove') {
-        const key = checkedKey(payload.key);
-        const operation = (this._workspaceWriteQueue || Promise.resolve()).catch(() => {}).then(async () => {
-          const path = fileFor(key);
-          if (await IOUtils.exists(path)) await IOUtils.remove(path);
-          try { Zotero.Prefs?.clear?.(`mindflow.${key}`, true); }
-          catch (error) { Zotero.log?.('[MindFlow] Legacy preference cleanup note: ' + error); }
-          return true;
-        });
-        this._workspaceWriteQueue = operation.catch(() => {});
-        return operation;
-      }
-      if (action === 'getAll' || action === 'keys') {
-        const keys = new Set();
-        if (await IOUtils.exists(directory)) {
-          for (const path of await IOUtils.getChildren(directory)) {
-            const name = PathUtils.filename(path);
-            if (/^mindflow_[a-zA-Z0-9_-]{1,160}\.json$/.test(name)) {
-              keys.add(name.slice(0, -5));
-            }
-          }
-        }
-        // Legacy preference documents can be recovered through their index.
-        let legacyIndex = null;
-        try { legacyIndex = Zotero.Prefs?.get?.('mindflow.mindflow_docs_index', true); }
-        catch (_) {}
-        if (typeof legacyIndex === 'string') {
-          try {
-            for (const entry of JSON.parse(legacyIndex)) {
-              if (entry?.id) keys.add(checkedKey(`mindflow_doc_${entry.id}`));
-            }
-          } catch (_) {}
-        }
-        if (action === 'keys') return [...keys];
-        const result = {};
-        for (const key of keys) {
-          try {
-            const value = await readFile(key);
-            if (value !== null) result[key] = value;
-          } catch (error) { Zotero.logError?.('[MindFlow] Unreadable workspace record: ' + key + '; ' + error); }
-        }
-        return result;
-      }
-      throw new Error('不支持的 MindFlow 存储操作');
-    },
-
-    captureWorkspaceOnClose(source) {
-      // Capture synchronously while the editor still exists. The Promise and
-      // disk I/O then belong to Zotero, so destroying the iframe cannot cancel it.
-      const editor = source?.wrappedJSObject || source;
-      let snapshot;
-      try { snapshot = editor?._mindflowCaptureState?.(); }
-      catch (error) { Zotero.logError?.('[MindFlow] Close capture failed: ' + error); return; }
-      if (!snapshot?.doc) return;
-      snapshot = JSON.parse(JSON.stringify(snapshot));
-      const fingerprint = JSON.stringify(snapshot);
-      if (editor._mindflowClosingFingerprint === fingerprint) return;
-      editor._mindflowClosingFingerprint = fingerprint;
-      const operation = (async () => {
-        let saved;
-        try {
-          saved = await this.workspaceStorage('commitDocument', { doc: snapshot.doc, expectedRevision: snapshot.doc.revision || 0 });
-        } catch (error) {
-          if (!String(error).includes('MINDFLOW_REVISION_CONFLICT:')) throw error;
-          const raw = await this.workspaceStorage('get', { key: `mindflow_doc_${snapshot.doc.id}` });
-          const comparable = doc => JSON.stringify({ ...doc, revision: 0, updatedAt: 0 });
-          if (raw && comparable(JSON.parse(raw)) === comparable(snapshot.doc)) return;
-          const metadata = { ...snapshot.doc.metadata, autoSyncToZotero: false };
-          for (const key of ['zoteroItemKey','zoteroUri','zoteroLibraryID','zoteroItemTitle','zoteroAttachmentKey','zoteroAttachmentLibraryID','mindflowUnlinkedContainer']) delete metadata[key];
-          const copyId = `doc_close_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-          const retarget = node => ({ ...node,
-            internalLink: node.internalLink?.documentId === snapshot.doc.id
-              ? { ...node.internalLink, documentId: copyId } : node.internalLink,
-            children: node.children.map(retarget) });
-          saved = await this.workspaceStorage('commitDocument', { doc: { ...snapshot.doc,
-            id: copyId, root: retarget(snapshot.doc.root),
-            title: `${snapshot.doc.title}（关闭恢复副本）`, metadata, revision: 0 }, expectedRevision: 0 });
-        }
-        if (saved.metadata?.zoteroItemKey && saved.metadata.autoSyncToZotero !== false) {
-          await this.saveMindMapToItem({ doc: saved, parentItemKey: saved.metadata.zoteroItemKey, silent: true });
-        }
-      })();
-      const tracked = operation.catch(error => {
-        Zotero.logError?.('[MindFlow] Closing document was not saved: ' + error);
-      });
-      this._closeSaveQueue = Promise.all([this._closeSaveQueue || Promise.resolve(), tracked]);
-      return tracked;
+      return mfStorage.workspaceStorage(action, payload);
     },
 
     ensureLocalization(doc) {
@@ -1454,7 +1071,7 @@
             ? `${this.rootURI}chrome/content/icons/mindflow.svg`
             : `${CHROME_ROOT}icons/mindflow.svg`;
 
-          Zotero.PreferencePanes.register({
+          const registration = Zotero.PreferencePanes.register({
             pluginID: ADDON_ID,
             src: prefSrc,
             label: 'Zotero MindFlow',
@@ -1462,6 +1079,10 @@
             scripts: [prefScript],
             stylesheets: [prefCss],
           });
+          this._preferenceRegistration = Promise.resolve(registration).then(id => {
+            this._preferencePaneID = id;
+            if (this._lifecycleActive === false && id) this.unregisterPreferencePane();
+          }).catch(error => Zotero.logError?.('[MindFlow] Preference registration failed: ' + error));
         } catch (prefErr) {
           Zotero.log?.('[MindFlow] PreferencePanes registration note: ' + prefErr);
         }
@@ -1472,23 +1093,6 @@
       this.registerItemPaneSection();
 
       Zotero.log('[MindFlow] Initialized successfully in Zotero');
-    },
-
-    captureAllWorkspaces() {
-      for (const win of injectedElements.keys()) {
-        for (const frame of win.document?.querySelectorAll?.('.mindflow-workspace-iframe') || []) this.captureWorkspaceOnClose(frame.contentWindow);
-      }
-      for (const win of this._standaloneWindows?.values() || []) if (!win.closed) this.captureWorkspaceOnClose(win);
-    },
-
-    async drainPendingWrites() {
-      let last;
-      do {
-        last = this._workspaceWriteQueue;
-        await this._closeSaveQueue;
-        await last;
-        await this._archiveWriteQueue;
-      } while (last !== this._workspaceWriteQueue);
     },
 
     resolveLiteratureTarget(item) {
@@ -1588,15 +1192,16 @@
             };
             this._itemPaneStates.add(state);
             sectionStates.set(body, state);
-            const owner = body?.parentElement;
-            if (owner && ('open' in owner || 'empty' in owner)) {
-              owner.empty = false;
-              owner.open = true;
+            state.disposeVisibility = _globalScope.MindFlowItemPaneVisibility.connect(document, body,
+              () => this._lifecycleActive !== false && this._itemPaneStates.has(state));
+            const owner = body?.closest?.('collapsible-section') || body?.parentElement;
+            if (owner?.removeAttribute) {
+              owner.removeAttribute('empty');
               const raf = document?.defaultView?.requestAnimationFrame;
               if (typeof raf === 'function') {
                 raf.call(document.defaultView, () => {
-                  owner.empty = false;
-                  owner.open = true;
+                  if (!this._itemPaneStates.has(state) || this._lifecycleActive === false) return;
+                  owner.removeAttribute('empty');
                 });
               }
             }
@@ -1605,6 +1210,7 @@
             const state = sectionStates.get(body);
             if (state) {
               state.renderVersion++;
+              state.disposeVisibility?.();
               this.cancelItemPaneRefresh(state);
               this._itemPaneStates.delete(state);
             }
@@ -2140,93 +1746,7 @@
     },
 
     async exportAttachmentToNote(attachment, win) {
-      if (!attachment) return;
-      const targetWindow = win || Zotero.getMainWindow?.();
-      try {
-        const parentID = attachment.parentItemID;
-        const parentItem = parentID ? Zotero.Items.get(parentID) : null;
-        if (!parentItem || parentItem.deleted || (typeof parentItem.isEditable === 'function' && !parentItem.isEditable())) {
-          targetWindow?.ZoteroPane?.displayCannotEditLibraryMessage?.();
-          throw new Error(T('当前文献处于只读库或回收站中，无法导出大纲笔记', 'Parent item is read-only or in Trash, cannot export outline note'));
-        }
-        const library = Zotero.Libraries?.get?.(parentItem.libraryID);
-        if (library?.editable === false || library?.filesEditable === false) {
-          targetWindow?.ZoteroPane?.displayCannotEditLibraryMessage?.();
-          throw new Error(T('当前文献处于只读库或回收站中，无法导出大纲笔记', 'Parent item is read-only or in Trash, cannot export outline note'));
-        }
-        if (mfNoteSync) {
-          return await mfNoteSync.exportAttachmentToNote(attachment, win);
-        }
-
-        const path = await attachment.getFilePathAsync?.();
-        if (!path || !(await IOUtils.exists(path))) {
-          targetWindow?.ZoteroPane?.displayCannotEditLibraryMessage?.();
-          return;
-        }
-        const content = await IOUtils.readUTF8(path);
-        const docData = JSON.parse(content);
-        if (!docData || !docData.root) {
-          throw new Error('导图数据格式不正确');
-        }
-
-        const defaultTitle = T('思维导图', 'Mind Map');
-        const safeTitle = escapeHtml(docData.title || attachment.getField?.('title') || defaultTitle);
-        const outlineHtml = this.renderNodeToHtml(docData.root);
-        const noteHeader = T('🧠 MindFlow 导图大纲', '🧠 MindFlow Map Outline');
-        const exportTimeLabel = T('导出时间', 'Exported at');
-        const noteHtml = `
-          <div data-mindflow-document-id="${escapeHtml(docData.id || '')}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            <h3 style="color: #4072e5; margin-bottom: 4px;">${noteHeader}: ${safeTitle}</h3>
-            <p style="color: #64748b; font-size: 11px; margin-top: 0;">${exportTimeLabel}: ${new Date().toLocaleString()}</p>
-            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 8px 0;" />
-            <ul style="padding-left: 20px; line-height: 1.6;">
-              ${outlineHtml}
-            </ul>
-          </div>
-        `.trim();
-
-        let targetNote = null;
-        const childItemIDs = parentItem.getNotes ? parentItem.getNotes() : [];
-        for (const noteID of childItemIDs) {
-          const noteItem = Zotero.Items.get(noteID);
-          if (noteItem && !noteItem.deleted) {
-            const currentNote = noteItem.getNote();
-            if (currentNote && currentNote.includes(`data-mindflow-document-id="${docData.id}"`)) {
-              targetNote = noteItem;
-              break;
-            }
-          }
-        }
-
-        if (targetNote) {
-          targetNote.setNote(noteHtml);
-          await targetNote.saveTx();
-        } else {
-          targetNote = new Zotero.Item('note');
-          targetNote.libraryID = parentItem.libraryID;
-          targetNote.parentItemID = parentItem.id;
-          targetNote.setNote(noteHtml);
-          await targetNote.saveTx();
-        }
-
-        const alertTitle = T('大纲笔记已生成', 'Outline Note Created');
-        const alertMsg = T(
-          `已将《${docData.title || '思维导图'}》大纲笔记保存至文献条目下。`,
-          `Saved outline note for "${docData.title || 'Mind Map'}" to the item.`
-        );
-        try {
-          const pw = targetWindow?.ProgressWindow || Zotero.ProgressWindow;
-          if (pw) {
-            const winProg = new pw({ closeOnClick: true });
-            winProg.changeHeadline?.(alertTitle);
-            winProg.addDescription?.(alertMsg);
-            winProg.show?.();
-          }
-        } catch (_) {}
-      } catch (err) {
-        Zotero.logError?.('[MindFlow] exportAttachmentToNote error: ' + err);
-        throw err;
-      }
+      return mfNoteSync.exportAttachmentToNote(attachment, win);
     },
 
     initWindowListener() {
@@ -2985,11 +2505,14 @@
       if (this._tabHookStates.has(win)) return;
       const restore = async (tab, index, session = false) => {
         try {
+          if (this._lifecycleActive === false || win.closed) return false;
           await this._closeSaveQueue;
+          if (this._lifecycleActive === false || win.closed) return false;
           const data = tab.data || {};
           if (!data.docId) return false;
           const raw = await this.workspaceStorage('get', { key: `mindflow_doc_${data.docId}` });
           if (!raw) return false;
+          if (this._lifecycleActive === false || win.closed) return false;
           const doc = JSON.parse(raw);
           this.openMindFlow({ mode: 'open_document', doc, workspaceDocumentId: doc.id, targetMode: 'tab',
             openedAttachmentKey: doc.metadata?.zoteroAttachmentKey,
@@ -3016,9 +2539,11 @@
         this._startupSessionScheduled = true;
         const savedTabs = Zotero.Session?.state?.windows?.find(w=>w.type==='pane')?.tabs || [];
         win.setTimeout(() => {
+          if (this._lifecycleActive === false || win.closed) return;
           this._startupRestoreQueue = (async () => {
             const occurrences = new Map(), restoredItemIDs = [];
             for (let i=0;i<savedTabs.length;i++) {
+              if (this._lifecycleActive === false || win.closed) return;
               const saved = savedTabs[i];
               if (saved.type === 'mindflow') {
                 if (saved.data?.docId && !tabs._tabs.some(t=>t.type==='mindflow' && t.data?.docId===saved.data.docId)) await restore(saved,i,true);
@@ -3305,6 +2830,7 @@
     },
 
     openMindFlow(options = {}, targetWindow = null) {
+      if (this._lifecycleActive === false) return;
       try {
         const win =
           targetWindow ||
@@ -3484,6 +3010,7 @@
     },
 
     openStandaloneWindow(options = {}, targetWindow = null) {
+      if (this._lifecycleActive === false) return;
       try {
         const ww = Services.ww;
         // dialog=no,all,resizable=yes,minimizable=yes ensures standard OS window controls (minimize, maximize/restore, close) on Windows
@@ -4834,7 +4361,20 @@
     },
 
     shutdown() {
+      if (this._shutdownTask) return this._shutdownTask;
       this._lifecycleActive = false;
+      this.captureAllWorkspaces();
+      this._shutdownTask = this.finishShutdown();
+      return this._shutdownTask;
+    },
+
+    unregisterPreferencePane() {
+      const id = this._preferencePaneID;
+      this._preferencePaneID = null;
+      if (id) Zotero.PreferencePanes?.unregister?.(id);
+    },
+
+    async finishShutdown() {
       for (const job of this._aiJobs?.values() || []) job.cancel();
       this._aiJobs?.clear();
       // Direct injected API calls bypass the message-job map and need the same cleanup.
@@ -4849,7 +4389,10 @@
         this._shutdownBarrier.removeBlocker(this._shutdownSave);
         this._shutdownBarrier = null;
       }
-      for (const state of [...(this._itemPaneStates || [])]) this.cancelItemPaneRefresh(state);
+      for (const state of [...(this._itemPaneStates || [])]) {
+        this.cancelItemPaneRefresh(state);
+        state.disposeVisibility?.();
+      }
       if (this._itemPaneNotifierID && Zotero.Notifier?.unregisterObserver) {
         try {
           Zotero.Notifier.unregisterObserver(this._itemPaneNotifierID);
@@ -4874,13 +4417,28 @@
         } catch (_) {}
       }
       pendingWindowLoads.clear();
+      await this.drainPendingWrites();
+      await this._preferenceRegistration;
+      this.unregisterPreferencePane();
+      for (const win of new Set(this._standaloneWindows?.values() || [])) {
+        try { if (!win.closed) win.close(); }
+        catch (error) { Zotero.logError?.('[MindFlow] Could not close workspace: ' + error); }
+      }
       for (const [win] of injectedElements) {
+        for (const tab of [...(win.Zotero_Tabs?._tabs || [])]) {
+          if (tab.type === 'mindflow') {
+            try { win.Zotero_Tabs.close?.(tab.id); }
+            catch (error) { Zotero.logError?.('[MindFlow] Could not close workspace tab: ' + error); }
+          }
+        }
         this.removeFromWindow(win);
       }
+      // Native close hooks may enqueue a final captured edit.
+      await this.drainPendingWrites();
       injectedElements.clear();
       this._standaloneWindows?.clear();
       for (const doc of this.localizedDocs) this.removeLocalization(doc);
-      delete Zotero.MindFlow;
+      if (Zotero.MindFlow === this) delete Zotero.MindFlow;
       Zotero.log('[MindFlow] Shutdown and cleaned up successfully');
     },
   };

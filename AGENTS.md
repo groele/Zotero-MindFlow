@@ -22,6 +22,11 @@
 | `tests/` | git 忽略的本地测试产物 |
 | `output/` | 候选包和验证证据，不自动视为最新源码 |
 
+宿主持久化的单一实现位于 `chrome/content/scripts/modules/storage.js`；
+`workspace-lifecycle.js` 管理关闭快照与队列稳定等待，`note-sync.js` 管理大纲导出。
+入口只能委托这些领域实现，不保留同一能力的回退副本。关系线持久化契约为
+`fromId` / `toId`，存储与附件写入共用 `constants.js` 中的校验器。
+
 ## 构建与验证
 
 在 `source/` 下：
@@ -35,6 +40,7 @@
 - `node --test scripts/test-host.mjs`：宿主逻辑模拟测试。
 - `python scripts/test-release-package.py`：发布包校验的自检。
 - `python scripts/package-xpi.py --output <路径> --report <报告路径>`：可复现构建 XPI 并校验载荷与更新源。`--verify-only` 只检查已有包；`--update-feeds` 在构建后同步更新源哈希，只在正式发布时使用。
+- 本地未发布版本使用 `python scripts/package-xpi.py --candidate --output <路径> --report <路径>`：要求 `releaseStatus: unreleased`，校验包载荷并生成哈希，不修改线上更新源，也不将其报告为已验证。该模式不能与 `--update-feeds` 同用。
 - `python scripts/release-tags.py --self-test`：标签校验自检。
 
 CI（`.github/workflows/release-integrity.yml`、`tag-policy.yml`）运行上述宿主测试、发布包自检与打包校验，不得绕过失败。

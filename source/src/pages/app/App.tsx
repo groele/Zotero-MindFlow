@@ -937,6 +937,7 @@ export const App: React.FC<AppProps> = ({ isSidepanelMode = false }) => {
     if (!doc) return;
     if (cleanDocRef.current === doc && cleanRelationshipsRef.current === relationships) return;
     const saveToken = ++pendingSaveTokenRef.current;
+    setSaveStatus({ state: 'saving', message: '等待本地保存…' });
     const timeout = setTimeout(() => {
       if (saveToken !== pendingSaveTokenRef.current) return;
       setSaveStatus({ state: 'saving', message: '保存中…' });

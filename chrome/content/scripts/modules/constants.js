@@ -69,9 +69,7 @@
         (doc.revision !== undefined && (!Number.isSafeInteger(doc.revision) || doc.revision < 0)) ||
         (doc.metadata !== undefined && (!doc.metadata || typeof doc.metadata !== 'object' || Array.isArray(doc.metadata))) ||
         !['mindmap', 'logic-right', 'org-down'].includes(doc.layoutType) ||
-        !doc.root || typeof doc.root !== 'object' || Array.isArray(doc.root)) {
-      throw new Error('导图身份或结构无效');
-    }
+        !doc.root || typeof doc.root !== 'object' || Array.isArray(doc.root)) throw new Error('导图身份或结构无效');
     const ids = new Set(), stack = [[doc.root, 0]];
     while (stack.length) {
       const [node, depth] = stack.pop();
@@ -119,23 +117,18 @@
       if (!Array.isArray(doc.relationships)) throw new Error('导图关系线数据无效');
       const relationshipIds = new Set();
       for (const relation of doc.relationships) {
-        if (!relation || typeof relation.id !== 'string' || !relation.id ||
-            typeof relation.fromNodeId !== 'string' || !relation.fromNodeId ||
-            typeof relation.toNodeId !== 'string' || !relation.toNodeId ||
-            relation.fromNodeId === relation.toNodeId ||
-            !ids.has(relation.fromNodeId) || !ids.has(relation.toNodeId) ||
-            relationshipIds.has(relation.id) || relationshipIds.size >= 1000 ||
+        if (!relation || typeof relation !== 'object' || Array.isArray(relation) ||
+            typeof relation.id !== 'string' || !relation.id || relationshipIds.has(relation.id) ||
+            typeof relation.fromId !== 'string' || typeof relation.toId !== 'string' ||
             (relation.label !== undefined && typeof relation.label !== 'string') ||
-            (relation.style !== undefined && !['solid', 'dashed', 'dotted'].includes(relation.style)) ||
             (relation.color !== undefined && typeof relation.color !== 'string') ||
-            (relation.hasArrow !== undefined && typeof relation.hasArrow !== 'boolean')) {
-          throw new Error('导图关系线属性或端点节点无效');
-        }
+            (relation.style !== undefined && !['dashed', 'solid'].includes(relation.style)) ||
+            !ids.has(relation.fromId) || !ids.has(relation.toId)) throw new Error('导图关系线属性无效、目标不存在或 ID 重复');
         relationshipIds.add(relation.id);
       }
     }
-    return doc;
   };
+
 
   const MindFlowConstants = {
     ADDON_ID,

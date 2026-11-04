@@ -49,6 +49,28 @@ class ReleaseTests(unittest.TestCase):
                 self.assertEqual(data["addons"][identity]["updates"][0]["update_hash"],
                                  "sha256:" + report["sha256"])
 
+    def test_candidate_checks_payload_without_mutating_published_feeds(self):
+        self.write_json('docs/brand/product.json', {'version': '1.2.3', 'releaseStatus': 'unreleased'})
+        build(self.root, self.output)
+        before = [(self.root / feed).read_bytes() for feed in self.feeds]
+        report = verify(self.root, self.output, self.repo, self.feeds, self.identities, candidate=True)
+        self.assertTrue(report['payloadVerifiedAgainstWorkspace'])
+        self.assertEqual(report['updateFeedsVerified'], [])
+        self.assertEqual(before, [(self.root / feed).read_bytes() for feed in self.feeds])
+        with self.assertRaisesRegex(ValueError, 'cannot update'):
+            verify(self.root, self.output, self.repo, self.feeds, self.identities, update=True, candidate=True)
+        self.write_json('docs/brand/product.json', {'version': '1.2.3', 'releaseStatus': 'released'})
+        with self.assertRaisesRegex(ValueError, 'unreleased'):
+            verify(self.root, self.output, self.repo, self.feeds, self.identities, candidate=True)
+
+    def test_localized_badge_checks_real_version_argument(self):
+        target = self.root / 'chrome/content/preferences.xhtml'
+        target.write_text('''<span data-l10n-id="mindflow-pref-version" data-l10n-args='{"version":"1.2.3"}'/>''')
+        metadata(self.root)
+        target.write_text(target.read_text().replace('1.2.3', '1.2.2'))
+        with self.assertRaisesRegex(ValueError, 'badge mismatch'):
+            metadata(self.root)
+
     def test_rebuild_is_byte_identical_after_mtime_changes(self):
         build(self.root, self.output)
         before = self.output.read_bytes()

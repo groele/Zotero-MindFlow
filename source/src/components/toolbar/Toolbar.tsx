@@ -214,13 +214,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             role="status"
             aria-live="polite"
             title={saveStatus.message}
-            className={`relative text-xs whitespace-nowrap ${
+            className={`relative text-xs whitespace-nowrap shrink-0 ${
               saveStatus.state === 'error'
                 ? 'text-red-600 dark:text-red-400'
                 : saveStatus.state === 'warning'
                 ? 'text-amber-600 dark:text-amber-400'
                 : saveStatus.state === 'saving'
-                ? 'text-slate-400'
+                ? 'text-slate-600 dark:text-slate-300'
                 : 'text-slate-500 dark:text-slate-400'
             }`}
           >

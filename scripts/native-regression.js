@@ -289,10 +289,16 @@
     });
     await run('native sidebar quick actions render without overflow and route the selected paper', async () => {
       const nav = [...win.document.querySelectorAll('item-pane-sidenav')].map(n => n.querySelector('.btn[data-pane*="mindflow"]')).find(Boolean);
-      nav.click();
-      let panel = await waitFor(() => [...win.document.querySelectorAll('.mf-pane-wrap')].find(n => n.querySelector('.mf-template-select') && n.getBoundingClientRect().width > 0), 'visible MindFlow sidebar');
+      // Zotero's sidenav handles detail=1 (single click) and detail=2 (pin).
+      // HTMLElement.click() has detail=0 and intentionally does not navigate.
+      nav.dispatchEvent(new win.MouseEvent('click', { bubbles: true, button: 0, detail: 1 }));
+      let panel = await waitFor(() => [...win.document.querySelectorAll('.mf-pane-wrap')].find(n => {
+        const section = n.closest('collapsible-section');
+        return n.querySelector('.mf-template-select') && n.getBoundingClientRect().width > 0 &&
+          section && !section.hasAttribute('empty') && section.hasAttribute('open');
+      }), 'visible and expanded MindFlow sidebar');
       const collapsible = panel.closest('collapsible-section');
-      check(collapsible?.empty === false && collapsible.open === true, 'MindFlow quick actions did not become visible on first open');
+      check(collapsible && !collapsible.hasAttribute('empty') && collapsible.hasAttribute('open'), 'MindFlow quick actions did not become visible on first open');
       await win.document.l10n.translateFragment(panel);
       const action = id => panel.querySelector(`[data-mindflow-action="${id}"]`);
       check(['ai','workspace','import','blank','workbench'].every(id => action(id)) && panel.querySelector('.mf-btn-primary') && panel.querySelector('.mf-btn-refresh'), 'missing sidebar action');

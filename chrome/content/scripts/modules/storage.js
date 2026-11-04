@@ -37,7 +37,7 @@
       const Zotero = getZotero();
       const IOUtils = getIOUtils();
       const constants = getConstants();
-      const validateHostDoc = constants.validateHostDocument || ((d) => d);
+      const validateHostDoc = constants.validateHostDocument;
 
       if (key.startsWith('mindflow_doc_')) {
         const markerKey = `mindflow_deleted_doc_${key.slice('mindflow_doc_'.length)}`;
@@ -80,11 +80,14 @@
     };
 
     async function workspaceStorage(action, payload = {}) {
+      // Capture revision, force flags and mutation inputs before queueing. A
+      // caller retaining its object cannot alter an operation while it waits.
+      payload = JSON.parse(JSON.stringify(payload));
       const Zotero = getZotero();
       const PathUtils = getPathUtils();
       const IOUtils = getIOUtils();
       const constants = getConstants();
-      const validateHostDoc = constants.validateHostDocument || ((d) => d);
+      const validateHostDoc = constants.validateHostDocument;
       const directory = getWorkspaceDir();
 
       if (action === 'get') return readFile(checkedKey(payload.key));
@@ -314,48 +317,9 @@
       throw new Error('不支持的 MindFlow 存储操作');
     }
 
-    function captureWorkspaceOnClose(source, host) {
-      if (!source) return;
-      try {
-        const editor = source._mindflowEditor || source.wrappedJSObject?._mindflowEditor;
-        const snapshot = editor?.getCloseSnapshot?.();
-        if (!snapshot?.doc?.id) return;
-        const targetHost = host || deps.host;
-        if (!targetHost?.workspaceStorage) return;
-
-        void (async () => {
-          try {
-            let saved = null;
-            try {
-              saved = await targetHost.workspaceStorage('commitDocument', { doc: snapshot.doc, expectedRevision: snapshot.doc.revision || 0 });
-            } catch (error) {
-              if (!String(error).includes('MINDFLOW_REVISION_CONFLICT:')) throw error;
-              const raw = await targetHost.workspaceStorage('get', { key: `mindflow_doc_${snapshot.doc.id}` });
-              const current = raw ? JSON.parse(raw) : null;
-              if (current && Number(current.updatedAt || 0) >= Number(snapshot.doc.updatedAt || 0)) {
-                return;
-              }
-              saved = await targetHost.workspaceStorage('commitDocument', {
-                doc: { ...snapshot.doc, id: `${snapshot.doc.id}-conflict-${Date.now()}` },
-                expectedRevision: 0,
-                force: true,
-              });
-            }
-            if (saved && saved.metadata?.zoteroItemKey && targetHost.saveMindMapToItem) {
-              await targetHost.saveMindMapToItem({ doc: saved, parentItemKey: saved.metadata.zoteroItemKey, silent: true });
-            }
-          } catch (err) {
-            getZotero()?.logError?.('[MindFlow] Capture on close failed: ' + err);
-          }
-        })();
-      } catch (err) {
-        getZotero()?.logError?.('[MindFlow] Sync capture inspection failed: ' + err);
-      }
-    }
-
     return {
       workspaceStorage,
-      captureWorkspaceOnClose,
+      get pendingWrites() { return _workspaceWriteQueue; },
       checkedKey,
       fileFor,
       readFile,

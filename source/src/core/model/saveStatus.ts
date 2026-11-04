@@ -7,7 +7,11 @@ export function saveStatusLabel(status: SaveStatus): string {
   if (/准备导出/.test(status.message)) return '准备导出…';
   if (/^已取消导出/.test(status.message)) return '已取消导出';
   if (/^已导出：/.test(status.message)) return '导出完成';
-  if (status.state === 'saving') return '保存中…';
+  if (status.state === 'saving') {
+    if (/等待本地保存/.test(status.message)) return '待保存…';
+    if (/本地文件已保存.*归档/.test(status.message)) return '本地已保存 · 归档中';
+    return '保存中…';
+  }
   if (status.state === 'saved') return '已保存';
   if (status.state === 'error') return '操作失败';
   if (/云端备份失败|WebDAV.*失败/.test(status.message)) return '云备份失败';

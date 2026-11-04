@@ -84,19 +84,25 @@
       if (!attachment) return;
       const Zotero = getZotero();
       const IOUtils = getIOUtils();
+      const owner = getHost();
       const targetWindow = win || Zotero.getMainWindow?.();
       try {
         const parentID = attachment.parentItemID;
         const parentItem = parentID ? Zotero.Items.get(parentID) : null;
-        if (!parentItem || parentItem.deleted || (typeof parentItem.isEditable === 'function' && !parentItem.isEditable())) {
+        const assertWritable = (note = null) => {
+        const library = parentItem && Zotero.Libraries?.get?.(parentItem.libraryID);
+        if (!parentItem || parentItem.deleted || parentItem.inTrash || attachment.deleted || attachment.inTrash ||
+            attachment.parentItemID !== parentID || attachment.libraryID !== parentItem.libraryID ||
+            (typeof parentItem.isEditable === 'function' && !parentItem.isEditable()) ||
+            library?.editable === false || (note && (note.deleted || note.inTrash ||
+              note.parentItemID !== parentID || note.libraryID !== parentItem.libraryID ||
+              (typeof note.isEditable === 'function' && !note.isEditable())))) {
           targetWindow?.ZoteroPane?.displayCannotEditLibraryMessage?.();
           throw new Error(T('当前文献处于只读库或回收站中，无法导出大纲笔记', 'Parent item is read-only or in Trash, cannot export outline note'));
         }
-        const library = Zotero.Libraries?.get?.(parentItem.libraryID);
-        if (library?.editable === false || library?.filesEditable === false) {
-          targetWindow?.ZoteroPane?.displayCannotEditLibraryMessage?.();
-          throw new Error(T('当前文献处于只读库或回收站中，无法导出大纲笔记', 'Parent item is read-only or in Trash, cannot export outline note'));
-        }
+        if (owner?._lifecycleActive === false) throw new Error(T('插件已停用，已取消大纲导出', 'Outline export cancelled because the add-on is disabled'));
+        };
+        assertWritable();
 
         const path = await attachment.getFilePathAsync?.();
         if (!path || !(await IOUtils.exists(path))) {
@@ -105,9 +111,9 @@
         }
         const content = await IOUtils.readUTF8(path);
         const docData = JSON.parse(content);
-        if (!docData || !docData.root) {
-          throw new Error('导图数据格式不正确');
-        }
+        getConstants().validateHostDocument(docData);
+        // Permission, parent and lifecycle can change while reading the file.
+        assertWritable();
 
         const defaultTitle = T('思维导图', 'Mind Map');
         const safeTitle = escapeHtml(docData.title || attachment.getField?.('title') || defaultTitle);
@@ -138,6 +144,7 @@
           }
         }
 
+        assertWritable(targetNote);
         if (targetNote) {
           targetNote.setNote(noteHtml);
           await targetNote.saveTx();

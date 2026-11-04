@@ -20,6 +20,11 @@ async function run(name: string, fn: () => unknown) {
   catch (error) { failed++; console.error(`FAIL: ${name}: ${(error as Error).message}`); }
 }
 const root: MindMapNode = { id: 'root', text: 'MoS2 mos2 MOS2', note: 'MOS2 evidence', children: [], task: { status: 'todo' } };
+await run('save indicator distinguishes pending local edits from completed local writes awaiting archive', () => {
+  assert.equal(saveStatusLabel({ state: 'saving', message: '等待本地保存…' }), '待保存…');
+  assert.equal(saveStatusLabel({ state: 'saving', message: '本地文件已保存，正在归档 Zotero 附件…' }), '本地已保存 · 归档中');
+  assert.equal(saveStatusLabel({ state: 'saved', message: '已保存到本地' }), '已保存');
+});
 await run('toolbar placement choices persist independently and retain legacy visibility switches', async () => {
   const original = await SettingsService.getSettings();
   try {

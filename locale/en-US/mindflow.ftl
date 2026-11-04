@@ -189,7 +189,7 @@ mindflow-pref-webdav-autoSyncOnSave = Push cloud backup on local save
 mindflow-pref-webdav-autoSyncOnSave-desc = Silently upload workspace incremental backup on each manual save
 
 
-mindflow-pref-version = v13.2.0
+mindflow-pref-version = v{ $version } (local candidate)
 mindflow-pref-release-notes-text = 13.2.0: Host monolith decoupled into modules, reinforced read-only note guard, and fully symmetric Fluent localization
 mindflow-pref-release-date = 2026-11-04
 mindflow-pref-release-xpi = zotero-mindflow-13.2.0.xpi
@@ -205,3 +205,12 @@ mindflow-pref-status-saved = Settings saved
 mindflow-pref-status-reset = Default settings restored
 mindflow-pref-notice-literature = Tip: MindFlow map files (.mindflow) are automatically archived as attachments under items. Multi-device sync follows Zotero file synchronization rules.
 
+
+mindflow-pref-key-0 = Tab
+mindflow-pref-key-1 = Enter
+mindflow-pref-key-2 = Space / F2
+mindflow-pref-key-3 = Delete / Backspace
+mindflow-pref-key-4 = /
+mindflow-pref-key-5 = Alt + 1~3
+mindflow-pref-key-6 = Ctrl + H
+mindflow-pref-key-7 = ?
