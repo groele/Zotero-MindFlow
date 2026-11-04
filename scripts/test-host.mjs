@@ -1752,3 +1752,75 @@ test('item-pane onRender displays read-only badge and disables creation controls
   assert.equal(createBtn.disabled, true, 'Primary create button must be disabled on read-only item');
 });
 
+
+test('item-pane onRender disables outline export button on read-only items', () => {
+  const f = fixture();
+  f.host.registerItemPaneSection();
+  const section = f.Zotero.ItemPaneManager.sections.get(f.host.itemPaneSectionID);
+
+  const roPaper = f.paper('RO_EXPORT_ITEM');
+  roPaper.isEditable = () => false;
+
+  const att = {
+    id: 9981,
+    parentItemID: roPaper.id,
+    libraryID: roPaper.libraryID,
+    deleted: false,
+    isAttachment: () => true,
+    attachmentFilename: 'readonly_map.mindflow',
+    getField: () => 'Readonly Map',
+  };
+  f.items.set(9981, att);
+  roPaper.attachments.push(9981);
+  roPaper.getAttachments = () => [9981];
+
+  const body = f.doc.createElement('div');
+  section.onRender({ body, item: roPaper });
+
+  const all = node => [node, ...node.children.flatMap(all)];
+  const allNodes = all(body);
+  const exportBtn = allNodes.find(node => node.attrs && node.attrs['data-l10n-id'] === 'mindflow-item-pane-card-export');
+  assert.ok(exportBtn, 'Export button must be present in map card');
+  assert.equal(exportBtn.disabled, true, 'Export outline button must be disabled for read-only parent item');
+});
+
+test('exportAttachmentToNote rejects read-only and deleted parent items', async () => {
+  const f = fixture();
+
+  const roPaper = f.paper('RO_NOTE_PARENT');
+  roPaper.isEditable = () => false;
+  const roAtt = {
+    id: 9982,
+    parentItemID: roPaper.id,
+    libraryID: roPaper.libraryID,
+    deleted: false,
+    isAttachment: () => true,
+    getFilePathAsync: async () => 'C:/dummy/map.mindflow',
+  };
+  f.items.set(9982, roAtt);
+
+  await assert.rejects(
+    () => f.host.exportAttachmentToNote(roAtt, f.win),
+    /只读|read-only/i,
+    'Should reject exportAttachmentToNote on read-only parent item'
+  );
+
+  const delPaper = f.paper('DEL_NOTE_PARENT');
+  delPaper.deleted = true;
+  delete delPaper.isEditable;
+  const delAtt = {
+    id: 9983,
+    parentItemID: delPaper.id,
+    libraryID: delPaper.libraryID,
+    deleted: false,
+    isAttachment: () => true,
+    getFilePathAsync: async () => 'C:/dummy/map.mindflow',
+  };
+  f.items.set(9983, delAtt);
+
+  await assert.rejects(
+    () => f.host.exportAttachmentToNote(delAtt, f.win),
+    /删除|deleted|只读|read-only/i,
+    'Should reject exportAttachmentToNote on deleted parent item'
+  );
+});

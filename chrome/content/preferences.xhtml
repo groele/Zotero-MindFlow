@@ -1,3 +1,7 @@
+<linkset xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+         xmlns:html="http://www.w3.org/1999/xhtml">
+  <html:link rel="localization" href="mindflow.ftl" />
+</linkset>
 <vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
       xmlns:html="http://www.w3.org/1999/xhtml"
       id="mindflow-preferences-pane" class="mindflow-prefs-container"
@@ -6,90 +10,90 @@
     <html:div class="mindflow-pref-identity">
       <html:div class="mindflow-pref-title-area">
         <html:img class="mindflow-pref-brand-icon" src="chrome://mindflow/content/icons/icon-accent.svg" width="22" height="22" alt="" />
-        <html:h1 class="mindflow-pref-title">Zotero MindFlow</html:h1>
-        <html:span class="mindflow-pref-version">v13.1.0</html:span>
+        <html:h1 class="mindflow-pref-title" data-l10n-id="mindflow-pref-title">Zotero MindFlow</html:h1>
+        <html:span class="mindflow-pref-version">v13.1.1</html:span>
       </html:div>
-      <html:p id="mindflow-pref-status" class="mindflow-pref-status" role="status" aria-live="polite">正在加载设置项…</html:p>
+      <html:p id="mindflow-pref-status" class="mindflow-pref-status" role="status" aria-live="polite" data-l10n-id="mindflow-pref-status-checking">正在加载设置项…</html:p>
     </html:div>
-    <html:button id="mindflow-btn-open-workspace" class="mindflow-btn-primary" type="button">打开导图工作台</html:button>
+    <html:button id="mindflow-btn-open-workspace" class="mindflow-btn-primary" type="button" data-l10n-id="mindflow-pref-btn-open-workspace">打开导图工作台</html:button>
   </html:header>
 
   <html:details class="mindflow-setting-card" open="open">
-    <html:summary class="mindflow-card-summary"><html:h2 class="mindflow-card-title">文献与工作台</html:h2></html:summary>
+    <html:summary class="mindflow-card-summary"><html:h2 class="mindflow-card-title" data-l10n-id="mindflow-pref-group-workspace">文献与工作台</html:h2></html:summary>
     <html:div class="mindflow-card-body">
       <html:div id="mindflow-pref-literature" class="mindflow-pref-content" />
-      <html:h3 class="mindflow-subhead">工作台界面与工具栏</html:h3>
+      <html:h3 class="mindflow-subhead" data-l10n-id="mindflow-pref-subhead-interface">工作台界面与工具栏</html:h3>
       <html:div id="mindflow-pref-interface" class="mindflow-pref-content" />
     </html:div>
   </html:details>
 
   <html:details class="mindflow-setting-card">
-    <html:summary class="mindflow-card-summary"><html:h2 class="mindflow-card-title">AI 研究与数据保存</html:h2></html:summary>
+    <html:summary class="mindflow-card-summary"><html:h2 class="mindflow-card-title" data-l10n-id="mindflow-pref-group-ai-sync">AI 研究与数据保存</html:h2></html:summary>
     <html:div class="mindflow-card-body">
       <html:div id="mindflow-pref-ai" class="mindflow-pref-content" />
-      <html:h3 class="mindflow-subhead">本地保存与历史快照</html:h3>
+      <html:h3 class="mindflow-subhead" data-l10n-id="mindflow-pref-subhead-backup">本地保存与历史快照</html:h3>
       <html:div id="mindflow-pref-backup" class="mindflow-pref-content" />
-      <html:h3 class="mindflow-subhead">WebDAV 同步</html:h3>
+      <html:h3 class="mindflow-subhead" data-l10n-id="mindflow-pref-subhead-webdav">WebDAV 同步</html:h3>
       <html:div id="mindflow-pref-webdav" class="mindflow-pref-content" />
     </html:div>
   </html:details>
 
   <html:details class="mindflow-setting-card mindflow-pref-group-last">
-    <html:summary class="mindflow-card-summary"><html:h2 class="mindflow-card-title">导图编辑与快捷键</html:h2></html:summary>
+    <html:summary class="mindflow-card-summary"><html:h2 class="mindflow-card-title" data-l10n-id="mindflow-pref-group-editing-shortcuts">导图编辑与快捷键</html:h2></html:summary>
     <html:div class="mindflow-card-body">
       <html:div id="mindflow-pref-editing" class="mindflow-pref-content" />
-      <html:h3 class="mindflow-subhead">快捷键与系统重置</html:h3>
+      <html:h3 class="mindflow-subhead" data-l10n-id="mindflow-pref-subhead-shortcuts">快捷键与系统重置</html:h3>
       <html:div id="mindflow-pref-shortcuts" class="mindflow-pref-content">
         <html:div class="mindflow-shortcuts-grid">
           <html:div class="mindflow-shortcut-item">
             <html:kbd class="mindflow-kbd">Tab</html:kbd>
-            <html:span class="mindflow-shortcut-label">添加子节点</html:span>
+            <html:span class="mindflow-shortcut-label" data-l10n-id="mindflow-pref-shortcut-child">添加子节点</html:span>
           </html:div>
           <html:div class="mindflow-shortcut-item">
             <html:kbd class="mindflow-kbd">Enter</html:kbd>
-            <html:span class="mindflow-shortcut-label">添加同级节点</html:span>
+            <html:span class="mindflow-shortcut-label" data-l10n-id="mindflow-pref-shortcut-sibling">添加同级节点</html:span>
           </html:div>
           <html:div class="mindflow-shortcut-item">
             <html:kbd class="mindflow-kbd">Space / F2</html:kbd>
-            <html:span class="mindflow-shortcut-label">编辑节点文本（或双击）</html:span>
+            <html:span class="mindflow-shortcut-label" data-l10n-id="mindflow-pref-shortcut-edit">编辑节点文本（或双击）</html:span>
           </html:div>
           <html:div class="mindflow-shortcut-item">
             <html:kbd class="mindflow-kbd">Delete / Backspace</html:kbd>
-            <html:span class="mindflow-shortcut-label">删除选定节点</html:span>
+            <html:span class="mindflow-shortcut-label" data-l10n-id="mindflow-pref-shortcut-delete">删除选定节点</html:span>
           </html:div>
           <html:div class="mindflow-shortcut-item">
             <html:kbd class="mindflow-kbd">/</html:kbd>
-            <html:span class="mindflow-shortcut-label">折叠 / 展开当前分支</html:span>
+            <html:span class="mindflow-shortcut-label" data-l10n-id="mindflow-pref-shortcut-toggle">折叠 / 展开当前分支</html:span>
           </html:div>
           <html:div class="mindflow-shortcut-item">
             <html:kbd class="mindflow-kbd">Alt + 1~3</html:kbd>
-            <html:span class="mindflow-shortcut-label">展开至 1~3 级分支（Alt+0 展开全部）</html:span>
+            <html:span class="mindflow-shortcut-label" data-l10n-id="mindflow-pref-shortcut-levels">展开至 1~3 级分支（Alt+0 展开全部）</html:span>
           </html:div>
           <html:div class="mindflow-shortcut-item">
             <html:kbd class="mindflow-kbd">Ctrl + H</html:kbd>
-            <html:span class="mindflow-shortcut-label">全局即时搜索与替换</html:span>
+            <html:span class="mindflow-shortcut-label" data-l10n-id="mindflow-pref-shortcut-replace">全局即时搜索与替换</html:span>
           </html:div>
           <html:div class="mindflow-shortcut-item">
             <html:kbd class="mindflow-kbd">?</html:kbd>
-            <html:span class="mindflow-shortcut-label">呼出全键盘快捷操作指南</html:span>
+            <html:span class="mindflow-shortcut-label" data-l10n-id="mindflow-pref-shortcut-help">呼出全键盘快捷操作指南</html:span>
           </html:div>
         </html:div>
         <html:div class="mindflow-form-row" style="margin-top: 10px; border-bottom: none;">
           <html:div class="mindflow-form-label-wrap">
-            <html:span class="mindflow-form-label">恢复默认设置</html:span>
-            <html:span class="mindflow-form-desc">仅重置插件偏好设置，不会删除导图附件、文献条目或历史快照</html:span>
+            <html:span class="mindflow-form-label" data-l10n-id="mindflow-pref-reset-label">恢复默认设置</html:span>
+            <html:span class="mindflow-form-desc" data-l10n-id="mindflow-pref-reset-desc">仅重置插件偏好设置，不会删除导图附件、文献条目或历史快照</html:span>
           </html:div>
-          <html:button id="mindflow-btn-reset-defaults" class="mindflow-btn-secondary" type="button">恢复 MindFlow 默认设置</html:button>
+          <html:button id="mindflow-btn-reset-defaults" class="mindflow-btn-secondary" type="button" data-l10n-id="mindflow-pref-reset-btn">恢复 MindFlow 默认设置</html:button>
         </html:div>
       </html:div>
     </html:div>
   </html:details>
 
   <html:footer class="mindflow-pref-release" aria-label="版本信息">
-    <html:h2 class="mindflow-pref-release-title">版本信息</html:h2>
-    <html:p><html:span class="mindflow-pref-release-label">版本说明</html:span><html:a href="https://github.com/groele/Zotero-MindFlow/releases/tag/v13.1.0" target="_blank" rel="noopener noreferrer">13.1.0：深度现代化改造：对齐 4.2 设置规范网格、加固条目只读防护、确立根生命周期体系</html:a></html:p>
-    <html:p><html:span class="mindflow-pref-release-label">构建日期</html:span>2026-11-02</html:p>
-    <html:p><html:span class="mindflow-pref-release-label">当前版本</html:span><html:a href="https://github.com/groele/Zotero-MindFlow/releases/download/v13.1.0/zotero-mindflow-13.1.0.xpi" target="_blank" rel="noopener noreferrer">zotero-mindflow-13.1.0.xpi</html:a></html:p>
-    <html:p><html:span class="mindflow-pref-release-label">项目仓库</html:span><html:a href="https://github.com/groele/Zotero-MindFlow" target="_blank" rel="noopener noreferrer">github.com/groele/Zotero-MindFlow</html:a></html:p>
+    <html:h2 class="mindflow-pref-release-title" data-l10n-id="mindflow-pref-release-section-title">版本信息</html:h2>
+    <html:p><html:span class="mindflow-pref-release-label" data-l10n-id="mindflow-pref-release-notes-label">版本说明</html:span><html:a href="https://github.com/groele/Zotero-MindFlow/releases/tag/v13.1.0" target="_blank" rel="noopener noreferrer">13.1.0：深度现代化改造：对齐 4.2 设置规范网格、加固条目只读防护、确立根生命周期体系</html:a></html:p>
+    <html:p><html:span class="mindflow-pref-release-label" data-l10n-id="mindflow-pref-release-date-label">构建日期</html:span>2026-11-04</html:p>
+    <html:p><html:span class="mindflow-pref-release-label" data-l10n-id="mindflow-pref-release-current-label">当前版本</html:span><html:a href="https://github.com/groele/Zotero-MindFlow/releases/download/v13.1.0/zotero-mindflow-13.1.0.xpi" target="_blank" rel="noopener noreferrer">zotero-mindflow-13.1.0.xpi</html:a></html:p>
+    <html:p><html:span class="mindflow-pref-release-label" data-l10n-id="mindflow-pref-release-repo-label">项目仓库</html:span><html:a href="https://github.com/groele/Zotero-MindFlow" target="_blank" rel="noopener noreferrer">github.com/groele/Zotero-MindFlow</html:a></html:p>
   </html:footer>
 </vbox>

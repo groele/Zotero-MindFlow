@@ -147,7 +147,8 @@
   line-height: 1.6;
 }
 .mindflow-form-desc {
-  margin: 0;
+  margin: 2px 0 0 0;
+  margin-inline-start: 24px;
   color: var(--flow-pref-muted);
   font-size: 13px;
   line-height: 1.6;
@@ -184,7 +185,8 @@
   user-select: none;
 }
 .mindflow-check-desc {
-  margin: 2px 0 0 24px;
+  margin: 2px 0 0 0;
+  margin-inline-start: 24px;
   color: var(--flow-pref-muted);
   font-size: 13px;
   line-height: 1.6;

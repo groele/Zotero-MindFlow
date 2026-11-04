@@ -1463,7 +1463,7 @@
 
     scheduleItemPaneRefresh(state, delay = 120) {
       if (!state || typeof state.refresh !== 'function' || state.refreshTimer) return;
-      const win = Zotero.getMainWindow?.();
+      const win = state.window || Zotero.getMainWindow?.();
       const setTimer = typeof win?.setTimeout === 'function' ? win.setTimeout.bind(win) : setTimeout;
       state.refreshTimer = setTimer(() => {
         state.refreshTimer = null;
@@ -1474,7 +1474,7 @@
 
     cancelItemPaneRefresh(state) {
       if (!state?.refreshTimer) return;
-      const win = Zotero.getMainWindow?.();
+      const win = state.window || Zotero.getMainWindow?.();
       try { (typeof win?.clearTimeout === 'function' ? win.clearTimeout.bind(win) : clearTimeout)(state.refreshTimer); } catch (_) {}
       state.refreshTimer = null;
     },
@@ -1525,6 +1525,7 @@
           sidenav: { l10nID: 'mindflow-item-pane-sidenav', icon },
           onInit: ({ doc, body, item, refresh }) => {
             const document = doc || body?.ownerDocument;
+            const win = doc?.defaultView || document?.defaultView || null;
             if (document) {
               this.ensureLocalization(document);
               this.ensureItemPaneStyles(document);
@@ -1534,6 +1535,7 @@
               itemKey: target?.key || null,
               libraryID: target?.libraryID || null,
               targetID: target?.id || null,
+              window: win,
               renderVersion: 0,
               saving: false,
               refresh,
@@ -1562,12 +1564,15 @@
             }
             sectionStates.delete(body);
           },
-          onItemChange: ({ body, item, setEnabled }) => {
+          onItemChange: ({ doc, body, item, setEnabled }) => {
+            const document = doc || body?.ownerDocument;
+            const win = doc?.defaultView || document?.defaultView || Zotero.getMainWindow?.();
             const target = this.resolveLiteratureTarget(item) || this.resolveLiteratureTarget(
-              Zotero.getMainWindow?.()?.ZoteroPane?.getSelectedItems?.()?.[0]
+              win?.ZoteroPane?.getSelectedItems?.()?.[0]
             );
             const state = sectionStates.get(body);
             if (state) {
+              if (win) state.window = win;
               state.itemKey = target?.key || null;
               state.libraryID = target?.libraryID || null;
               state.targetID = target?.id || null;
@@ -1578,33 +1583,36 @@
               if (action.id === 'ai' || action.id === 'pdf') action.button.disabled = !target || (action.id === 'pdf' && !action.hasPDF);
             }
             if (!body && lastPaneBody && renderItemPaneAsync) {
-              void renderItemPaneAsync({ body: lastPaneBody, item: target || item, setSectionSummary: null });
+              void renderItemPaneAsync({ doc, body: lastPaneBody, item: target || item, setSectionSummary: null });
             }
             // Keep the section available without a literature item so users
             // can create an explicitly standalone blank map.
             setEnabled(true);
           },
-          onRender: ({ body, item, setSectionSummary }) => {
+          onRender: ({ doc, body, item, setSectionSummary }) => {
             if (!body) return;
-            const document = body.ownerDocument;
+            const document = doc || body.ownerDocument;
+            const win = doc?.defaultView || document?.defaultView || Zotero.getMainWindow?.();
             if (document) {
               this.ensureItemPaneStyles(document);
             }
             const target = this.resolveLiteratureTarget(item) || this.resolveLiteratureTarget(
-              Zotero.getMainWindow?.()?.ZoteroPane?.getSelectedItems?.()?.[0]
+              win?.ZoteroPane?.getSelectedItems?.()?.[0]
             );
             lastPaneBody = body;
             lastPaneTarget = target;
             lastPaneActions = [];
             let state = sectionStates.get(body);
             if (!state) {
-              state = { itemKey: target?.key || null, libraryID: target?.libraryID || null, targetID: target?.id || null, renderVersion: 0, saving: false };
-              state.refresh = () => renderItemPaneAsync?.({ body, item: lastPaneTarget || item, setSectionSummary });
+              state = { itemKey: target?.key || null, libraryID: target?.libraryID || null, targetID: target?.id || null, window: win, renderVersion: 0, saving: false };
+              state.refresh = () => renderItemPaneAsync?.({ doc, body, item: lastPaneTarget || item, setSectionSummary });
               sectionStates.set(body, state);
               this._itemPaneStates.add(state);
+            } else if (win) {
+              state.window = win;
             }
             if (target && renderItemPaneAsync) {
-              void renderItemPaneAsync({ body, item, setSectionSummary });
+              void renderItemPaneAsync({ doc, body, item, setSectionSummary });
               return;
             }
             const maps = target ? this.getMindflowAttachments(target) : [];
@@ -1633,11 +1641,11 @@
               primaryBtn.disabled = true;
               try {
                 if (totalMaps > 0 && maps[0]) {
-                  await this.openMindflowAttachment(maps[0], Zotero.getMainWindow?.());
+                  await this.openMindflowAttachment(maps[0], win);
                 } else if (currentTarget) {
-                  await this.openMindFlow({ mode: 'create_from_selection', items: [currentTarget], forceNew: false }, Zotero.getMainWindow?.());
+                  await this.openMindFlow({ mode: 'create_from_selection', items: [currentTarget], forceNew: false }, win);
                 } else {
-                  await this.openMindFlow({ mode: 'create_blank', forceNew: true }, Zotero.getMainWindow?.());
+                  await this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
                 }
                 await state?.refresh?.();
               } catch (error) {
@@ -1650,11 +1658,12 @@
           onAsyncRender: renderItemPaneAsync = async ({ doc, body, item, setSectionSummary }) => {
             if (!body) return;
             const document = doc || body.ownerDocument;
+            const win = doc?.defaultView || document?.defaultView || Zotero.getMainWindow?.();
             if (document) {
               this.ensureItemPaneStyles(document);
             }
             const target = this.resolveLiteratureTarget(item) || this.resolveLiteratureTarget(
-              Zotero.getMainWindow?.()?.ZoteroPane?.getSelectedItems?.()?.[0]
+              win?.ZoteroPane?.getSelectedItems?.()?.[0]
             );
             lastPaneBody = body;
             lastPaneTarget = target;
@@ -1662,6 +1671,7 @@
             if (!target) return;
 
             const state = sectionStates.get(body);
+            if (state && win) state.window = win;
             const renderVersion = state ? ++state.renderVersion : 0;
             const html = 'http://www.w3.org/1999/xhtml';
             const createEl = (tag, className = '', text = null) => {
@@ -1693,7 +1703,6 @@
 
             setSectionSummary?.(totalMaps ? String(totalMaps) : this.paneText('展开后快速新建', 'Create quickly'));
 
-            const win = document.defaultView?.ZoteroPane ? document.defaultView : Zotero.getMainWindow?.();
             const wrapper = createEl('div', 'mf-pane-wrap');
             const T = (zh, en) => this.paneText(zh, en);
             if (totalMaps > 0) wrapper.setAttribute('data-has-maps', 'true');
@@ -2030,7 +2039,12 @@
                 const exportBtn = createEl('button', 'mf-card-btn', T('导出大纲', 'Export Outline'));
                 exportBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-card-export');
                 exportBtn.type = 'button';
-                exportBtn.title = T('将思维导图结构一键导出为 Zotero 文献子笔记', 'Export the map outline as a Zotero child note');
+                if (!isEditable) {
+                  exportBtn.disabled = true;
+                  exportBtn.title = T('当前文献处于只读库或回收站中，无法导出大纲笔记', 'Parent item is read-only or in Trash, cannot export outline note');
+                } else {
+                  exportBtn.title = T('将思维导图结构一键导出为 Zotero 文献子笔记', 'Export the map outline as a Zotero child note');
+                }
                 exportBtn.addEventListener('click', async (e) => {
                   e.preventDefault(); e.stopPropagation();
                   if (exportBtn.disabled) return;
@@ -2040,7 +2054,7 @@
                   } catch (err) {
                     Zotero.logError?.('[MindFlow] Export attachment to note failed: ' + err);
                   } finally {
-                    exportBtn.disabled = false;
+                    exportBtn.disabled = !isEditable;
                   }
                 });
                 cardActions.appendChild(exportBtn);
@@ -2079,6 +2093,18 @@
       if (!attachment) return;
       const targetWindow = win || Zotero.getMainWindow?.();
       try {
+        const parentID = attachment.parentItemID;
+        const parentItem = parentID ? Zotero.Items.get(parentID) : null;
+        if (!parentItem || parentItem.deleted) {
+          throw new Error(T('未找到关联的有效文献主条目或条目已被删除', 'Parent literature item not found or has been deleted'));
+        }
+        const isItemEditable = typeof parentItem.isEditable === 'function' ? parentItem.isEditable() : !parentItem.deleted;
+        const library = Zotero.Libraries?.get?.(parentItem.libraryID);
+        if (!isItemEditable || library?.editable === false || library?.filesEditable === false) {
+          targetWindow?.ZoteroPane?.displayCannotEditLibraryMessage?.();
+          throw new Error(T('当前文献处于只读库或回收站中，无法导出大纲笔记', 'Parent item is read-only or in Trash, cannot export outline note'));
+        }
+
         const path = await attachment.getFilePathAsync?.();
         if (!path || !(await IOUtils.exists(path))) {
           targetWindow?.ZoteroPane?.displayCannotEditLibraryMessage?.();
@@ -2088,11 +2114,6 @@
         const docData = JSON.parse(content);
         if (!docData || !docData.root) {
           throw new Error('导图数据格式不正确');
-        }
-        const parentID = attachment.parentItemID;
-        const parentItem = parentID ? Zotero.Items.get(parentID) : null;
-        if (!parentItem) {
-          throw new Error('未找到关联的文献主条目');
         }
 
         const defaultTitle = T('思维导图', 'Mind Map');

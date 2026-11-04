@@ -75,3 +75,116 @@ mindflow-item-pane-template-create = Generate from Template
 mindflow-item-pane-readonly-badge = Read-only Item
 mindflow-item-pane-readonly-hint = This item is read-only or in Trash. Maps are kept in local workspace and will not be saved as attachments.
 
+## Preferences
+mindflow-pref-title = Zotero MindFlow
+mindflow-pref-status-checking = Loading preferences…
+mindflow-pref-btn-open-workspace = Open Workspace
+
+mindflow-pref-group-workspace = Literature & Workspace
+mindflow-pref-subhead-interface = Interface & Toolbar
+mindflow-pref-group-ai-sync = AI Research & Synchronization
+mindflow-pref-subhead-backup = Local Backup & Snapshots
+mindflow-pref-subhead-webdav = WebDAV Synchronization
+mindflow-pref-group-editing-shortcuts = Editing & Keyboard Shortcuts
+mindflow-pref-subhead-shortcuts = Shortcuts & System Reset
+
+mindflow-pref-shortcut-child = Add child node
+mindflow-pref-shortcut-sibling = Add sibling node
+mindflow-pref-shortcut-edit = Edit node text (or double click)
+mindflow-pref-shortcut-delete = Delete selected nodes
+mindflow-pref-shortcut-toggle = Collapse / expand current branch
+mindflow-pref-shortcut-levels = Expand levels 1~3 (Alt+0 for all)
+mindflow-pref-shortcut-replace = Global instant search and replace
+mindflow-pref-shortcut-help = Open keyboard shortcuts cheatsheet
+
+mindflow-pref-reset-label = Restore Default Settings
+mindflow-pref-reset-desc = Only resets preference values; does not delete mind maps, literature items, or snapshots.
+mindflow-pref-reset-btn = Restore MindFlow Defaults
+
+mindflow-pref-release-section-title = Release Information
+mindflow-pref-release-notes-label = Release Notes
+mindflow-pref-release-date-label = Build Date
+mindflow-pref-release-current-label = Current Version
+mindflow-pref-release-repo-label = Repository
+
+# Dynamic preferences
+mindflow-pref-zoteroWindowMode = Open Mode
+mindflow-pref-zoteroWindowMode-desc = Window presentation mode when opening maps from items or the PDF reader
+mindflow-pref-showWelcomeOnStartup = Show welcome page on blank workspace
+mindflow-pref-showWelcomeOnStartup-desc = Display template library, knowledge graph guide, and quick start help
+mindflow-pref-zoteroIncludeAbstract = Import abstract from literature item
+mindflow-pref-zoteroIncludeAbstract-desc = Include the item Abstract as a dedicated branch when generating a map
+mindflow-pref-zoteroIncludeAnnotations = Import PDF highlights and annotations
+mindflow-pref-zoteroIncludeAnnotations-desc = Automatically extract PDF highlights, annotations, and notes into structured branches
+mindflow-pref-zoteroIncludeTags = Import item tags
+mindflow-pref-zoteroIncludeTags-desc = Present existing item tags as mind map branch tags
+mindflow-pref-autoArchiveToItem = Auto-update outline child note on map archive
+mindflow-pref-autoArchiveToItem-desc = Maintain a structured Markdown/outline child note under the literature item
+mindflow-pref-autoOpenAfterExport = Locate note in library after exporting
+mindflow-pref-autoOpenAfterExport-desc = Automatically focus and highlight the newly exported note in the library
+
+mindflow-pref-aiMaxPdfPages = Maximum PDF pages to analyze
+mindflow-pref-aiMaxPdfPages-desc = Page cutoff limit for long papers to prevent context window overflow or timeouts
+
+mindflow-pref-toolbarTemplatesPlacement = Templates Entry Placement
+mindflow-pref-toolbarTemplatesPlacement-desc = Keep visible on toolbar, tuck into More menu, or hide from top bar
+mindflow-pref-toolbarPresentationPlacement = Presentation Entry Placement
+mindflow-pref-toolbarPresentationPlacement-desc = Keep visible on toolbar, tuck into More menu, or hide from top bar
+mindflow-pref-toolbarExportPlacement = Import/Export Entry Placement
+mindflow-pref-toolbarExportPlacement-desc = Keep visible on toolbar, tuck into More menu, or hide from top bar
+mindflow-pref-toolbarPosition = Main Toolbar Placement
+mindflow-pref-toolbarPosition-desc = Docking direction of the top toolbar in the workspace
+mindflow-pref-workbenchDockPosition = Sidebar Dock Position
+mindflow-pref-workbenchDockPosition-desc = Outline and auxiliary panels dock to the left or right of the canvas
+mindflow-pref-canvasBackground = Canvas Background Grid
+mindflow-pref-canvasBackground-desc = Background pattern and texture of the mind map canvas
+mindflow-pref-zoomStep = Scroll Wheel Zoom Step
+mindflow-pref-zoomStep-desc = Change rate of canvas zoom scale per wheel step
+
+mindflow-pref-subhead-toolbar-buttons = Workspace Toolbar Quick Buttons
+mindflow-pref-toolbarButtons-history = Undo & Redo
+mindflow-pref-toolbarButtons-insert = Insert Node
+mindflow-pref-toolbarButtons-layout = Layout Structures
+mindflow-pref-toolbarButtons-theme = Color Themes
+mindflow-pref-toolbarButtons-outline = Outline View
+mindflow-pref-toolbarButtons-inbox = Inspiration Inbox
+mindflow-pref-toolbarButtons-templates = Preset Templates
+mindflow-pref-toolbarButtons-zen = Zen Mode
+mindflow-pref-toolbarButtons-export = Export & Archive
+mindflow-pref-toolbarButtons-zoom = Canvas Zoom
+
+mindflow-pref-defaultThemeId = Default Map Theme
+mindflow-pref-defaultThemeId-desc = Default palette applied when creating a new blank mind map
+mindflow-pref-defaultLayout = Default Map Layout
+mindflow-pref-defaultLayout-desc = Default branching rule for new mind map nodes
+mindflow-pref-curveStyle = Branch Line Style
+mindflow-pref-curveStyle-desc = Geometric curve rendering between parent and child nodes
+mindflow-pref-rainbowBranches = Auto-assign rainbow colors to branches
+mindflow-pref-rainbowBranches-desc = Distribute distinct colors to each top-level branch for clearer distinction
+mindflow-pref-soundEffects = Play interaction sound effects
+mindflow-pref-soundEffects-desc = Play gentle audio feedback when inserting, deleting, or reordering nodes
+mindflow-pref-autoExpandOnAddChild = Auto-expand parent node on adding child
+mindflow-pref-autoExpandOnAddChild-desc = Automatically expand a collapsed parent branch when adding a child node
+
+mindflow-pref-customSavePath = Extra Mirror Backup Folder
+mindflow-pref-customSavePath-desc = Save an additional .mindflow copy to a local directory alongside item attachments
+mindflow-pref-autoSnapshotEnabled = Automatically create history snapshots
+mindflow-pref-autoSnapshotEnabled-desc = Silently save timestamped versions in the background to prevent data loss
+mindflow-pref-autoSnapshotIntervalMinutes = Snapshot Interval
+mindflow-pref-autoSnapshotIntervalMinutes-desc = Minimum time interval for automatic background snapshots
+mindflow-pref-maxSnapshotsPerDoc = Max Snapshots per Map
+mindflow-pref-maxSnapshotsPerDoc-desc = Oldest snapshots are automatically pruned when the limit is reached
+
+mindflow-pref-webdav-enabled = Enable WebDAV Cloud Backup
+mindflow-pref-webdav-enabled-desc = Sync workspace backups with standard WebDAV servers like Nutstore or Nextcloud
+mindflow-pref-webdav-serverUrl = Server URL
+mindflow-pref-webdav-serverUrl-desc = Must use HTTPS, e.g. https://dav.jianguoyun.com/dav/
+mindflow-pref-webdav-basePath = Cloud Backup Directory
+mindflow-pref-webdav-basePath-desc = Root folder path for storing backups, defaults to /MindFlow/
+mindflow-pref-webdav-username = Username / Email
+mindflow-pref-webdav-username-desc = WebDAV login account username
+mindflow-pref-webdav-password = Application Password / Token
+mindflow-pref-webdav-password-desc = Using an app-specific password or token is strongly recommended
+mindflow-pref-webdav-autoSyncOnSave = Push cloud backup on local save
+mindflow-pref-webdav-autoSyncOnSave-desc = Silently upload workspace incremental backup on each manual save
+
