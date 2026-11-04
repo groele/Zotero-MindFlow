@@ -1,16 +1,17 @@
 {
-  "version": "13.2.0",
-  "file": "zotero-mindflow-13.2.0.xpi",
-  "size": 570878,
-  "sha256": "4ccd22c08e13d3bfe1585383a12aa7438c99107803c8710a24b6e380e445d354",
-  "sha512": "11338eaa35e6391637dbbee5036e52230f65688119727c341cef8414f1fbe2a146121bc1909da11e0780ba1f819928a3a2fa1d21400a111fa4fa31cf904f8c7d",
-  "entries": 66,
+  "version": "13.2.1",
+  "file": "zotero-mindflow-13.2.1.xpi",
+  "size": 566603,
+  "sha256": "34b533799ebc1552a2432c72882b335bfd4671be22a17bfb48577c873c0d6648",
+  "sha512": "6495eb25b41bc8543916f6f2795f87eef402431f698de6e79677f6e341b5829df73bc03126f060b9fb896260e8ed0441fb1926e4afb14b3a4fde529e1365c0b5",
+  "entries": 68,
   "payloadVerifiedAgainstWorkspace": true,
   "updateFeedsVerified": [
     "update.json",
     "zotero/update.json"
   ],
   "testHarnessIncluded": false,
+  "candidate": false,
   "reproducibleZipMetadata": true,
   "textLineEndings": "LF"
 }

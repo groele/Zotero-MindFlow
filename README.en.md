@@ -8,12 +8,12 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Version](https://img.shields.io/badge/version-13.1.1-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.1.1)
+[![Version](https://img.shields.io/badge/version-13.2.1-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v13.2.1)
 [![Zotero Compatibility](https://img.shields.io/badge/Zotero-10.0--12.*-brightgreen?style=flat-square)](https://www.zotero.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
-[![Tests Passing](https://img.shields.io/badge/tests-224%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
+[![Tests Passing](https://img.shields.io/badge/host_tests-116%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
 
-[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.1.1/zotero-mindflow-13.1.1.xpi) · [📝 Release Notes](docs/releases/v13.1.1.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
+[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v13.2.1/zotero-mindflow-13.2.1.xpi) · [📝 Release Notes](docs/releases/v13.2.1.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
 
 [📖 Overview](#overview) · [📦 Installation and updates](#installation) · [🚀 Quick start](#quick-start) · [🛠️ Key features](#features) · [✨ In-depth highlights](#highlights) · [⚙️ Settings](#settings) · [🔒 Data, sync, and services](#data) · [🧪 Compatibility and validation](#compatibility) · [❓ Troubleshooting](#troubleshooting) · [💻 Development and documentation](#development) · [🔗 The Flow series](#series) · [📄 Origin and license](#license)
 
@@ -38,24 +38,24 @@ As an integral pillar of the **Zotero Flow** series, MindFlow operates completel
 | Specification | Official Parameter & Requirement |
 |---|---|
 | **Add-on ID** | `mindflow@groele.org` |
-| **Current Stable Release** | `v13.1.1` (Minor Release) |
-| **Host Compatibility** | Zotero `10.0` through `12.*` (fully adaptive across 10.x / 11.x / 12.x light and dark themes) |
-| **Package File** | `zotero-mindflow-13.1.1.xpi` |
-| **File Size** | `546,498 bytes` |
-| **SHA-256 Checksum** | `a943bfa9086b6bd3288c31f9d142e9895559e0571c4959d570520f90b452d053` |
+| **Current Stable Release** | `v13.2.1` (Patch Release) |
+| **Host Compatibility** | Zotero `10.0` through `12.*` (declared range; tested on Zotero 10.0.7, with 11/12 validation pending) |
+| **Package File** | `zotero-mindflow-13.2.1.xpi` |
+| **File Size** | `566,603 bytes` |
+| **SHA-256 Checksum** | `34b533799ebc1552a2432c72882b335bfd4671be22a17bfb48577c873c0d6648` |
 | **Online Update Feed** | [zotero/update.json](zotero/update.json) |
 
 ### Installation Steps
 
-1. Download the official release package [zotero-mindflow-13.1.1.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.1.1/zotero-mindflow-13.1.1.xpi) (**current stable release v13.1.1**; download the XPI directly, do not install the Source code ZIP).
+1. Download the official release package [zotero-mindflow-13.2.1.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v13.2.1/zotero-mindflow-13.2.1.xpi) (**current stable release v13.2.1**; download the XPI directly, do not install the Source code ZIP).
 2. In Zotero, navigate to **Tools → Plugins / Add-ons** from the top menu.
-3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**, or drag and drop `zotero-mindflow-13.1.1.xpi` directly into the window.
-4. Choose the downloaded `zotero-mindflow-13.1.1.xpi` file and restart Zotero when prompted.
+3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**, or drag and drop `zotero-mindflow-13.2.1.xpi` directly into the window.
+4. Choose the downloaded `zotero-mindflow-13.2.1.xpi` file and restart Zotero when prompted.
 
 > [!TIP]
 > **Update Feeds and Verification**  
 > - **Online Update Manifest**: Hosted as an immutable asset feed at [zotero/update.json](zotero/update.json) with Add-on ID `mindflow@groele.org`.  
-> - **SHA-256 Checksum**: `a943bfa9086b6bd3288c31f9d142e9895559e0571c4959d570520f90b452d053`.  
+> - **SHA-256 Checksum**: `34b533799ebc1552a2432c72882b335bfd4671be22a17bfb48577c873c0d6648`.
 > - **Browser Renaming Note**: Certain browsers (such as Safari or Edge) may occasionally rename downloaded files to `.zip`. If this occurs, simply rename the file back to `.xpi` before loading into Zotero.  
 > - Subsequent updates can be detected and applied directly through the Zotero Add-on Manager. Backing up the workspace before major version upgrades is always recommended.
 
@@ -182,12 +182,13 @@ Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**, neatly ar
 
 | Dimension | Specification & Verification Status |
 |---|---|
-| **Current Published Release** | **v13.0.8** (Patch Release) |
+| **Current Published Release** | **v13.2.1** (Patch Release) |
 | **Declared Manifest Range** | Zotero `10.0` through `12.*` (`strict_min_version: 10.0`, `strict_max_version: 12.*`) |
 | **TypeScript Static Check** | `npm run typecheck` (PASS, **0** errors) |
-| **Frontend Unit Suite** | `npm test` (**116 / 116** tests PASS: 50 data pipelines + 36 core logic + 7 presets + 23 data integrity) |
-| **Host Logic Regression** | `node --test scripts/test-host.mjs` (**95 / 95** tests PASS) |
-| **Package & Update Feed Check** | `python scripts/test-release-package.py` (**8 / 8** tests PASS, payload hashes verified) |
+| **Frontend Unit Suite** | Five programs passed: 54 data-chain checks, 40 logic checks, 7 presets, 1 full recovery scenario and 23 integrity checks |
+| **Simulated Host Regression** | `node --test scripts/test-host.mjs` (**116 / 116** tests PASS) |
+| **Package Policy Checks** | `python scripts/test-release-package.py` (**10 / 10** tests PASS); production payload and update-feed SHA-512 verified separately |
+| **Native Zotero Validation** | Zotero **10.0.7**, isolated profile: **51 / 51** native checks and **3 / 3** process-restart checks; main-profile installation, 11/12, cross-platform and complete light/dark acceptance remain unverified |
 
 ---
 
