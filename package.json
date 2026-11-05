@@ -1,6 +1,6 @@
 {
   "name": "zotero-mindflow",
-  "version": "13.2.1",
+  "version": "14.0.0",
   "type": "module",
   "description": "Zotero MindFlow - 面向科研文献的可视化知识组织与智能思维导图工具。 From Papers to Ideas, From Ideas to Knowledge.",
   "author": "groele",
@@ -11,11 +11,13 @@
     "url": "https://github.com/groele/Zotero-MindFlow.git"
   },
   "scripts": {
-    "build": "npm --prefix source run build && python scripts/package-xpi.py",
+    "build": "node scripts/build-source.mjs && python scripts/package-xpi.py",
     "build:xpi": "python scripts/package-xpi.py",
-    "build:bundle": "npm --prefix source run build",
-    "typecheck": "npm --prefix source run typecheck",
-    "test": "node --test scripts/test-host.mjs && python scripts/test-release-package.py && python scripts/release-tags.py --self-test && npm --prefix source test",
+    "build:bundle": "node scripts/build-source.mjs",
+    "typecheck": "npm run typecheck:host && npm --prefix source run typecheck",
+    "typecheck:host": "tsc --noEmit -p tsconfig.json",
+    "typecheck:ui": "npm --prefix source run typecheck",
+    "test": "node scripts/build-source.mjs && node --test scripts/test-host.mjs && python scripts/test-release-package.py && python scripts/release-tags.py --self-test && npm --prefix source test",
     "test:host": "node --test scripts/test-host.mjs",
     "test:frontend": "npm --prefix source test",
     "test:package": "python scripts/test-release-package.py",
@@ -28,5 +30,10 @@
     "mindmap",
     "knowledge",
     "research"
-  ]
+  ],
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
 }

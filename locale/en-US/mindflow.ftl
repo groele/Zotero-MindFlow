@@ -191,7 +191,7 @@ mindflow-pref-webdav-autoSyncOnSave-desc = Silently upload workspace incremental
 
 mindflow-pref-version = v{ $version }
 mindflow-pref-release-notes-text = 13.2.1: Fix relationship-map saves, drain closing writes, and harden outline export and sidebar navigation
-mindflow-pref-release-date = 2026-11-04
+mindflow-pref-release-date = 2026-11-05
 mindflow-pref-release-xpi = zotero-mindflow-13.2.1.xpi
 mindflow-pref-release-repo = github.com/groele/Zotero-MindFlow
 mindflow-pref-release-aria = Version Information
