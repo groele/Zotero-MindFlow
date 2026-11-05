@@ -98,4 +98,20 @@ for (const file of runtimeFiles) {
   }
 }
 
-console.log('[Success] Unified TypeScript typechecks, production bundles, and syntax verifications passed.');
+// 6. Persistence domain line constraints and version consistency
+for (const domainFile of ['storage.js', 'workspace-lifecycle.js', 'note-sync.js', 'item-pane-visibility.js']) {
+  const content = await readFile(path.join(root, 'chrome/content/scripts/modules', domainFile), 'utf8');
+  const lineCount = content.trimEnd().split(/\r?\n/).length;
+  if (lineCount > 360) {
+    console.error(`[Error] Persistence domain module ${domainFile} exceeded 360 lines limit (${lineCount} lines).`);
+    process.exit(1);
+  }
+}
+
+const manifest = JSON.parse(await readFile(path.join(root, 'manifest.json'), 'utf8'));
+if (manifest.version !== version) {
+  console.error(`[Error] manifest.json version (${manifest.version}) does not match package.json (${version}).`);
+  process.exit(1);
+}
+
+console.log('[Success] Unified TypeScript typechecks, production bundles, domain constraints, and syntax verifications passed.');

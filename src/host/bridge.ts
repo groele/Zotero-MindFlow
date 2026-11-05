@@ -100,13 +100,43 @@ export function createBridgeModule(deps: any = {}) {
     }
   }
 
+  function openTargetIdentity(options: any, items: any[] = []) {
+    if (options.forceNew) return `new:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+    if (options.mode === 'open_document') {
+      const metadata = options.doc?.metadata || {};
+      const key = options.openedAttachmentKey || metadata.zoteroAttachmentKey;
+      const library = options.openedAttachmentLibraryID || metadata.zoteroAttachmentLibraryID;
+      if (key && library) return `attachment:${library}:${key}`;
+      return `document:${metadata.zoteroUri || metadata.zoteroItemKey || 'unlinked'}:${options.doc?.id}`;
+    }
+    if (options.mode === 'create_from_collection') {
+      return `collection:${options.collectionLibraryID}:${options.collectionKey}`;
+    }
+    if (options.mode === 'create_blank') return `blank:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+    if (items.length) {
+      return `${options.mode === 'ai_analyze' ? 'ai' : 'items'}:${items.map(i => `${i.libraryID}:${i.key}`).sort().join('|')}`;
+    }
+    return 'workspace';
+  }
+
+  function openActionMessage(options: any, items: any[] = []) {
+    return {
+      type: 'MINDFLOW_OPEN_ACTION',
+      action: { ...options, items },
+      requestId: `open-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    };
+  }
+
   return {
+    sameWindow,
     tabContainer,
     workspaceOwner,
     ownsWorkspaceWindow,
     connectWorkspace,
     updateWorkspaceContext,
     updateStandaloneContext,
+    openTargetIdentity,
+    openActionMessage,
   };
 }
 

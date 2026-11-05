@@ -194,7 +194,7 @@
 
     function scheduleItemPaneRefresh(host, state, delay = 120) {
       if (!state || typeof state.refresh !== 'function' || state.refreshTimer) return;
-      const win = state.window || getZotero()?.getMainWindow?.();
+      const win = state.window || (typeof window !== 'undefined' ? window : null) || getZotero()?.getActiveZoteroPane?.()?.window || getZotero()?.getMainWindow?.();
       const setTimer = typeof win?.setTimeout === 'function' ? win.setTimeout.bind(win) : setTimeout;
       state.refreshTimer = setTimer(() => {
         state.refreshTimer = null;
@@ -205,9 +205,27 @@
 
     function cancelItemPaneRefresh(state) {
       if (!state?.refreshTimer) return;
-      const win = state.window || getZotero()?.getMainWindow?.();
+      const win = state.window || (typeof window !== 'undefined' ? window : null) || getZotero()?.getActiveZoteroPane?.()?.window || getZotero()?.getMainWindow?.();
       try { (typeof win?.clearTimeout === 'function' ? win.clearTimeout.bind(win) : clearTimeout)(state.refreshTimer); } catch (_) {}
       state.refreshTimer = null;
+    }
+
+    function resolveContextSelection(win, doc) {
+      const currentWin = win || doc?.defaultView;
+      if (currentWin?.ZoteroPane?.getSelectedItems) {
+        const sel = currentWin.ZoteroPane.getSelectedItems();
+        if (sel?.[0]) return sel[0];
+      }
+      if (currentWin?.ZoteroReader?.itemID) {
+        const item = getZotero()?.Items?.get?.(currentWin.ZoteroReader.itemID);
+        if (item) return item;
+      }
+      const activePane = getZotero()?.getActiveZoteroPane?.();
+      if (activePane?.getSelectedItems) {
+        const sel = activePane.getSelectedItems();
+        if (sel?.[0]) return sel[0];
+      }
+      return null;
     }
 
     function resolveLiteratureTarget(item) {
@@ -315,9 +333,9 @@
           },
           onItemChange: ({ doc, body, item, setEnabled }) => {
             const document = doc || body?.ownerDocument;
-            const win = doc?.defaultView || document?.defaultView || Zotero.getMainWindow?.();
+            const win = doc?.defaultView || document?.defaultView || null;
             const target = resolveLiteratureTarget(item) || resolveLiteratureTarget(
-              win?.ZoteroPane?.getSelectedItems?.()?.[0]
+              resolveContextSelection(win, document)
             );
             const state = sectionStates.get(body);
             if (state) {
@@ -339,12 +357,12 @@
           onRender: ({ doc, body, item, setSectionSummary }) => {
             if (!body) return;
             const document = doc || body.ownerDocument;
-            const win = doc?.defaultView || document?.defaultView || Zotero.getMainWindow?.();
+            const win = doc?.defaultView || document?.defaultView || null;
             if (document) {
               ensureItemPaneStyles(document);
             }
             const target = resolveLiteratureTarget(item) || resolveLiteratureTarget(
-              win?.ZoteroPane?.getSelectedItems?.()?.[0]
+              resolveContextSelection(win, document)
             );
             lastPaneBody = body;
             lastPaneTarget = target;
@@ -405,12 +423,12 @@
           onAsyncRender: renderItemPaneAsync = async ({ doc, body, item, setSectionSummary }) => {
             if (!body) return;
             const document = doc || body.ownerDocument;
-            const win = doc?.defaultView || document?.defaultView || Zotero.getMainWindow?.();
+            const win = doc?.defaultView || document?.defaultView || null;
             if (document) {
               ensureItemPaneStyles(document);
             }
             const target = resolveLiteratureTarget(item) || resolveLiteratureTarget(
-              win?.ZoteroPane?.getSelectedItems?.()?.[0]
+              resolveContextSelection(win, document)
             );
             lastPaneBody = body;
             lastPaneTarget = target;

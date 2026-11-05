@@ -199,9 +199,9 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
       }
     }
 
-    function scheduleItemPaneRefresh(host, state, delay = 120) {
+    function scheduleItemPaneRefresh(host: any, state: any, delay = 120) {
       if (!state || typeof state.refresh !== 'function' || state.refreshTimer) return;
-      const win = state.window || getZotero()?.getMainWindow?.();
+      const win = state.window || (typeof window !== 'undefined' ? window : null) || getZotero()?.getActiveZoteroPane?.()?.window || getZotero()?.getMainWindow?.();
       const setTimer = typeof win?.setTimeout === 'function' ? win.setTimeout.bind(win) : setTimeout;
       state.refreshTimer = setTimer(() => {
         state.refreshTimer = null;
@@ -210,14 +210,32 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
       }, delay);
     }
 
-    function cancelItemPaneRefresh(state) {
+    function cancelItemPaneRefresh(state: any) {
       if (!state?.refreshTimer) return;
-      const win = state.window || getZotero()?.getMainWindow?.();
+      const win = state.window || (typeof window !== 'undefined' ? window : null) || getZotero()?.getActiveZoteroPane?.()?.window || getZotero()?.getMainWindow?.();
       try { (typeof win?.clearTimeout === 'function' ? win.clearTimeout.bind(win) : clearTimeout)(state.refreshTimer); } catch (_) {}
       state.refreshTimer = null;
     }
 
-    function resolveLiteratureTarget(item) {
+    function resolveContextSelection(win: any, doc: any) {
+      const currentWin = win || doc?.defaultView;
+      if (currentWin?.ZoteroPane?.getSelectedItems) {
+        const sel = currentWin.ZoteroPane.getSelectedItems();
+        if (sel?.[0]) return sel[0];
+      }
+      if (currentWin?.ZoteroReader?.itemID) {
+        const item = getZotero()?.Items?.get?.(currentWin.ZoteroReader.itemID);
+        if (item) return item;
+      }
+      const activePane = getZotero()?.getActiveZoteroPane?.();
+      if (activePane?.getSelectedItems) {
+        const sel = activePane.getSelectedItems();
+        if (sel?.[0]) return sel[0];
+      }
+      return null;
+    }
+
+    function resolveLiteratureTarget(item: any) {
       const Zotero = getZotero();
       if (!item) return null;
       if (typeof item.isRegularItem === 'function' && item.isRegularItem() && !item.deleted) return item;
@@ -320,11 +338,11 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
             }
             sectionStates.delete(body);
           },
-          onItemChange: ({ doc, body, item, setEnabled }) => {
+          onItemChange: ({ doc, body, item, setEnabled }: any) => {
             const document = doc || body?.ownerDocument;
-            const win = doc?.defaultView || document?.defaultView || Zotero.getMainWindow?.();
+            const win = doc?.defaultView || document?.defaultView || null;
             const target = resolveLiteratureTarget(item) || resolveLiteratureTarget(
-              win?.ZoteroPane?.getSelectedItems?.()?.[0]
+              resolveContextSelection(win, document)
             );
             const state = sectionStates.get(body);
             if (state) {
@@ -343,15 +361,15 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
             }
             setEnabled(true);
           },
-          onRender: ({ doc, body, item, setSectionSummary }) => {
+          onRender: ({ doc, body, item, setSectionSummary }: any) => {
             if (!body) return;
             const document = doc || body.ownerDocument;
-            const win = doc?.defaultView || document?.defaultView || Zotero.getMainWindow?.();
+            const win = doc?.defaultView || document?.defaultView || null;
             if (document) {
               ensureItemPaneStyles(document);
             }
             const target = resolveLiteratureTarget(item) || resolveLiteratureTarget(
-              win?.ZoteroPane?.getSelectedItems?.()?.[0]
+              resolveContextSelection(win, document)
             );
             lastPaneBody = body;
             lastPaneTarget = target;
@@ -409,15 +427,15 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
             fallback.appendChild(primaryBtn);
             body.appendChild(fallback);
           },
-          onAsyncRender: renderItemPaneAsync = async ({ doc, body, item, setSectionSummary }) => {
+          onAsyncRender: renderItemPaneAsync = async ({ doc, body, item, setSectionSummary }: any) => {
             if (!body) return;
             const document = doc || body.ownerDocument;
-            const win = doc?.defaultView || document?.defaultView || Zotero.getMainWindow?.();
+            const win = doc?.defaultView || document?.defaultView || null;
             if (document) {
               ensureItemPaneStyles(document);
             }
             const target = resolveLiteratureTarget(item) || resolveLiteratureTarget(
-              win?.ZoteroPane?.getSelectedItems?.()?.[0]
+              resolveContextSelection(win, document)
             );
             lastPaneBody = body;
             lastPaneTarget = target;
