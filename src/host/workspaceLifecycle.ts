@@ -1,8 +1,8 @@
 /** Workspace close snapshots and stable draining of every persistence queue. */
-(function (global) {
-  function createWorkspaceLifecycle({ Zotero, storage, injectedElements }) {
+(function (global: any) {
+  function createWorkspaceLifecycle({ Zotero, storage, injectedElements }: { Zotero: any; storage: any; injectedElements: Map<any, any> }): any {
     return {
-    captureWorkspaceOnClose(source) {
+    captureWorkspaceOnClose(source: any) {
       // Capture synchronously while the editor still exists. The Promise and
       // disk I/O then belong to Zotero, so destroying the iframe cannot cancel it.
       const editor = source?.wrappedJSObject || source;
@@ -21,12 +21,12 @@
         } catch (error) {
           if (!String(error).includes('MINDFLOW_REVISION_CONFLICT:')) throw error;
           const raw = await this.workspaceStorage('get', { key: `mindflow_doc_${snapshot.doc.id}` });
-          const comparable = doc => JSON.stringify({ ...doc, revision: 0, updatedAt: 0 });
+          const comparable = (doc: any) => JSON.stringify({ ...doc, revision: 0, updatedAt: 0 });
           if (raw && comparable(JSON.parse(raw)) === comparable(snapshot.doc)) return;
           const metadata = { ...snapshot.doc.metadata, autoSyncToZotero: false };
           for (const key of ['zoteroItemKey','zoteroUri','zoteroLibraryID','zoteroItemTitle','zoteroAttachmentKey','zoteroAttachmentLibraryID','mindflowUnlinkedContainer']) delete metadata[key];
           const copyId = `doc_close_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-          const retarget = node => ({ ...node,
+          const retarget = (node: any) => ({ ...node,
             internalLink: node.internalLink?.documentId === snapshot.doc.id
               ? { ...node.internalLink, documentId: copyId } : node.internalLink,
             children: node.children.map(retarget) });
@@ -55,12 +55,12 @@
     },
 
     async drainPendingWrites() {
-      let previous, current;
+      let previous: any[] = [], current: any[] = [];
       do {
         previous = [storage.pendingWrites, this._closeSaveQueue, this._archiveWriteQueue];
         await Promise.all(previous);
         current = [storage.pendingWrites, this._closeSaveQueue, this._archiveWriteQueue];
-      } while (previous.some((queue, index) => queue !== current[index]));
+      } while (previous.some((queue: any, index: number) => queue !== current[index]));
     },
     };
   }

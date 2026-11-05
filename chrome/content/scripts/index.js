@@ -1834,26 +1834,42 @@
       // 2. Add to Collection Context Menu (分类列表右键菜单)
       const collectionMenu = doc.getElementById('zotero-collectionmenu');
       if (collectionMenu) {
+        // §5.3: Zotero 11 removed the singular collection-selection compat
+        // shim. Resolve through the plural API only, and never probe for the
+        // deprecated method: its presence does not imply that it is callable.
+        const getActiveCollection = () => {
+          const pane = window.ZoteroPane || Zotero?.getActiveZoteroPane?.();
+          const selected = pane?.getSelectedCollections?.();
+          return Array.isArray(selected) && selected.length ? selected[0] || null : null;
+        };
+
         const colItem = doc.createXULElement
           ? doc.createXULElement('menuitem')
           : doc.createElement('menuitem');
         colItem.id = 'mindflow-collectionmenu-create';
-        colItem.setAttribute('label', '生成分类思维导图');
+        colItem.setAttribute('data-l10n-id', 'mindflow-collection-menu-create');
         colItem.setAttribute('image', `${CHROME_ROOT}icons/mindflow.svg`);
         colItem.setAttribute('class', 'menuitem-iconic');
 
+        const setCollectionLabel = (collection) => {
+          if (collection) {
+            colItem.setAttribute('data-l10n-id', 'mindflow-collection-menu-create-with-name');
+            colItem.setAttribute('data-l10n-args', JSON.stringify({ name: collection.name }));
+          } else {
+            colItem.removeAttribute('data-l10n-args');
+            colItem.setAttribute('data-l10n-id', 'mindflow-collection-menu-create');
+          }
+        };
+
         const updateCollectionMenuState = () => {
           try {
-            const collection = window.ZoteroPane ? window.ZoteroPane.getSelectedCollection() : null;
-            if (!collection) {
-              colItem.setAttribute('disabled', 'true');
-              colItem.setAttribute('label', '生成分类思维导图');
-            } else {
-              colItem.removeAttribute('disabled');
-              colItem.setAttribute('label', `生成【${collection.name}】思维导图`);
-            }
-          } catch (e) {
-            // fallback
+            const collection = getActiveCollection();
+            colItem.disabled = !collection;
+            setCollectionLabel(collection);
+          } catch (error) {
+            colItem.disabled = true;
+            setCollectionLabel(null);
+            Zotero?.logError?.('[MindFlow] Failed to resolve the selected collection: ' + error);
           }
         };
 
@@ -1863,7 +1879,7 @@
         });
 
         colItem.addEventListener('command', () => {
-          const collection = window.ZoteroPane ? window.ZoteroPane.getSelectedCollection() : null;
+          const collection = getActiveCollection();
           if (collection) {
             const items = typeof collection.getChildItems === 'function' ? collection.getChildItems() : [];
             this.openMindFlow(

@@ -1,4 +1,8 @@
 import { requestWebDAV } from './webdavRequest';
+import {
+  LATEST_BACKUP, VERSIONED_BACKUP, backupPath, buildUrl, getAuthHeader,
+  parseBackupTimestamp, parseSecureServerUrl,
+} from './webdavPaths';
 import { WebDAVConfig } from '../../core/model/settingsTypes';
 import { MAX_BACKUP_BYTES, WorkspaceBackupData } from '../storage/backupService';
 
@@ -13,8 +17,6 @@ export interface RemoteBackupVersion {
   createdAt: number;
 }
 
-const LATEST_BACKUP = 'mindflow-workspace-backup.json';
-const VERSIONED_BACKUP = /^mindflow-workspace-\d{8}T\d{6}Z-[a-f0-9]{8}\.json$/;
 
 export class WebDAVService {
   private static uploadQueue: Promise<unknown> = Promise.resolve();
@@ -24,15 +26,12 @@ export class WebDAVService {
       .every(field => a[field] === b[field]);
   }
 
-  private static backupPath(config: WebDAVConfig, fileName: string): string {
-    return (config.basePath || '/').replace(/\/+$/, '') + '/' + fileName;
-  }
 
   public static async listBackupVersions(config: WebDAVConfig): Promise<RemoteBackupVersion[]> {
-    const folderUrl = this.buildUrl(config.serverUrl, (config.basePath || '/').replace(/\/?$/, '/'));
+    const folderUrl = buildUrl(config.serverUrl, (config.basePath || '/').replace(/\/?$/, '/'));
     const response = await requestWebDAV(folderUrl, {
       method: 'PROPFIND',
-      headers: { Authorization: this.getAuthHeader(config), Depth: '1' },
+      headers: { Authorization: getAuthHeader(config), Depth: '1' },
     });
     if (response.status !== 207 && response.status !== 200) {
       throw new Error(`无法列出云端历史版本 (HTTP ${response.status})`);
@@ -46,71 +45,28 @@ export class WebDAVService {
         const url = new URL(href.textContent || '', folderUrl);
         if (url.origin !== new URL(folderUrl).origin) continue;
         const name = decodeURIComponent(url.pathname.split('/').pop() || '');
-        if (!VERSIONED_BACKUP.test(name) || url.toString() !== this.buildUrl(config.serverUrl, this.backupPath(config, name))) continue;
-        const stamp = name.slice('mindflow-workspace-'.length, 'mindflow-workspace-'.length + 16);
-        const iso = `${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6, 8)}T${stamp.slice(9, 11)}:${stamp.slice(11, 13)}:${stamp.slice(13, 15)}Z`;
-        versions.push({ fileName: name, createdAt: Date.parse(iso) });
+        if (!VERSIONED_BACKUP.test(name) || url.toString() !== buildUrl(config.serverUrl, backupPath(config, name))) continue;
+        versions.push({ fileName: name, createdAt: parseBackupTimestamp(name) });
       } catch { /* Ignore unrelated DAV resources. */ }
     }
     return versions.sort((a, b) => b.createdAt - a.createdAt);
   }
   /** Validate URL and ensure secure origin */
   public static async requestServerPermission(serverUrl: string): Promise<boolean> {
-    this.parseSecureServerUrl(serverUrl);
+    parseSecureServerUrl(serverUrl);
     return true;
   }
 
   public static async hasServerPermission(serverUrl: string): Promise<boolean> {
-    this.parseSecureServerUrl(serverUrl);
+    parseSecureServerUrl(serverUrl);
     return true;
   }
 
-  private static parseSecureServerUrl(serverUrl: string): URL {
-    const input = (serverUrl || '').trim();
-    const normalized = /^https?:\/\//i.test(input) ? input : `https://${input}`;
-    const url = new URL(normalized);
-    if (url.protocol !== 'https:') {
-      throw new Error('WebDAV 仅允许 HTTPS 连接，避免账户密码通过明文 HTTP 传输。');
-    }
-    if (url.username || url.password) {
-      throw new Error('请将 WebDAV 用户名和密码填写在账户字段中，不要放进服务器地址。');
-    }
-    if (url.search || url.hash) throw new Error('服务器地址请填写到路径为止，不要包含查询参数或片段。');
-    return url;
-  }
 
-  /**
-   * Helper to encode Basic Auth credentials safely for UTF-8 characters
-   */
-  public static getAuthHeader(config: WebDAVConfig): string {
-    const raw = `${config.username}:${config.password}`;
-    try {
-      return 'Basic ' + btoa(unescape(encodeURIComponent(raw)));
-    } catch {
-      return 'Basic ' + btoa(raw);
-    }
-  }
 
-  /**
-   * Normalize base server URL and remote relative path into an absolute URI
-   */
+  /** Retained for external callers and tests; delegates to the shared path primitives. */
   public static buildUrl(serverUrl: string, path: string): string {
-    const base = this.parseSecureServerUrl(serverUrl);
-    if (!base.pathname.endsWith('/')) base.pathname += '/';
-    const cleanPath = (path || '').trim().replace(/^\/+/, '');
-    if (cleanPath.includes('\\') || cleanPath.includes('?') || cleanPath.includes('#') ||
-        /^[a-z][a-z0-9+.-]*:/i.test(cleanPath) || cleanPath.split('/').some(segment => {
-          let decoded: string;
-          try { decoded = decodeURIComponent(segment); } catch { return true; }
-          return decoded === '..' || decoded.includes('/') || decoded.includes('\\');
-        })) {
-      throw new Error('WebDAV 目标路径必须位于配置的服务器内。');
-    }
-    const target = new URL(cleanPath, base);
-    if (target.origin !== base.origin || !target.pathname.startsWith(base.pathname)) {
-      throw new Error('WebDAV 目标路径必须位于配置的服务器内。');
-    }
-    return target.toString();
+    return buildUrl(serverUrl, path);
   }
 
   /**
@@ -125,13 +81,13 @@ export class WebDAVService {
     }
 
     try {
-      this.parseSecureServerUrl(config.serverUrl);
+      parseSecureServerUrl(config.serverUrl);
     } catch (err: any) {
       return { success: false, message: err.message || 'WebDAV 地址无效' };
     }
 
-    const testUrl = this.buildUrl(config.serverUrl, config.basePath || '');
-    const auth = this.getAuthHeader(config);
+    const testUrl = buildUrl(config.serverUrl, config.basePath || '');
+    const auth = getAuthHeader(config);
 
     try {
       // 1. First attempt PROPFIND with Depth: 0
@@ -206,13 +162,13 @@ export class WebDAVService {
     }
 
     // Validate the whole path before creating any intermediate directory.
-    this.buildUrl(config.serverUrl, config.basePath);
+    buildUrl(config.serverUrl, config.basePath);
     const segments = config.basePath.split('/').filter(Boolean);
-    const auth = this.getAuthHeader(config);
+    const auth = getAuthHeader(config);
 
     try {
       for (let i = 1; i <= segments.length; i += 1) {
-        const folderUrl = this.buildUrl(config.serverUrl, segments.slice(0, i).join('/') + '/');
+        const folderUrl = buildUrl(config.serverUrl, segments.slice(0, i).join('/') + '/');
         const res = await requestWebDAV(folderUrl, {
           method: 'MKCOL',
           headers: { Authorization: auth },
@@ -245,7 +201,7 @@ export class WebDAVService {
     }
 
     try {
-      this.parseSecureServerUrl(config.serverUrl);
+      parseSecureServerUrl(config.serverUrl);
     } catch (err: any) {
       return { success: false, message: err.message || 'WebDAV 地址无效' };
     }
@@ -261,19 +217,19 @@ export class WebDAVService {
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     const nonce = Array.from(crypto.getRandomValues(new Uint8Array(4)), value => value.toString(16).padStart(2, '0')).join('');
     const fileName = `mindflow-workspace-${stamp}-${nonce}.json`;
-    const remotePath = this.backupPath(config, fileName);
-    const auth = this.getAuthHeader(config);
+    const remotePath = backupPath(config, fileName);
+    const auth = getAuthHeader(config);
 
     try {
       const headers = { Authorization: auth, 'Content-Type': 'application/json; charset=utf-8' };
-      const response = await requestWebDAV(this.buildUrl(config.serverUrl, remotePath), {
+      const response = await requestWebDAV(buildUrl(config.serverUrl, remotePath), {
         method: 'PUT',
         headers,
         body: payload,
       });
 
       if (response.status === 200 || response.status === 201 || response.status === 204) {
-        const latest = await requestWebDAV(this.buildUrl(config.serverUrl, this.backupPath(config, LATEST_BACKUP)), {
+        const latest = await requestWebDAV(buildUrl(config.serverUrl, backupPath(config, LATEST_BACKUP)), {
           method: 'PUT', headers, body: payload,
         });
         if (!latest.ok) {
@@ -315,7 +271,7 @@ export class WebDAVService {
     }
 
     try {
-      this.parseSecureServerUrl(config.serverUrl);
+      parseSecureServerUrl(config.serverUrl);
     } catch (err: any) {
       return { success: false, message: err.message || 'WebDAV 地址无效' };
     }
@@ -323,9 +279,9 @@ export class WebDAVService {
     if (fileName !== LATEST_BACKUP && !VERSIONED_BACKUP.test(fileName)) {
       return { success: false, message: '云端历史版本文件名无效' };
     }
-    const remotePath = this.backupPath(config, fileName);
-    const targetUrl = this.buildUrl(config.serverUrl, remotePath);
-    const auth = this.getAuthHeader(config);
+    const remotePath = backupPath(config, fileName);
+    const targetUrl = buildUrl(config.serverUrl, remotePath);
+    const auth = getAuthHeader(config);
 
     try {
       const response = await requestWebDAV(targetUrl, {

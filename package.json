@@ -1,6 +1,6 @@
 {
   "name": "zotero-mindflow",
-  "version": "14.0.1",
+  "version": "14.0.5",
   "type": "module",
   "description": "Zotero MindFlow - 面向科研文献的可视化知识组织与智能思维导图工具。 From Papers to Ideas, From Ideas to Knowledge.",
   "author": "groele",
@@ -17,7 +17,8 @@
     "typecheck": "npm run typecheck:host && npm --prefix source run typecheck",
     "typecheck:host": "tsc --noEmit -p tsconfig.json",
     "typecheck:ui": "npm --prefix source run typecheck",
-    "test": "node scripts/build-source.mjs && node --test scripts/test-host.mjs && python scripts/test-release-package.py && python scripts/release-tags.py --self-test && npm --prefix source test",
+    "test": "node scripts/build-source.mjs && npm run test:architecture && node --test scripts/test-host.mjs && python scripts/test-release-package.py && python scripts/release-tags.py --self-test && npm --prefix source test",
+    "test:architecture": "node --test scripts/architecture-guard.mjs",
     "test:host": "node --test scripts/test-host.mjs",
     "test:frontend": "npm --prefix source test",
     "test:package": "python scripts/test-release-package.py",

@@ -90,6 +90,21 @@ async function waitForZotero() {
   if (Zotero) await Zotero.initializationPromise;
 }
 
+/**
+ * Release cached localization bundles so a re-enabled add-on cannot keep
+ * serving the previous build's Fluent catalogues. Runtime scripts are loaded
+ * with Services.scriptloader.loadSubScript, not as JSM/ESM modules, so
+ * Cu.unload has nothing to unload here: chrome registration is released via
+ * chromeHandle.destruct() instead.
+ */
+function releaseLocalizationBundles() {
+  try {
+    Services.strings?.flushBundles?.();
+  } catch (error) {
+    Zotero?.logError?.('[MindFlow] Failed to flush localization bundles: ' + error);
+  }
+}
+
 function install(data, reason) {}
 
 async function startup({ id, version, resourceURI, rootURI }, reason) {
@@ -168,6 +183,25 @@ async function shutdown({ id, version, resourceURI, rootURI }, reason) {
       chromeHandle = null;
     }
   }
+  releaseLocalizationBundles();
 }
 
-function uninstall(data, reason) {}
+function uninstall(data, reason) {
+  ++startupGeneration;
+  cancelZoteroWait?.();
+  if (chromeHandle) {
+    try {
+      chromeHandle.destruct();
+    } catch (error) {
+      Zotero?.logError?.('[MindFlow] Failed to release MindFlow chrome during uninstall: ' + error);
+    } finally {
+      chromeHandle = null;
+    }
+  }
+  try {
+    Services.obs.notifyObservers(null, 'startupcache-invalidate', null);
+  } catch (error) {
+    Zotero?.logError?.('[MindFlow] Failed to invalidate the startup cache: ' + error);
+  }
+  releaseLocalizationBundles();
+}

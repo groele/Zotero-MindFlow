@@ -1,0 +1,50 @@
+{
+  "policy": "freeze-and-shrink",
+  "maxSourceLines": 360,
+  "capturedAt": "2026-11-05",
+  "note": "Known §5.9 debt. Listed files may stay at or below the recorded line count, but must never grow; any other source file above 360 lines fails the guard. Remove an entry only after splitting that module below 360 lines. Every entry must still exist and must still exceed the ceiling - stale entries are rejected by the baseline integrity test.",
+  "lastReleasedVersion": "14.0.1",
+  "splitHistory": [
+    {
+      "version": "14.0.5",
+      "date": "2026-11-05",
+      "resolved": [
+        "source/src/services/zotero/researchAnalysis.ts (461 -> 94, split into researchAnalysisTypes 161 + researchDocument 227)",
+        "source/src/services/storage/backupService.ts (434 -> 299, split into backupValidation 157)"
+      ]
+    },
+    {
+      "version": "14.0.4",
+      "date": "2026-11-05",
+      "resolved": [
+        "scripts/test-host.mjs (1992 -> 13-line aggregator + 7 shards + 170-line shared fixture)",
+        "chrome/content/assets/preferences.css (explicit 16/24px grid declarations)"
+      ]
+    },
+    {
+      "version": "14.0.3",
+      "date": "2026-11-05",
+      "resolved": [
+        "source/src/services/zotero/zoteroBridge.ts (1316 -> 16, forwarding barrel)",
+        "source/src/services/io/exporter.ts (1069 -> 22, forwarding barrel)",
+        "src/host/itemPane.ts (882 -> 249, split into itemPaneHelpers/Styles/View)",
+        "source/src/services/sync/webdavService.ts (393 -> 349, webdavPaths extracted)",
+        "src/preferences.ts (843 -> 168, split into preferenceSchema/Fields/Store/Controls)",
+        "source/src/services/zotero/zoteroItemData.ts (448 -> 257, zoteroItemExtractor extracted)",
+        "src/host/itemPaneView.ts (408 -> 358, itemPaneDom/itemPaneFallback extracted)"
+      ]
+    }
+  ],
+  "oversized": {
+    "source/src/pages/app/App.tsx": 2828,
+    "source/src/components/modal/SettingsModal.tsx": 1356,
+    "source/src/components/toolbar/Toolbar.tsx": 901,
+    "source/src/components/sidebar/LeftWorkbench.tsx": 732,
+    "source/src/components/canvas/Canvas.tsx": 726,
+    "source/src/components/sidebar/PropertySidebar.tsx": 608,
+    "source/src/core/layout/layoutEngine.ts": 568,
+    "source/src/components/modal/AIResearchModal.tsx": 499,
+    "source/src/components/node/NodeCard.tsx": 464,
+    "source/src/core/model/treeOps.ts": 429
+  }
+}

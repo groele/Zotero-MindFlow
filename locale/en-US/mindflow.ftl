@@ -2,6 +2,7 @@ mindflow-menu-open = Zotero MindFlow Mind Map
 mindflow-item-menu-create = Generate Mind Map in MindFlow
 mindflow-item-menu-add = Add to Current MindFlow Map
 mindflow-collection-menu-create = Generate Mind Map for Collection
+mindflow-collection-menu-create-with-name = Generate Mind Map for "{ $name }"
 mindflow-toolbar-tooltip = Open Zotero MindFlow Mind Map Workspace
 mindflow-reader-send = Send Excerpt to MindFlow Map
 # This message targets the native collapsible-section. A value would erase its controls.

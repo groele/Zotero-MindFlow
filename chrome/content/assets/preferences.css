@@ -12,7 +12,10 @@
   max-width: 780px;
   min-width: 0;
   margin-inline: auto;
-  padding: 12px 16px 28px;
+  /* §4.2.1 horizontal baseline: declare the 16px grid explicitly instead of
+     hiding it inside a shorthand, so the alignment contract is auditable. */
+  padding-block: 12px 28px;
+  padding-inline: 16px;
   color: var(--flow-pref-text);
   font-family: system-ui, "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
   font-size: 14px;
@@ -78,7 +81,8 @@
   align-items: center;
   justify-content: space-between;
   min-height: 0;
-  padding: 12px 16px;
+  padding-block: 12px;
+  padding-inline: 16px;
   border-radius: 8px;
   color: var(--flow-pref-text);
   cursor: pointer;
@@ -115,8 +119,16 @@
   font-weight: 600;
   line-height: 1.5;
 }
-.mindflow-card-body { min-width: 0; padding: 8px 16px 16px; border-top: 1px solid var(--flow-pref-divider); }
+.mindflow-card-body { min-width: 0; padding-block: 8px 16px; padding-inline: 16px; border-top: 1px solid var(--flow-pref-divider); }
 .mindflow-pref-content { display: flex; flex-direction: column; min-width: 0; }
+
+/* §4.2.4 A card-level overview is a Level-1 element: it starts on the 16px
+   content baseline and must never inherit the 24px Level-3 indent. */
+.mindflow-card-body > .description:first-child,
+.mindflow-card-body > p:first-child,
+.mindflow-pref-content > .description:first-child {
+  margin-inline-start: 0;
+}
 
 .mindflow-subhead {
   margin: 10px 0 4px;
@@ -155,15 +167,18 @@
   overflow-wrap: anywhere;
 }
 
-.subordinate-row {
+.subordinate-row,
+.indented-pref {
   margin-inline-start: 24px !important;
 }
 .subordinate-row.is-disabled,
+.indented-pref.is-disabled,
 .mindflow-form-row.is-disabled,
 .mindflow-check-option.is-disabled {
   opacity: 0.55;
 }
 .subordinate-row.is-disabled :is(input, select, button),
+.indented-pref.is-disabled :is(input, select, button),
 .mindflow-form-row.is-disabled :is(input, select, button),
 .mindflow-check-option.is-disabled input {
   pointer-events: none;
@@ -284,7 +299,8 @@ select.mindflow-control {
 
 .mindflow-notice {
   margin: 10px 0 4px;
-  padding: 10px 16px;
+  padding-block: 10px;
+  padding-inline: 16px;
   border: 1px solid var(--flow-pref-border);
   border-radius: 6px;
   background: var(--flow-pref-surface);
@@ -319,7 +335,8 @@ select.mindflow-control {
 
 .mindflow-pref-release {
   margin-top: 14px;
-  padding: 12px 16px;
+  padding-block: 12px;
+  padding-inline: 16px;
   border: 1px solid var(--flow-pref-border);
   border-radius: 9px;
   background: var(--flow-pref-surface);

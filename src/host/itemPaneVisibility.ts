@@ -1,11 +1,11 @@
 /** Keep native collapse preferences; open this section on explicit navigation. */
-(function (global) {
-  function connect(document, body, isAlive) {
+(function (global: any) {
+  function connect(document: any, body: any, isAlive: () => boolean) {
     const section = body?.closest?.('collapsible-section') || body?.parentElement;
     if (!section?.removeAttribute) return () => {};
     const pane = section.getAttribute?.('data-pane');
     section.removeAttribute('empty');
-    const onNavigate = event => {
+    const onNavigate = (event: any) => {
       if (!isAlive() || event.button !== 0 || !pane) return;
       const button = event.target?.closest?.('item-pane-sidenav .btn[data-pane]');
       if (button?.getAttribute('data-pane') !== pane) return;
