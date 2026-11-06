@@ -8,12 +8,12 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Version](https://img.shields.io/badge/version-14.0.1-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v14.0.1)
+[![Version](https://img.shields.io/badge/version-14.0.6-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v14.0.6)
 [![Zotero Compatibility](https://img.shields.io/badge/Zotero-10.0--12.*-brightgreen?style=flat-square)](https://www.zotero.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
 [![Tests Passing](https://img.shields.io/badge/host_tests-116%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
 
-[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v14.0.1/zotero-mindflow-14.0.1.xpi) · [📝 Release Notes](docs/releases/v14.0.1.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
+[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v14.0.6/zotero-mindflow-14.0.6.xpi) · [📝 Release Notes](docs/releases/v14.0.6.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
 
 [📖 Overview](#overview) · [📦 Installation and updates](#installation) · [🚀 Quick start](#quick-start) · [🛠️ Key features](#features) · [✨ In-depth highlights](#highlights) · [⚙️ Settings](#settings) · [🔒 Data, sync, and services](#data) · [🧪 Compatibility and validation](#compatibility) · [❓ Troubleshooting](#troubleshooting) · [💻 Development and documentation](#development) · [🔗 The Flow series](#series) · [📄 Origin and license](#license)
 
@@ -38,24 +38,24 @@ As an integral pillar of the **Zotero Flow** series, MindFlow operates completel
 | Specification | Official Parameter & Requirement |
 |---|---|
 | **Add-on ID** | `mindflow@groele.org` |
-| **Current Stable Release** | `v14.0.1` (Patch Release) |
+| **Current Stable Release** | `v14.0.6` (Patch Release) |
 | **Host Compatibility** | Zotero `10.0` through `12.*` (declared range; tested on Zotero 10.0.7, with 11/12 validation pending) |
-| **Package File** | `zotero-mindflow-14.0.1.xpi` |
-| **File Size** | `566,937 bytes` |
-| **SHA-256 Checksum** | `86e8f51a10a7c85b47a4eb1cb793905aa9aad22f2205da41767de829a76024b5` |
+| **Package File** | `zotero-mindflow-14.0.6.xpi` |
+| **File Size** | `566,990 bytes` |
+| **SHA-256 Checksum** | `2a8c493a2052942f3688798691531141635bbc3912e6020b7da48921711a5443` |
 | **Online Update Feed** | [zotero/update.json](zotero/update.json) |
 
 ### Installation Steps
 
-1. Download the official release package [zotero-mindflow-14.0.1.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v14.0.1/zotero-mindflow-14.0.1.xpi) (**current stable release v14.0.1**; download the XPI directly, do not install the Source code ZIP).
+1. Download the official release package [zotero-mindflow-14.0.6.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v14.0.6/zotero-mindflow-14.0.6.xpi) (**current stable release v14.0.6**; download the XPI directly, do not install the Source code ZIP).
 2. In Zotero, navigate to **Tools → Plugins / Add-ons** from the top menu.
-3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**, or drag and drop `zotero-mindflow-14.0.1.xpi` directly into the window.
-4. Choose the downloaded `zotero-mindflow-14.0.1.xpi` file and restart Zotero when prompted.
+3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**, or drag and drop `zotero-mindflow-14.0.6.xpi` directly into the window.
+4. Choose the downloaded `zotero-mindflow-14.0.6.xpi` file and restart Zotero when prompted.
 
 > [!TIP]
 > **Update Feeds and Verification**  
 > - **Online Update Manifest**: Hosted as an immutable asset feed at [zotero/update.json](zotero/update.json) with Add-on ID `mindflow@groele.org`.  
-> - **SHA-256 Checksum**: `86e8f51a10a7c85b47a4eb1cb793905aa9aad22f2205da41767de829a76024b5`.
+> - **SHA-256 Checksum**: `2a8c493a2052942f3688798691531141635bbc3912e6020b7da48921711a5443`.
 > - **Browser Renaming Note**: Certain browsers (such as Safari or Edge) may occasionally rename downloaded files to `.zip`. If this occurs, simply rename the file back to `.xpi` before loading into Zotero.  
 > - Subsequent updates can be detected and applied directly through the Zotero Add-on Manager. Backing up the workspace before major version upgrades is always recommended.
 
@@ -182,7 +182,7 @@ Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**, neatly ar
 
 | Dimension | Specification & Verification Status |
 |---|---|
-| **Current Published Release** | **v14.0.0** (Major Release) |
+| **Current Published Release** | **v14.0.6** (Patch Release) |
 | **Declared Manifest Range** | Zotero `10.0` through `12.*` (`strict_min_version: 10.0`, `strict_max_version: 12.*`) |
 | **TypeScript Static Check** | `npm run typecheck` (PASS, **0** errors) |
 | **Frontend Unit Suite** | Five programs passed: 54 data-chain checks, 40 logic checks, 7 presets, 1 full recovery scenario and 23 integrity checks |
@@ -248,7 +248,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [Audit Documentation Index](docs/README.md)
-- [Release Notes v14.0.1](docs/releases/v14.0.1.md)
+- [Release Notes v14.0.6](docs/releases/v14.0.6.md)
 - [Brand & Product Specifications](docs/brand/PRODUCT.md)
 - [Release Tag Policy](docs/release-tag-policy.md)
 - [Historical Reference Guide & Acknowledgments](docs/reference/README.md)

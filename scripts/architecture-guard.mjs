@@ -4,7 +4,9 @@
  * Enforces the workspace AGENTS.md clauses that can be decided statically:
  *   §3   Fluent symmetry / naming governance
  *   §4.1 every native preference has a settings-pane implementation
- *   §5.2 the TS contract layer and the runtime JS modules stay in parity
+ *   §5.2 src/ is the single source of truth: every runtime JS is rendered
+ *        from TypeScript, carries a provenance banner, and is byte-identical
+ *        to a fresh render; TS/JS exported globals stay in parity too
  *   §5.3 deprecated Zotero/Gecko APIs must not return
  *   §5.9 360-line ceiling with a freeze-and-shrink baseline
  *   §6   version fields stay aligned
@@ -20,6 +22,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  GENERATED_FILES,
+  ENTRY_TARGET,
+  ESBUILD_TARGETS,
+  renderAllGenerated,
+  bannerForEsbuild,
+  bannerForEntry,
+} from './host-build-targets.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => fs.readFileSync(path.join(root, rel), 'utf8');
@@ -238,12 +248,23 @@ test('§5.2 host constants do not drift between the TS contract layer and runtim
   const ts = read('src/host/constants.ts');
   const js = read('chrome/content/scripts/modules/constants.js');
 
+  const parseVal = (str) => {
+    if (!str) return null;
+    const s = str.trim();
+    if (s.startsWith('[') && s.endsWith(']')) {
+      return [...s.slice(1, -1).matchAll(/['"]([^'"]+)['"]/g)].map((m) => m[1]).join(',');
+    }
+    if (/^[\d*+\-/()e.\s]+$/.test(s)) {
+      try { return String(Function('return (' + s + ')')()); } catch (_) {}
+    }
+    return s.replace(/['"]/g, '').replace(/\s+/g, '');
+  };
   const scalar = (text, name) => {
-    const found = text.match(new RegExp(`(?:export\\s+)?const\\s+${name}\\s*(?::[^{;]*?)?=\\s*([^;]+);`));
-    return found ? found[1].replace(/\s+/g, '') : null;
+    const found = text.match(new RegExp(`(?:export\\s+)?(?:const|var|let)\\s+${name}\\s*(?::[^{;]*?)?=\\s*([^;]+);`));
+    return found ? parseVal(found[1]) : null;
   };
   const objectKeys = (text, name) => {
-    const found = text.match(new RegExp(`(?:export\\s+)?const\\s+${name}\\s*(?::[^{;]*?)?=\\s*\\{`));
+    const found = text.match(new RegExp(`(?:export\\s+)?(?:const|var|let)\\s+${name}\\s*(?::[^{;]*?)?=\\s*\\{`));
     if (!found) return null;
     let index = found.index + found[0].length;
     let depth = 1;
@@ -279,6 +300,80 @@ test('§5.2 host constants do not drift between the TS contract layer and runtim
 
   t.diagnostic(`compared ${scalars.length} scalars and ${keyMaps.length} key maps between TS and runtime constants`);
   assert.deepEqual(failures, [], `§5.2 constant drift:\n${failures.join('\n')}`);
+});
+
+test('§5.2 every runtime script is generated from src/ and carries its provenance banner', (t) => {
+  const actual = walk('chrome/content/scripts', ['.js']).sort();
+  const expected = [...GENERATED_FILES].sort();
+  assert.deepEqual(
+    actual,
+    expected,
+    'a hand-written runtime script appeared outside the generated manifest',
+  );
+
+  const banners = new Map([
+    ...ESBUILD_TARGETS.map(({ source, output }) => [output, bannerForEsbuild(source)]),
+    [ENTRY_TARGET.output, bannerForEntry(ENTRY_TARGET.source)],
+  ]);
+  const wrong = actual.filter((file) => !read(file).startsWith(banners.get(file)));
+  assert.deepEqual(wrong, [], `missing or stale generation banner: ${wrong.join(', ')}`);
+
+  assert.ok(
+    fs.existsSync(path.join(root, ENTRY_TARGET.source)),
+    `host entry TypeScript source ${ENTRY_TARGET.source} is missing`,
+  );
+  t.diagnostic(`${actual.length} runtime scripts, all declared generated and correctly bannered`);
+});
+
+test('§5.2 generated runtime scripts are byte-identical to a fresh render of their TypeScript sources', async (t) => {
+  const rendered = await renderAllGenerated(root);
+  const drift = [];
+  for (const [relative, expected] of rendered) {
+    const absolute = path.join(root, relative);
+    if (!fs.existsSync(absolute) || read(relative) !== expected) {
+      drift.push(relative);
+    }
+  }
+  assert.deepEqual(
+    drift,
+    [],
+    `runtime artefacts were hand-edited or their TS source changed without a rebuild:\n${drift.join('\n')}`,
+  );
+  t.diagnostic(`${rendered.size} runtime scripts re-rendered from TypeScript with zero byte drift`);
+});
+
+test('§5.2 host entry consumes exactly the globals published by generated modules', (t) => {
+  const entry = read(ENTRY_TARGET.output);
+  const consumed = new Set([...entry.matchAll(/_globalScope\.(MindFlow\w+)/g)].map((m) => m[1]));
+  const published = new Set();
+  for (const file of walk('chrome/content/scripts/modules', ['.js'])) {
+    for (const m of read(file).matchAll(/\bglobal\.(MindFlow\w+)\s*=/g)) published.add(m[1]);
+  }
+  assert.ok(consumed.size > 0, 'host entry no longer loads its domain modules via _globalScope');
+  assert.deepEqual([...consumed].filter((name) => !published.has(name)), [], 'host entry reads a global that no generated module publishes');
+  assert.deepEqual([...published].filter((name) => !consumed.has(name)), [], 'a generated module publishes an unused global');
+
+  // Zotero 10 loads preference scripts in a pane sandbox: onload handlers
+  // resolve names on the preferences window, never on sandbox globals.
+  const pane = read('chrome/content/scripts/preferences.js');
+  assert.match(pane, /window\.MindFlow_Preferences\s*=\s*\{\s*init\s*\}/, 'pane init must be published on window');
+  assert.ok(!/global\.MindFlow_Preferences\s*=/.test(pane), 'pane init must not fall back to a sandbox global');
+
+  // scripts/start-native-test.ps1 injects its FilePicker stub by replacing
+  // this exact literal in the packaged entry; losing it silently disables
+  // native regression instrumentation.
+  assert.ok(
+    entry.includes('const picker = new FilePicker(); // mindflow-export-picker'),
+    'native-test injection anchor was lost from the host entry',
+  );
+  t.diagnostic(`${consumed.size} host globals matched; pane hook and native-test anchor intact`);
+});
+
+test('§5.2 the legacy host entry is the only file allowed a type-check exemption', () => {
+  const offenders = [...walk('src'), ...walk('source/src', ['.ts', '.tsx'])]
+    .filter((file) => read(file).includes('@ts-nocheck'))
+    .filter((file) => file !== ENTRY_TARGET.source);
+  assert.deepEqual(offenders, [], `@ts-nocheck escaped the legacy host entry: ${offenders.join(', ')}`);
 });
 
 test('§4.2 the settings pane declares the 16/24px alignment grid explicitly', (t) => {

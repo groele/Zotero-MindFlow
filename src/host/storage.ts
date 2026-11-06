@@ -329,3 +329,7 @@ export function createStorageModule(deps: any = {}) {
 export const MindFlowStorage = {
   createStorageModule,
 };
+
+(function (global: any) {
+  global.MindFlowStorage = MindFlowStorage;
+})(typeof globalThis !== 'undefined' ? globalThis : this);

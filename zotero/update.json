@@ -3,15 +3,15 @@
     "mindflow@groele.org": {
       "updates": [
         {
-          "version": "14.0.5",
-          "update_link": "https://github.com/groele/Zotero-MindFlow/releases/download/v14.0.5/zotero-mindflow-14.0.5.xpi",
+          "version": "14.0.6",
+          "update_link": "https://github.com/groele/Zotero-MindFlow/releases/download/v14.0.6/zotero-mindflow-14.0.6.xpi",
           "applications": {
             "zotero": {
               "strict_min_version": "10.0",
               "strict_max_version": "12.*"
             }
           },
-          "update_hash": "sha512:fc14e3a2b9126cd52ec309697e544df6b18455f6efa092b059e777445331d66d8c209dd043a46213990aca70a1273cdcfb24846f17bb17fbcc316adb0dbcd658"
+          "update_hash": "sha512:a6a19c72d5e5a27ea2e99edf953cd860269bbc6c0fde9ce0e099d668af93017085ff13c1973cc8bd19ccd4dc551a0a7d68f2c03a339bc8a9acc671861fd54f33"
         }
       ]
     }

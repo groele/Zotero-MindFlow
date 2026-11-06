@@ -18,6 +18,27 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            source/package-lock.json
+      # esbuild is pinned by package-lock.json: the guard re-renders every
+      # runtime script and compares byte-for-byte, so CI must resolve the exact
+      # same compiler version as the committed artefacts.
+      - name: Install pinned dependencies (root and frontend)
+        run: npm ci && npm --prefix source ci
+      - name: Host and frontend type checks
+        run: npm run typecheck
+      - name: Architecture guard (generated-runtime parity, 15 checks)
+        run: npm run test:architecture
+      - name: Frontend unit tests
+        run: npm --prefix source test
       - run: python scripts/test-release-package.py
       - run: node --test scripts/test-host.mjs
-      - run: python scripts/package-xpi.py --output /tmp/candidate.xpi --report /tmp/package-verification.json
+      # During an unreleased development round the feeds keep serving the last
+      # published version, so a normal (non-candidate) payload check would
+      # fail on a version mismatch. Pick the matching mode from product.json.
+      - name: Verify release package payload
+        run: |
+          FLAG=$(python3 -c "import json; print('' if json.load(open('docs/brand/product.json'))['releaseStatus'] == 'released' else '--candidate')")
+          python scripts/package-xpi.py $FLAG --output /tmp/candidate.xpi --report /tmp/package-verification.json

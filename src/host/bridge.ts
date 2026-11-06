@@ -143,3 +143,7 @@ export function createBridgeModule(deps: any = {}) {
 export const MindFlowBridge = {
   createBridgeModule,
 };
+
+(function (global: any) {
+  global.MindFlowBridge = MindFlowBridge;
+})(typeof globalThis !== 'undefined' ? globalThis : this);

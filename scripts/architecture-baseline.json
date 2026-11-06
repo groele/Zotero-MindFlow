@@ -3,8 +3,16 @@
   "maxSourceLines": 360,
   "capturedAt": "2026-11-05",
   "note": "Known §5.9 debt. Listed files may stay at or below the recorded line count, but must never grow; any other source file above 360 lines fails the guard. Remove an entry only after splitting that module below 360 lines. Every entry must still exist and must still exceed the ceiling - stale entries are rejected by the baseline integrity test.",
-  "lastReleasedVersion": "14.0.1",
+  "lastReleasedVersion": "14.0.6",
   "splitHistory": [
+    {
+      "version": "14.0.6",
+      "date": "2026-11-06",
+      "resolved": [
+        "source/src/core/layout/layoutEngine.ts (568 -> 95, split into layoutMetrics 73 / layoutHorizontal 156 / layoutMindmap 79 / layoutStructured 181)",
+        "source/src/core/model/treeOps.ts (429 -> 8-line forwarding facade, split into treeCore 47 / treeStructure 316 / treeText 70)"
+      ]
+    },
     {
       "version": "14.0.5",
       "date": "2026-11-05",
@@ -42,9 +50,16 @@
     "source/src/components/sidebar/LeftWorkbench.tsx": 732,
     "source/src/components/canvas/Canvas.tsx": 726,
     "source/src/components/sidebar/PropertySidebar.tsx": 608,
-    "source/src/core/layout/layoutEngine.ts": 568,
     "source/src/components/modal/AIResearchModal.tsx": 499,
     "source/src/components/node/NodeCard.tsx": 464,
-    "source/src/core/model/treeOps.ts": 429
-  }
+    "src/host/index.ts": 4484
+  },
+  "architectureMilestones": [
+    {
+      "version": "14.0.6",
+      "date": "2026-11-06",
+      "change": "Single Source of Truth completed: all 9 runtime scripts under chrome/content/scripts/ are now generated from src/ via scripts/host-build-targets.mjs; architecture-guard re-renders and byte-compares them.",
+      "entryDebt": "src/host/index.ts is the former hand-maintained 4,483-line entry, now an explicit frozen module. Splitting it requires real Zotero host acceptance (§6 layer 6), not available yet."
+    }
+  ]
 }

@@ -5,6 +5,13 @@
  * and preference synchronizations across Zotero 10-12 host runtimes.
  * The schema, field catalogue, store and control builders live in sibling
  * modules; this file owns pane lifecycle and observer wiring only.
+ *
+ * Zotero 10 loads preference scripts in a pane sandbox. The generated
+ * chrome/content/scripts/preferences.js must therefore publish init() on the
+ * preferences window (see the assignment at the end of this file), because
+ * inline fragment handlers resolve names on that window, not on sandbox
+ * globals. The workspace and this pane share one AppSettings JSON preference;
+ * legacy native preferences remain mirrored for host-side actions.
  */
 
 import { ROOT, PREFIX, DEFAULTS, LEGACY, NATIVE_DEFAULTS, T } from './preferenceSchema';
@@ -162,7 +169,8 @@ export function init(win: Window): void {
   }
 }
 
-// Attach to window for XHTML inline event handlers
-if (typeof window !== 'undefined') {
-  (window as any).MindFlow_Preferences = { init };
-}
+// Zotero 10 loads preference scripts in a pane sandbox. Inline fragment
+// handlers (onload="MindFlow_Preferences.init(window)") resolve names on the
+// preferences window, NOT on sandbox globals. Never fall back to globalThis:
+// that would silently leave the pane uninitialised when window is unavailable.
+(window as any).MindFlow_Preferences = { init };

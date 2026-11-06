@@ -189,3 +189,7 @@ export function createNoteSyncModule(deps: any = {}) {
 export const MindFlowNoteSync = {
   createNoteSyncModule,
 };
+
+(function (global: any) {
+  global.MindFlowNoteSync = MindFlowNoteSync;
+})(typeof globalThis !== 'undefined' ? globalThis : this);

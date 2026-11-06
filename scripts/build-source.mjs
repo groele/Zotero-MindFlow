@@ -1,23 +1,22 @@
 /**
  * Zotero MindFlow - Unified build pipeline.
  *
- * Runs host/frontend type checks, bundles the React canvas via Vite, verifies
- * that the TS host contract layer compiles with the standard esbuild target,
- * refreshes asset cache-busting, then enforces syntax, domain-size, version
- * and architecture/compliance guards.
+ * Runs host/frontend type checks, bundles the React canvas via Vite, renders
+ * every runtime script from TypeScript, refreshes asset cache-busting, then
+ * enforces syntax, domain-size, version and architecture/compliance guards.
  *
- * NOTE on §5.2: chrome/content/scripts/**.js are still independently
- * maintained runtime sources, not generated artefacts. The esbuild step below
- * verifies that the TS contract layer is compilable under the standard target;
- * architecture-guard.mjs keeps the exported globals of both sides in parity
- * until the runtime modules are migrated to generated output.
+ * NOTE on §5.2: src/ is the authoritative Single Source of Truth. EVERY .js
+ * under chrome/content/scripts/ - including the host entry index.js - is
+ * generated during step [4/7] from scripts/host-build-targets.mjs; do not edit
+ * them by hand. architecture-guard.mjs re-renders the same targets and fails
+ * on byte-level drift, so a hand-edited artefact cannot survive the build.
  */
 
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { readFile, readdir, writeFile } from 'node:fs/promises';
-import { build as esbuild } from 'esbuild';
+import { readFile, writeFile } from 'node:fs/promises';
+import { renderAllGenerated } from './host-build-targets.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sourceDependencies = path.join(root, 'source/node_modules');
@@ -74,29 +73,13 @@ await viteBuild({
   },
 });
 
-// 4. §5.2 standard esbuild parameters applied to the host contract layer.
-console.log('[4/7] Verifying host contract layer against the standard esbuild target (firefox140)...');
-const hostDir = path.join(root, 'src/host');
-const hostEntries = (await readdir(hostDir))
-  .filter((file) => file.endsWith('.ts'))
-  .map((file) => path.join(hostDir, file));
-const hostCompile = await esbuild({
-  entryPoints: hostEntries,
-  bundle: true,
-  format: 'iife',
-  target: 'firefox140',
-  minify: false,
-  treeShaking: true,
-  write: false,
-  outdir: path.join(root, 'output/host-contract-check'),
-  logLevel: 'silent',
-});
-if (hostCompile.outputFiles.length !== hostEntries.length
-    || hostCompile.outputFiles.some((file) => file.contents.length === 0)) {
-  console.error('[Error] Host contract layer did not produce one non-empty bundle per entry.');
-  process.exit(1);
+// 4. §5.2 Render all runtime scripts from the TypeScript single source of truth.
+console.log('[4/7] Rendering runtime scripts from src/ (single source of truth)...');
+const generated = await renderAllGenerated(root);
+for (const [relative, code] of generated) {
+  await writeFile(path.join(root, relative), code, 'utf8');
 }
-console.log(`[4/7] ${hostEntries.length} host modules compiled, no output written (verification only).`);
+console.log(`[4/7] ${generated.size} runtime scripts rendered (8 esbuild targets + 1 verbatim host entry).`);
 
 // 5. Update index.html version queries for cache invalidation
 console.log('[5/7] Updating HTML asset cache versions...');
@@ -146,7 +129,7 @@ if (manifest.version !== version) {
   process.exit(1);
 }
 
-// 7. Architecture & compliance guard (§3/§4.1/§5.2/§5.3/§5.9/§6/§9.1)
+// 7. Architecture & compliance guard (§3/§4.1/§4.2/§5.2/§5.3/§5.9/§6/§9.1)
 console.log('[7/7] Running architecture and compliance guard...');
 const guard = spawnSync(process.execPath,
   ['--test', path.join(root, 'scripts/architecture-guard.mjs')],
@@ -156,4 +139,4 @@ if (guard.status !== 0) {
   process.exit(guard.status || 1);
 }
 
-console.log('[Success] Type checks, bundles, host contract verification, syntax, version and architecture guards passed.');
+console.log('[Success] Type checks, bundles, generated-runtime parity, syntax, version and architecture guards passed.');

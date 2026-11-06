@@ -14,7 +14,9 @@
 |---|---|
 | `source/` | React + TypeScript 前端源码（Vite），`source/tests/` 为前端单测 |
 | `chrome/content/` | 插件界面；`assets/app.iife.js` 与 `index.html` 为构建产物，勿手改 |
-| `bootstrap.js`、`chrome/content/scripts/` | 宿主侧逻辑（侧栏、菜单、文件读写、PDF 打开） |
+| `bootstrap.js` | 引导脚本：等待 Zotero、注册 chrome、以 `loadSubScript` 载入宿主入口 |
+| `src/host/`、`src/preferences.ts` | 宿主侧 TypeScript **单一权威源**（侧栏、菜单、文件读写、PDF 打开、设置面板） |
+| `chrome/content/scripts/` | **生成产物**，9 个 JS 全部由 `src/` 编译产生，禁止手改 |
 | `locale/en-US`、`locale/zh-CN` | Fluent 本地化，两种语言键必须一一对应 |
 | `scripts/` | 构建、打包、测试、发布校验脚本 |
 | `docs/brand/product.json` | 品牌与版本元数据，`releaseStatus` 为 `released` 或 `unreleased` |
@@ -22,10 +24,18 @@
 | `tests/` | git 忽略的本地测试产物 |
 | `output/` | 候选包和验证证据，不自动视为最新源码 |
 
-宿主持久化的单一实现位于 `chrome/content/scripts/modules/storage.js`；
-`workspace-lifecycle.js` 管理关闭快照与队列稳定等待，`note-sync.js` 管理大纲导出。
+宿主持久化的单一实现位于 `src/host/storage.ts`（产物为 `.../modules/storage.js`）；
+`workspaceLifecycle.ts` 管理关闭快照与队列稳定等待，`noteSync.ts` 管理大纲导出。
 入口只能委托这些领域实现，不保留同一能力的回退副本。关系线持久化契约为
-`fromId` / `toId`，存储与附件写入共用 `constants.js` 中的校验器。
+`fromId` / `toId`，存储与附件写入共用 `constants.ts` 中的校验器。
+
+## 单一权威源与生成产物
+
+- `src/` 是宿主侧唯一权威源。`scripts/host-build-targets.mjs` 定义全部 9 个运行时产物的生成规则；`build-source.mjs` 的 `[4/7]` 负责写入，`architecture-guard.mjs` **用同一份规则重新渲染并逐字节比对**。构建与守卫不得各写一套配方。
+- `chrome/content/scripts/**/*.js`（含 `index.js`、`preferences.js` 与 `modules/*.js`）一律不得手改。改动先落在对应 `.ts`，再跑 `npm run build:bundle`；否则守卫的「溯源横幅」与「逐字节一致」两项会报红。
+- `src/host/index.ts` 是宿主入口的权威源。`bootstrap.js` 以 `Services.scriptloader.loadSubScript()` 把它载入自定义作用域，宿主测试夹具还依赖其中一行字面量注入测试钩子，因此该文件按原文逐字渲染（仅剥离两行编译期标记 `// @ts-nocheck` 与 `export {};`），不经 esbuild 重写，行为与历史入口逐字节一致。它目前是冻结的结构债务（见 `architecture-baseline.json`），拆分需真实 Zotero 宿主验收。
+- 生成产物首行必须带 `// [Generated … DO NOT EDIT DIRECTLY]` 溯源横幅。新增运行时脚本必须同时登记进 `host-build-targets.mjs` 的清单，否则守卫报红。
+- 架构守卫共 **15 项**，其中 §5.2 有五类校验：TS/JS 全局导出名与常量一致、产物清单与横幅齐备、产物与 TS 源重渲染逐字节一致、宿主入口消费的全局名与产物挂载名一一对应（含设置面板必须挂在 `window`、原生测试注入锚点保留）、`@ts-nocheck` 只允许出现在历史宿主入口。
 
 ## 构建与验证
 
@@ -37,13 +47,15 @@
 
 在仓库根目录：
 
+- `npm run build:bundle`（`node scripts/build-source.mjs`）：双端 typecheck → Vite 前端打包 → 从 `src/` 渲染 9 个运行时脚本 → 缓存串与语法/域大小/版本检查 → 13 项架构守卫。
+- `npm run test:architecture`：只跑 15 项架构守卫，不重建产物，用于检查提交里是否混入手改的生成 JS。
 - `node --test scripts/test-host.mjs`：宿主逻辑模拟测试。
 - `python scripts/test-release-package.py`：发布包校验的自检。
 - `python scripts/package-xpi.py --output <路径> --report <报告路径>`：可复现构建 XPI 并校验载荷与更新源。`--verify-only` 只检查已有包；`--update-feeds` 在构建后同步更新源哈希，只在正式发布时使用。
 - 本地未发布版本使用 `python scripts/package-xpi.py --candidate --output <路径> --report <路径>`：要求 `releaseStatus: unreleased`，校验包载荷并生成哈希，不修改线上更新源，也不将其报告为已验证。该模式不能与 `--update-feeds` 同用。
 - `python scripts/release-tags.py --self-test`：标签校验自检。
 
-CI（`.github/workflows/release-integrity.yml`、`tag-policy.yml`）运行上述宿主测试、发布包自检与打包校验，不得绕过失败。
+CI（`.github/workflows/release-integrity.yml`、`tag-policy.yml`）以 `npm ci` + `npm --prefix source ci` 锁定依赖，运行双端类型检查、15 项架构守卫、前端单测、宿主模拟测试、发布包自检与打包校验，不得绕过失败。esbuild 版本由根 `package-lock.json` 固定：守卫会重新编译全部产物并逐字节比对，编译器版本漂移会让 CI 直接报红，这是刻意设计。
 
 ## 原生测试
 

@@ -150,3 +150,7 @@ export const MindFlowConstants = {
   sameWindow,
   validateHostDocument,
 };
+
+(function (global: any) {
+  global.MindFlowConstants = MindFlowConstants;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
