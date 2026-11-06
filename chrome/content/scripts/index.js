@@ -1,4 +1,4 @@
-// [Generated from src/host/index.ts - DO NOT EDIT DIRECTLY]
+// [Generated from src/host/entry - DO NOT EDIT DIRECTLY]
 /**
  * MindFlow for Zotero - Runtime Script
  * Injects UI elements into Zotero 10 (Tools menu, context menus, toolbar)

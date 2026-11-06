@@ -18,5 +18,6 @@
       "@host/*": ["./src/host/*"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/host/entry"]
 }

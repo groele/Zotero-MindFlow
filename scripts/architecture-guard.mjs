@@ -25,8 +25,10 @@ import { fileURLToPath } from 'node:url';
 import {
   GENERATED_FILES,
   ENTRY_TARGET,
+  ENTRY_PARTS,
   ESBUILD_TARGETS,
   renderAllGenerated,
+  renderEntryScript,
   bannerForEsbuild,
   bannerForEntry,
 } from './host-build-targets.mjs';
@@ -35,6 +37,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => fs.readFileSync(path.join(root, rel), 'utf8');
 const readJson = (rel) => JSON.parse(read(rel));
 const lines = (rel) => read(rel).trimEnd().split(/\r?\n/).length;
+// Entry parts are verbatim text slices and may legitimately end on a blank
+// line; count lines without trimming content away.
+const rawLines = (rel) => {
+  const parts = read(rel).split(/\r?\n/);
+  if (parts.length > 0 && parts[parts.length - 1] === '') parts.pop();
+  return parts.length;
+};
 const SKIP_DIRS = new Set(['node_modules', '.git', 'tests', 'dist', 'build', 'output', 'assets', '.scaffold']);
 
 function walk(relDir, extensions = ['.ts', '.tsx', '.js']) {
@@ -369,11 +378,42 @@ test('§5.2 host entry consumes exactly the globals published by generated modul
   t.diagnostic(`${consumed.size} host globals matched; pane hook and native-test anchor intact`);
 });
 
-test('§5.2 the legacy host entry is the only file allowed a type-check exemption', () => {
+test('§5.2 no TypeScript source is allowed a type-check exemption', () => {
   const offenders = [...walk('src'), ...walk('source/src', ['.ts', '.tsx'])]
-    .filter((file) => read(file).includes('@ts-nocheck'))
-    .filter((file) => file !== ENTRY_TARGET.source);
-  assert.deepEqual(offenders, [], `@ts-nocheck escaped the legacy host entry: ${offenders.join(', ')}`);
+    .filter((file) => read(file).includes('@ts-nocheck'));
+  assert.deepEqual(offenders, [], `@ts-nocheck found in TypeScript sources: ${offenders.join(', ')}`);
+});
+
+test('§5.9 host entry parts are complete, bounded, contiguous and losslessly ordered', async (t) => {
+  const problems = [];
+  let previousEnd = 0;
+  for (const part of ENTRY_PARTS) {
+    if (!fs.existsSync(path.join(root, part.file))) {
+      problems.push(`${part.file}: missing source part`);
+      continue;
+    }
+    const count = rawLines(part.file);
+    if (count > MAX_LINES) problems.push(`${part.file}: ${count} lines exceeds ${MAX_LINES}`);
+    const [start, end] = part.lines;
+    if (start !== previousEnd + 1) {
+      problems.push(`${part.file}: starts at ${start}, expected ${previousEnd + 1}`);
+    }
+    if (end < start || end - start + 1 !== count) {
+      problems.push(`${part.file}: declared [${start}, ${end}] but file has ${count} lines`);
+    }
+    previousEnd = end;
+  }
+  assert.deepEqual(problems, [], `entry part manifest is invalid:\n${problems.join('\n')}`);
+
+  // Re-render from the parts and compare with the committed artefact. The
+  // concatenation must reproduce the historical runtime IIFE byte-for-byte.
+  const rendered = await renderEntryScript(root);
+  assert.equal(read(ENTRY_TARGET.output), rendered, 'entry artefact differs from the ordered parts');
+  assert.ok(
+    !fs.existsSync(path.join(root, 'src/host/index.ts')),
+    'the monolithic src/host/index.ts must not return',
+  );
+  t.diagnostic(`${ENTRY_PARTS.length} entry parts, max ${MAX_LINES} lines, contiguous to line ${previousEnd}`);
 });
 
 test('§4.2 the settings pane declares the 16/24px alignment grid explicitly', (t) => {

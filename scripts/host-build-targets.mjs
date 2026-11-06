@@ -10,10 +10,14 @@
  * The host entry (index.js) is deliberately NOT bundled: bootstrap.js loads it
  * with Services.scriptloader.loadSubScript() into a custom scope, and the host
  * test fixture injects a test hook by matching a literal line in that script.
- * Its TypeScript source is therefore rendered verbatim (minus the two compile-
- * time-only header lines) instead of being rewritten by esbuild. Behaviour is
- * byte-identical to the historical hand-maintained entry; only the origin of
- * truth changes.
+ * It is assembled from ordered, verbatim source parts under src/host/entry/.
+ * Concatenated in the declared order they reproduce the historical IIFE
+ * byte-for-byte, so behaviour is unchanged while the 4,484-line monolith is
+ * gone. The parts are compile-time text units, not standalone ES modules:
+ * three methods exceed 360 lines on their own, and the IIFE shares 268 `this.`
+ * references plus 215 closure bindings. tsconfig.json excludes that directory
+ * from independent type checking; the concatenated artefact is validated with
+ * node --check and the 116-item host test suite.
  */
 
 import path from 'node:path';
@@ -32,14 +36,37 @@ export const ESBUILD_TARGETS = [
   { source: 'src/preferences.ts', output: 'chrome/content/scripts/preferences.js' },
 ];
 
-/** The host entry point, rendered verbatim from its TypeScript source. */
+/**
+ * Ordered source parts of the host entry. `lines` records the 1-based range
+ * each part occupies in the historical entry; the guard verifies that the
+ * ranges are contiguous and complete, and that no part exceeds the ceiling.
+ * Never reorder, merge or edit these independently of the concatenation.
+ */
+export const ENTRY_PARTS = [
+  { file: 'src/host/entry/01-runtime-bootstrap-and-llm-client.ts', lines: [1, 323], role: 'runtime-bootstrap-and-llm-client' },
+  { file: 'src/host/entry/02-runtime-ai-evidence-and-items.ts', lines: [324, 634], role: 'runtime-ai-evidence-and-items' },
+  { file: 'src/host/entry/03-runtime-workspace-open-and-storage.ts', lines: [635, 857], role: 'runtime-workspace-open-and-storage' },
+  { file: 'src/host/entry/04-methods-item-pane-styles-and-init.ts', lines: [858, 1149], role: 'methods-item-pane-styles-and-init' },
+  { file: 'src/host/entry/05-methods-item-pane-section-begin.ts', lines: [1150, 1489], role: 'methods-item-pane-section-begin' },
+  { file: 'src/host/entry/06-methods-item-pane-section-end.ts', lines: [1490, 1811], role: 'methods-item-pane-section-end' },
+  { file: 'src/host/entry/07-methods-add-to-window-begin.ts', lines: [1812, 2151], role: 'methods-add-to-window-begin' },
+  { file: 'src/host/entry/08-methods-add-to-window-end.ts', lines: [2152, 2346], role: 'methods-add-to-window-end' },
+  { file: 'src/host/entry/09-methods-toolbar-and-window-cleanup.ts', lines: [2347, 2634], role: 'methods-toolbar-and-window-cleanup' },
+  { file: 'src/host/entry/10-methods-attachments-and-open-trigger.ts', lines: [2635, 2865], role: 'methods-attachments-and-open-trigger' },
+  { file: 'src/host/entry/11-methods-open-mind-flow.ts', lines: [2866, 3119], role: 'methods-open-mind-flow' },
+  { file: 'src/host/entry/12-methods-serialize-item-and-ai-config.ts', lines: [3120, 3281], role: 'methods-serialize-item-and-ai-config' },
+  { file: 'src/host/entry/13-methods-prepare-paper-analysis.ts', lines: [3282, 3572], role: 'methods-prepare-paper-analysis' },
+  { file: 'src/host/entry/14-methods-analyze-paper-with-ai-begin.ts', lines: [3573, 3912], role: 'methods-analyze-paper-with-ai-begin' },
+  { file: 'src/host/entry/15-methods-analyze-paper-with-ai-end.ts', lines: [3913, 3965], role: 'methods-analyze-paper-with-ai-end' },
+  { file: 'src/host/entry/16-methods-save-mind-map-begin.ts', lines: [3966, 4305], role: 'methods-save-mind-map-begin' },
+  { file: 'src/host/entry/17-methods-save-mind-map-end.ts', lines: [4306, 4410], role: 'methods-save-mind-map-end' },
+  { file: 'src/host/entry/18-methods-shutdown-and-init-launch.ts', lines: [4411, 4482], role: 'methods-shutdown-and-init-launch' },
+];
+
 export const ENTRY_TARGET = {
-  source: 'src/host/index.ts',
+  source: 'src/host/entry',
   output: 'chrome/content/scripts/index.js',
 };
-
-/** Compile-time-only header lines of src/host/index.ts, stripped at render time. */
-export const ENTRY_HEADER = ['// @ts-nocheck', 'export {};'];
 
 export const GENERATED_FILES = [
   ...ESBUILD_TARGETS.map((target) => target.output),
@@ -68,13 +95,11 @@ export async function compileEsbuildTarget(root, target) {
 }
 
 export async function renderEntryScript(root) {
-  const source = await readFile(path.join(root, ENTRY_TARGET.source), 'utf8');
-  const lines = source.split('\n');
-  const header = lines.slice(0, ENTRY_HEADER.length);
-  if (header.some((line, index) => line !== ENTRY_HEADER[index])) {
-    throw new Error(`[MindFlow] ${ENTRY_TARGET.source} must start with ${JSON.stringify(ENTRY_HEADER)}`);
+  const chunks = [];
+  for (const part of ENTRY_PARTS) {
+    chunks.push(await readFile(path.join(root, part.file), 'utf8'));
   }
-  return bannerForEntry(ENTRY_TARGET.source) + lines.slice(ENTRY_HEADER.length).join('\n');
+  return bannerForEntry(ENTRY_TARGET.source) + chunks.join('');
 }
 
 /** Render every generated runtime script, keyed by its output path. */

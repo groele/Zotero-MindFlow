@@ -9,6 +9,13 @@
       "version": "14.0.6",
       "date": "2026-11-06",
       "resolved": [
+        "src/host/index.ts (4484 -> removed; assembled at build time from 18 ordered compile-time parts under src/host/entry/, max 340 lines each, concatenation byte-identical to the historical IIFE)"
+      ]
+    },
+    {
+      "version": "14.0.6",
+      "date": "2026-11-06",
+      "resolved": [
         "source/src/core/layout/layoutEngine.ts (568 -> 95, split into layoutMetrics 73 / layoutHorizontal 156 / layoutMindmap 79 / layoutStructured 181)",
         "source/src/core/model/treeOps.ts (429 -> 8-line forwarding facade, split into treeCore 47 / treeStructure 316 / treeText 70)"
       ]
@@ -51,15 +58,14 @@
     "source/src/components/canvas/Canvas.tsx": 726,
     "source/src/components/sidebar/PropertySidebar.tsx": 608,
     "source/src/components/modal/AIResearchModal.tsx": 499,
-    "source/src/components/node/NodeCard.tsx": 464,
-    "src/host/index.ts": 4484
+    "source/src/components/node/NodeCard.tsx": 464
   },
   "architectureMilestones": [
     {
       "version": "14.0.6",
       "date": "2026-11-06",
       "change": "Single Source of Truth completed: all 9 runtime scripts under chrome/content/scripts/ are now generated from src/ via scripts/host-build-targets.mjs; architecture-guard re-renders and byte-compares them.",
-      "entryDebt": "src/host/index.ts is the former hand-maintained 4,483-line entry, now an explicit frozen module. Splitting it requires real Zotero host acceptance (§6 layer 6), not available yet."
+      "entryDebt": "RESOLVED: the 4,483-line host entry was split into 18 ordered compile-time parts (max 340 lines); the generated index.js remains byte-identical to the historical entry. Standalone ES-module decomposition still requires real Zotero host acceptance, because three methods exceed 360 lines and the IIFE shares 268 this./215 closure references."
     }
   ]
 }

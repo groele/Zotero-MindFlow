@@ -42,7 +42,7 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 | **宿主兼容范围** | Zotero `10.0` 至 `12.*`（声明范围；本轮实测 Zotero 10.0.7，11/12 待实测） |
 | **安装包文件名** | `zotero-mindflow-14.0.6.xpi` |
 | **发布文件大小** | `566,990 字节` |
-| **SHA-256 校验和** | `2a8c493a2052942f3688798691531141635bbc3912e6020b7da48921711a5443` |
+| **SHA-256 校验和** | `d904b3e81dab718c294a06da4cbf0e3ec4fb435d104141dd78f7aef77d14e7c5` |
 | **在线更新源** | [zotero/update.json](zotero/update.json) |
 
 ### 安装步骤
@@ -55,7 +55,7 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 > [!TIP]
 > **更新与校验说明**  
 > - **在线自动更新**：更新清单由不可变资产源托管于 [zotero/update.json](zotero/update.json)，后续可在 Zotero 插件管理器中直接自动或手动检查升级。  
-> - **文件校验和**：`2a8c493a2052942f3688798691531141635bbc3912e6020b7da48921711a5443` (SHA-256)。
+> - **文件校验和**：`d904b3e81dab718c294a06da4cbf0e3ec4fb435d104141dd78f7aef77d14e7c5` (SHA-256)。
 > - **下载重命名提示**：部分浏览器（如 Safari 或 Edge 某些配置）可能在下载后自动将扩展名改为 `.zip`。遇到此情况请将其重新命名为 `.xpi` 后再进行安装。  
 > - **数据安全建议**：跨大版本升级前，建议在 MindFlow 设置中先导出工作区完整备份。
 
