@@ -6,7 +6,8 @@ import type { PreferenceField } from './preferenceSchema';
 import { prefGet, getPath, setPath, readSettings, writeSettings } from './preferenceStore';
 
 declare const Zotero: any;
-declare const Components: any;
+declare const Cc: any;
+declare const Ci: any;
 
 export function element<K extends keyof HTMLElementTagNameMap>(
   doc: Document,
@@ -231,11 +232,11 @@ function renderField(doc: Document, container: HTMLElement, field: PreferenceFie
     folderBtn.setAttribute('data-l10n-id', 'mindflow-pref-btn-choose-folder');
     folderBtn.addEventListener('click', () => {
       try {
-        const picker = Components.classes['@mozilla.org/filepicker;1']
-          .createInstance(Components.interfaces.nsIFilePicker);
-        picker.init(doc.defaultView, T('选择 MindFlow 额外保存文件夹', 'Select MindFlow Mirror Backup Folder'), Components.interfaces.nsIFilePicker.modeGetFolder);
+        const picker = Cc['@mozilla.org/filepicker;1']
+          .createInstance(Ci.nsIFilePicker);
+        picker.init(doc.defaultView, T('选择 MindFlow 额外保存文件夹', 'Select MindFlow Mirror Backup Folder'), Ci.nsIFilePicker.modeGetFolder);
         picker.open((result: number) => {
-          if (result !== Components.interfaces.nsIFilePicker.returnOK || !picker.file?.path) return;
+          if (result !== Ci.nsIFilePicker.returnOK || !picker.file?.path) return;
           input.value = picker.file.path;
           input.dispatchEvent(new (doc.defaultView as any).Event('change', { bubbles: true }));
         });

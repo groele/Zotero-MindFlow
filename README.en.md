@@ -8,12 +8,12 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Version](https://img.shields.io/badge/version-14.0.7-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v14.0.7)
+[![Version](https://img.shields.io/badge/version-16.0.0-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v16.0.0)
 [![Zotero Compatibility](https://img.shields.io/badge/Zotero-10.0--12.*-brightgreen?style=flat-square)](https://www.zotero.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
 [![Tests Passing](https://img.shields.io/badge/host_tests-116%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
 
-[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v14.0.7/zotero-mindflow-14.0.7.xpi) · [📝 Release Notes](docs/releases/v14.0.7.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
+[📦 Download XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v16.0.0/zotero-mindflow-16.0.0.xpi) · [📝 Release Notes](docs/releases/v16.0.0.md) · [💬 Report an Issue](https://github.com/groele/Zotero-MindFlow/issues)
 
 [📖 Overview](#overview) · [📦 Installation and updates](#installation) · [🚀 Quick start](#quick-start) · [🛠️ Key features](#features) · [✨ In-depth highlights](#highlights) · [⚙️ Settings](#settings) · [🔒 Data, sync, and services](#data) · [🧪 Compatibility and validation](#compatibility) · [❓ Troubleshooting](#troubleshooting) · [💻 Development and documentation](#development) · [🔗 The Flow series](#series) · [📄 Origin and license](#license)
 
@@ -38,19 +38,19 @@ As an integral pillar of the **Zotero Flow** series, MindFlow operates completel
 | Specification | Official Parameter & Requirement |
 |---|---|
 | **Add-on ID** | `mindflow@groele.org` |
-| **Current Stable Release** | `v14.0.7` (Patch Release) |
+| **Current Stable Release** | `v16.0.0` (Patch Release) |
 | **Host Compatibility** | Zotero `10.0` through `12.*` (declared range; tested on Zotero 10.0.7, with 11/12 validation pending) |
-| **Package File** | `zotero-mindflow-14.0.7.xpi` |
+| **Package File** | `zotero-mindflow-16.0.0.xpi` |
 | **File Size** | `574,657 bytes` |
 | **SHA-256 Checksum** | `a98b3d012e50914ff1fc8c1623281211b85b37bc075aeca10831d0ff0ba4ca7f` |
 | **Online Update Feed** | [zotero/update.json](zotero/update.json) |
 
 ### Installation Steps
 
-1. Download the official release package [zotero-mindflow-14.0.7.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v14.0.7/zotero-mindflow-14.0.7.xpi) (**current stable release v14.0.7**; download the XPI directly, do not install the Source code ZIP).
+1. Download the official release package [zotero-mindflow-16.0.0.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v16.0.0/zotero-mindflow-16.0.0.xpi) (**current stable release v16.0.0**; download the XPI directly, do not install the Source code ZIP).
 2. In Zotero, navigate to **Tools → Plugins / Add-ons** from the top menu.
-3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**, or drag and drop `zotero-mindflow-14.0.7.xpi` directly into the window.
-4. Choose the downloaded `zotero-mindflow-14.0.7.xpi` file and restart Zotero when prompted.
+3. Click the **gear icon** in the top-right corner of the Add-ons Manager and select **Install Add-on From File...**, or drag and drop `zotero-mindflow-16.0.0.xpi` directly into the window.
+4. Choose the downloaded `zotero-mindflow-16.0.0.xpi` file and restart Zotero when prompted.
 
 > [!TIP]
 > **Update Feeds and Verification**  
@@ -182,7 +182,7 @@ Fine-tune every facet via **Zotero → Settings → Zotero MindFlow**, neatly ar
 
 | Dimension | Specification & Verification Status |
 |---|---|
-| **Current Published Release** | **v14.0.7** (Patch Release) |
+| **Current Published Release** | **v16.0.0** (Patch Release) |
 | **Declared Manifest Range** | Zotero `10.0` through `12.*` (`strict_min_version: 10.0`, `strict_max_version: 12.*`) |
 | **TypeScript Static Check** | `npm run typecheck` (PASS, **0** errors) |
 | **Frontend Unit Suite** | Five programs passed: 54 data-chain checks, 40 logic checks, 7 presets, 1 full recovery scenario and 23 integrity checks |
@@ -248,7 +248,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [Audit Documentation Index](docs/README.md)
-- [Release Notes v14.0.7](docs/releases/v14.0.7.md)
+- [Release Notes v16.0.0](docs/releases/v16.0.0.md)
 - [Brand & Product Specifications](docs/brand/PRODUCT.md)
 - [Release Tag Policy](docs/release-tag-policy.md)
 - [Historical Reference Guide & Acknowledgments](docs/reference/README.md)
