@@ -191,9 +191,9 @@ mindflow-pref-webdav-autoSyncOnSave-desc = Silently upload workspace incremental
 
 
 mindflow-pref-version = v{ $version }
-mindflow-pref-release-notes-text = 14.0.1: Hardened data processing pipelines, multi-window state isolation, and unified TypeScript type contracts
-mindflow-pref-release-date = 2026-11-05
-mindflow-pref-release-xpi = zotero-mindflow-14.0.1.xpi
+mindflow-pref-release-notes-text = 14.0.7: Complete decoupled modularization of frontend components, freeze baseline debt cleared, dual-target TypeScript guards and single source of truth
+mindflow-pref-release-date = 2026-11-06
+mindflow-pref-release-xpi = zotero-mindflow-14.0.7.xpi
 mindflow-pref-release-repo = github.com/groele/Zotero-MindFlow
 mindflow-pref-release-aria = Version Information
 mindflow-pref-notice-backup = Tip: The extra backup folder does not replace attachments. History snapshots and rollbacks can be viewed and restored in the workspace "History" panel.

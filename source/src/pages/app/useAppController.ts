@@ -1,0 +1,31 @@
+import { findNode } from '../../core/model/treeOps';
+import { useAppFoundation } from './useAppFoundation';
+import { useAppDocumentIO } from './useAppDocumentIO';
+import { useAppZoteroCreation } from './useAppZoteroCreation';
+import { useAppHostMessaging } from './useAppHostMessaging';
+import { useAppAutoSave } from './useAppAutoSave';
+import { useAppEditorCore } from './useAppEditorCore';
+import { useAppEditorActions } from './useAppEditorActions';
+import { useAppTemplates } from './useAppTemplates';
+import { useAppKeyboardShortcuts } from './useAppKeyboardShortcuts';
+import { useAppAiResearch } from './useAppAiResearch';
+import { useAppZoteroArchive } from './useAppZoteroArchive';
+import type { AppContext, AppControllerProps } from './appContext';
+
+export const useAppController = (props: AppControllerProps): AppContext => {
+  const ctx: AppContext = { isSidepanelMode: props.isSidepanelMode };
+  useAppFoundation(ctx);
+  useAppDocumentIO(ctx);
+  useAppZoteroCreation(ctx);
+  useAppHostMessaging(ctx);
+  useAppAutoSave(ctx);
+  useAppEditorCore(ctx);
+  useAppEditorActions(ctx);
+  useAppTemplates(ctx);
+  useAppKeyboardShortcuts(ctx);
+  useAppAiResearch(ctx);
+  useAppZoteroArchive(ctx);
+  ctx.selectedNode = ctx.doc && ctx.selectedId ? findNode(ctx.doc.root, ctx.selectedId) : null;
+  ctx.inspectorDockSide = ctx.dockPosition === 'left' ? 'right' : 'left';
+  return ctx;
+};

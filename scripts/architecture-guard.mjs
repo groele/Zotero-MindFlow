@@ -101,7 +101,15 @@ test('§5.9 the freeze baseline contains no stale or misleading entries', (t) =>
       problems.push(`${file}: frozen ceiling ${frozen} is below the current ${count} lines`);
     }
   }
-  assert.ok(entries.length > 0, 'baseline must not be empty while §5.9 debt exists');
+  // An empty baseline is legitimate once every frozen module has been split below the
+  // ceiling, but only when the baseline explicitly declares that the debt was cleared.
+  // Without the flag, an accidentally emptied baseline must still fail the guard.
+  // The preceding test keeps rejecting any newly-oversized source file in either case.
+  if (baseline.debtCleared === true) {
+    assert.deepEqual(entries, [], 'debtCleared is set but frozen entries remain');
+  } else {
+    assert.ok(entries.length > 0, 'baseline must not be empty while §5.9 debt exists');
+  }
   assert.deepEqual(problems, [], `baseline integrity:\n${problems.join('\n')}`);
   t.diagnostic(`${entries.length} frozen entries all exist and still exceed ${MAX_LINES} lines`);
 });

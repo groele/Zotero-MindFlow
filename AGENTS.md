@@ -36,6 +36,7 @@
 - 宿主入口的权威源是 `src/host/entry/` 下 **18 个有序编译期分片**（每个 ≤340 行，按职责命名）。`scripts/host-build-targets.mjs` 的 `ENTRY_PARTS` 声明顺序与行区间，`renderEntryScript()` 按序拼接；拼接结果与历史 IIFE **逐字节一致**。`bootstrap.js` 以 `Services.scriptloader.loadSubScript()` 载入自定义作用域，宿主测试夹具仍靠其中一行字面量注入测试钩子，因此不经 esbuild 重写。分片是编译期文本单元，不是独立 ESM 模块：三个方法本身超过 360 行，且 IIFE 共享 268 处 `this.` 与 215 处闭包引用。`tsconfig.json` 的 `exclude` 排除该目录，拼接产物由 `node --check` 与 116 项宿主测试验证；**不得**让单片 `src/host/index.ts` 回归。真正模块化重写仍需真实 Zotero 宿主验收。
 - 生成产物首行必须带 `// [Generated … DO NOT EDIT DIRECTLY]` 溯源横幅。新增运行时脚本必须同时登记进 `host-build-targets.mjs` 的清单，否则守卫报红。
 - 架构守卫共 **16 项**，其中 §5.2 有五类校验：TS/JS 全局导出名与常量一致、产物清单与横幅齐备、产物与 TS 源重渲染逐字节一致、宿主入口消费的全局名与产物挂载名一一对应（含设置面板必须挂在 `window`、原生测试注入锚点保留）、**任何 TS 源文件都不允许 `@ts-nocheck`**；§5.9 另校验分片清单完整、行区间连续、每片不超限且拼接无损。
+- §5.9 冻结基线采用 `freeze-and-shrink`：条目必须仍存在、仍超过 360 行且不得超过记录行数，否则守卫按僵尸条目或增长报红；把模块拆到 ≤360 行后必须同步移除条目并写入 `splitHistory`。**全部债务清零时 `oversized` 允许为空，但必须在 `architecture-baseline.json` 显式声明 `"debtCleared": true`**；未声明的空基线仍被拒绝，且 `debtCleared` 为真时不得残留任何条目。第一项 §5.9 守卫始终拒绝任何新的 >360 行源文件，清空基线不等于关闭门禁。
 
 ## 构建与验证
 

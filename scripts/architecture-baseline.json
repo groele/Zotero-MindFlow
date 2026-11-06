@@ -1,10 +1,25 @@
 {
   "policy": "freeze-and-shrink",
   "maxSourceLines": 360,
-  "capturedAt": "2026-11-05",
+  "capturedAt": "2026-11-06",
+  "debtCleared": true,
   "note": "Known §5.9 debt. Listed files may stay at or below the recorded line count, but must never grow; any other source file above 360 lines fails the guard. Remove an entry only after splitting that module below 360 lines. Every entry must still exist and must still exceed the ceiling - stale entries are rejected by the baseline integrity test.",
-  "lastReleasedVersion": "14.0.6",
+  "lastReleasedVersion": "14.0.7",
   "splitHistory": [
+    {
+      "version": "14.0.7",
+      "date": "2026-11-06",
+      "resolved": [
+        "source/src/pages/app/App.tsx (2828 -> 32, orchestrated via useAppController/useAppFoundation/useAppEditorCore/useAppEditorActions/useAppKeyboardShortcuts/useAppDocumentIO/useAppAutoSave/useAppHostMessaging/useAppZoteroCreation/useAppZoteroArchive/useAppTemplates/useAppAiResearch + AppShell/AppToolbar/AppWorkspace/AppContextMenus/AppAiResearchHost/AppOverlays/appContext)",
+        "source/src/components/modal/SettingsModal.tsx (1356 -> 185, split into useSettingsModal/settingsModalUtils + SettingsAboutTab/SettingsAiTab/SettingsBackupTab/SettingsEditingTab/SettingsInterfaceTab/SettingsLicenseTab/SettingsWebdavTab/SettingsZoteroTab)",
+        "source/src/components/toolbar/Toolbar.tsx (901 -> 169, split into ToolbarConfig + ToolbarBrandTitle/ToolbarCoreActions/ToolbarExportGroup/ToolbarFileGroup/ToolbarViewControls/ToolbarZoteroGroup)",
+        "source/src/components/sidebar/LeftWorkbench.tsx (732 -> 210, split into LeftWorkbenchTypes/LeftWorkbenchUtils + LeftWorkbenchBackup/LeftWorkbenchDocs/LeftWorkbenchDrawer/LeftWorkbenchInbox/LeftWorkbenchOutline/LeftWorkbenchRail/LeftWorkbenchTags)",
+        "source/src/components/canvas/Canvas.tsx (726 -> 138, split into CanvasTypes/CanvasInteractions/CanvasTouch + CanvasNodes/CanvasRelationships)",
+        "source/src/components/sidebar/PropertySidebar.tsx (608 -> 181, split into PropertySidebarUtils + PropertySidebarFooterFields/PropertySidebarNodeFields/PropertySidebarRelationshipFields)",
+        "source/src/components/modal/AIResearchModal.tsx (499 -> 136, split into useAIResearchModal/aiResearchModalUtils + AIResearchConfigFieldsets/AIResearchPreviewCard/AIResearchSourcesFieldset/AIResearchTrailingPanel)",
+        "source/src/components/node/NodeCard.tsx (464 -> 305, split into NodeCardUtils + NodeCardContent)"
+      ]
+    },
     {
       "version": "14.0.6",
       "date": "2026-11-06",
@@ -50,17 +65,14 @@
       ]
     }
   ],
-  "oversized": {
-    "source/src/pages/app/App.tsx": 2828,
-    "source/src/components/modal/SettingsModal.tsx": 1356,
-    "source/src/components/toolbar/Toolbar.tsx": 901,
-    "source/src/components/sidebar/LeftWorkbench.tsx": 732,
-    "source/src/components/canvas/Canvas.tsx": 726,
-    "source/src/components/sidebar/PropertySidebar.tsx": 608,
-    "source/src/components/modal/AIResearchModal.tsx": 499,
-    "source/src/components/node/NodeCard.tsx": 464
-  },
+  "oversized": {},
   "architectureMilestones": [
+    {
+      "version": "14.0.7",
+      "date": "2026-11-06",
+      "change": "Zero-Debt Milestone: all remaining 8 oversized React frontend components split into decoupled ES modules <= 360 lines; debtCleared declared true and oversized baseline emptied.",
+      "entryDebt": "All 18 host entry parts <= 340 lines; all 182 frontend and host source files <= 360 lines."
+    },
     {
       "version": "14.0.6",
       "date": "2026-11-06",
