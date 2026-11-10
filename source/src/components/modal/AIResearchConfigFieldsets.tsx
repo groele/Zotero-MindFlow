@@ -1,9 +1,10 @@
 import { Target } from 'lucide-react';
 import { researchTemplates, defaultResearchTemplateId, researchSectionDefinitions } from '../../services/zotero/researchTemplates';
 import { getTheme } from '../../core/theme/themes';
-import { builtinResearchPrompts, type ResearchFocus } from '../../services/zotero/researchPresets';
+import type { ResearchFocus } from '../../services/zotero/researchPresets';
 import type { ResearchReasoningLevel } from '../../services/zotero/researchAnalysis';
 import type { AIResearchModalContext } from './useAIResearchModal';
+import { focusUnavailableReason } from './aiResearchModalUtils';
 
 const FOCUS_CARDS: Array<{ id: ResearchFocus; label: string; desc: string; icon: string }> = [
   { id: 'all', label: '全文综合研读', desc: '系统平衡覆盖全部分支', icon: '🌟' },
@@ -17,7 +18,7 @@ const FOCUS_CARDS: Array<{ id: ResearchFocus; label: string; desc: string; icon:
 export const AIResearchConfigFieldsets = ({ ctx }: { ctx: AIResearchModalContext }) => {
   const {
     preview, stage, busy, template, templateId, setTemplateId, preset, setPreset, generatedAppearance,
-    modelEntryId, setModelEntryId, setReasoningLevel, modelSelection, selectedModel,
+    modelEntryId, setModelEntryId, setReasoningLevel, modelSelection, selectedModel, enabledSources,
   } = ctx;
   if (!preview) return null;
 
@@ -68,41 +69,48 @@ export const AIResearchConfigFieldsets = ({ ctx }: { ctx: AIResearchModalContext
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {FOCUS_CARDS.map(item => {
                 const isSelected = (preset.focus || 'all') === item.id;
+                const reason = focusUnavailableReason(item.id, preview.readingMode, enabledSources.pdf);
+                const isUnavailable = Boolean(reason);
+
                 return (
                   <button
                     key={item.id}
                     type="button"
-                    disabled={busy}
+                    disabled={busy || isUnavailable}
+                    title={reason || item.desc}
                     onClick={() => {
-                      const matched = builtinResearchPrompts.find(p => p.focus === item.id);
+                      if (isUnavailable) return;
+                      // 纯粹切换 focus 侧重状态，不破坏用户的自定义提示词
                       setPreset(current => ({
                         ...current,
                         focus: item.id,
-                        customPrompt: matched && (!current.customPrompt || builtinResearchPrompts.some(bp => bp.text === current.customPrompt))
-                          ? matched.text
-                          : current.customPrompt,
                       }));
                     }}
                     className={`p-2 rounded-xl text-left border transition-all text-xs flex flex-col justify-between ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/60 dark:border-blue-700 text-blue-900 dark:text-blue-200 shadow-xs ring-1 ring-blue-400/40'
-                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'
+                      isUnavailable
+                        ? 'opacity-40 cursor-not-allowed border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 text-slate-400'
+                        : isSelected
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/60 dark:border-blue-700 text-blue-900 dark:text-blue-200 shadow-xs ring-1 ring-blue-400/40'
+                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'
                     }`}
                   >
                     <div className="flex items-center gap-1.5 font-medium mb-0.5">
                       <span>{item.icon}</span>
                       <span className="truncate">{item.label}</span>
                     </div>
-                    <span className="text-[10px] text-slate-400 leading-tight">{item.desc}</span>
+                    <span className="text-[10px] text-slate-400 leading-tight">
+                      {isUnavailable ? reason : item.desc}
+                    </span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <p className="text-xs text-slate-500">{template.style === 'story' ? '最多五条主线、三个核心发现 · 省去单子节点分类层 · 补充资料保留在备注' : `${template.keys.length} 个固定分支 · 数值与单位保留，缺失内容标为待补充。`}</p>
-          <p aria-label="生成导图外观" className="text-xs text-slate-500">{preset.presentation ? '使用呈现模板：' : '生成时保留当前外观：'}{getTheme(generatedAppearance.themeId).name} · {generatedAppearance.layoutType === 'logic-right' ? '向右逻辑图' : generatedAppearance.layoutType === 'org-down' ? '向下层级图' : '双侧思维导图'}。内容模板只决定分析逻辑和层级。</p>
-          <p className="text-xs text-slate-500">{template.style === 'story' ? '观测、条件、对照与作者解释直接显示在图中，原文及核对状态保留在备注。仅摘要无法覆盖全文证据；需要完整结果时请选择全文 PDF。' : '节点采用精炼要点：材料／参数直接列出，机理用原因→过程→结果；解释、条件与原文放在备注。绿色勾为引文匹配，问号为待核验。'}</p>
+          <div className="text-[11px] text-slate-400 pt-1 flex items-center justify-between">
+            <span>导图生成外观：{getTheme(generatedAppearance.themeId).name} · {generatedAppearance.layoutType === 'logic-right' ? '向右逻辑图' : generatedAppearance.layoutType === 'org-down' ? '向下层级图' : '双侧思维导图'}</span>
+            <span>{template.style === 'story' ? '五条主线 · 核心发现直接出图' : `${template.keys.length} 个结构分支`}</span>
+          </div>
         </fieldset>
       )}
 

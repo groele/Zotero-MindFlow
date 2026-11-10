@@ -3718,8 +3718,11 @@
       const progress = (phase, completed, total) => options.onProgress?.(phase, completed, total);
       const partialReading = prepared.readingMode !== 'full';
       const mode = ['quick', 'standard', 'deep'].includes(options.mode) ? options.mode : 'standard';
+      const analysisFocus = ['all', 'abstract', 'methods', 'results', 'discussion', 'conclusion'].includes(options.analysisFocus) ? options.analysisFocus : 'all';
+      if (['methods', 'results', 'discussion'].includes(analysisFocus) && (prepared.readingMode !== 'full' || !pdfText)) throw new Error('所选分析侧重需要读取并发送 PDF 全文；请将读取范围改为全文，或改选其他侧重。');
+      if (analysisFocus === 'conclusion' && (!['conclusion', 'key-sections', 'full'].includes(prepared.readingMode) || !pdfText)) throw new Error('“结论与贡献”侧重需要读取并发送结论或全文；请调整读取范围。');
       const scopeKey = JSON.stringify([template.id, template.version, config.fingerprint, reasoningLevel, mode,
-        Object.values(selectedSources), customPrompt]);
+        Object.values(selectedSources), customPrompt, analysisFocus]);
       if (prepared.results?.[scopeKey]) {
         ensureActive();
         progress('恢复本次会话结果', 1, 1);
@@ -3732,9 +3735,7 @@
         pdf: [],
         note: notes,
         annotation: annotations.map((entry) => ({ ...entry, text: entry.text })),
-        comment: annotations.filter((entry) => entry.comment).map((entry) => ({
-          id: entry.commentId, text: entry.comment, uri: entry.uri, page: entry.page,
-        })),
+        comment: annotations.filter((entry) => entry.comment).map((entry) => ({ id: entry.commentId, text: entry.comment, uri: entry.uri, page: entry.page })),
       };
       let usedNoteCount = notes.length;
       let usedAnnotationCount = annotations.length;
@@ -3763,27 +3764,26 @@
         cancelRequest = () => localController?.abort();
         let output;
         try {
-          const chosenFocus = options.analysisFocus || options.focus;
-          const focusGuide = {
-            methods: '【分析重点：研究方法与实验设计】\n即使提供了全文资料，请重点剖析论文的研究方法、实验流程、材料体系与测量表征条件。详细梳理各实验步骤与输入参数（温度/波长/电压等具体数值与单位）、对照组设计与复现细节；指出未报告的复现参数。',
-            discussion: '【分析重点：讨论与深入机理分析】\n即使提供了全文资料，请重点剖析论文的讨论（Discussion）与机理推导。深入梳理作者对实验现象的归因解释、证据链条逻辑、与已有文献的对比争议，明确区分直接证据与推断。',
-            results: '【分析重点：实验结果与核心发现】\n即使提供了全文资料，请重点提炼直接观测现象、定量指标数值（含单位与误差范围）、对照基准提升幅度，按发现主题归纳汇总。',
-            conclusion: '【分析焦点：仅分析结论与未来展望】\n重点分析作者在文末总结的核心结论、论文对核心科学问题的明确回应、实际应用启示、以及工作存在的局限性（Limitations）与未来研究方向。',
-            abstract: '【分析焦点：仅分析摘要与核心贡献】\n重点提炼论文阐述的核心研究问题、主要创新点/贡献以及最高层级的关键发现。忽略具体的繁琐实验步骤与中间推导。若输入为论文前页文字，请直接定位作者对研究主旨与核心发现的陈述。',
-            introduction: '【分析焦点：仅分析引言与背景动机】\n聚焦研究背景、前人工作的不足与研究缺口（Research Gap）、作者提出该研究的问题意识与立论假设。若提供了正文，请主要聚焦于引言与背景部分，无需展开后续详细实验数据。',
-            'key-sections': '【分析焦点：核心框架（摘要＋引言＋结论）】\n以“提出问题（引言）→ 核心主张（摘要）→ 最终回应与展望（结论）”为脉络组织导图。重点串联论文的出发点与最终落脚点，省略正文中间的非关键实验细节。',
-            full: '【分析焦点：全文综合研读】\n全面综合研读整篇论文。系统梳理背景问题、材料体系、实验/计算方法、关键条件对照、主要实验结果、机理推导链条与最终结论。',
-            all: '【分析焦点：全文综合研读】\n全面综合研读整篇论文。系统梳理背景问题、材料体系、实验/计算方法、关键条件对照、主要实验结果、机理推导链条与最终结论。',
-          }[chosenFocus || prepared.readingMode] || '';
-
+          // Two layers: what was actually read (never overridden) + what to emphasise within it.
+          const readingGuide = {
+            abstract: '【读取范围：仅摘要】只依据摘要提炼研究问题、主要贡献与最高层级发现；未读正文，不补造实验步骤、参数、数据或局限。',
+            introduction: '【读取范围：引言】聚焦研究背景、研究缺口与立论假设；未读结果部分，不补造实验数据与结论。',
+            conclusion: '【读取范围：结论】聚焦核心结论、对研究问题的回应、局限与展望；未读方法与结果细节，不补造参数。',
+            'key-sections': '【读取范围：摘要＋引言＋结论】按“提出问题→核心主张→回应与展望”组织；未读正文中间部分，不补造实验细节与数值。',
+            full: '【读取范围：全文】系统梳理背景、体系、方法、条件对照、结果、机理与结论。' }[prepared.readingMode] || '';
+          const focusGuide = analysisFocus === 'all' ? '' : '\n' + ({
+            abstract: '【分析侧重：摘要与主旨】优先提炼核心问题、创新点与最高层级结论，其余分支从简。',
+            methods: '【分析侧重：方法与实验设计】在已读资料中优先展开材料体系、制备与测量流程、输入参数（数值与单位）和对照设计；未报告的复现参数标为待补充，其余分支从简。',
+            results: '【分析侧重：结果与数据】优先展开直接观测、定量指标（含单位与误差）及相对对照的变化幅度，不掺入未证实的机理，其余分支从简。',
+            discussion: '【分析侧重：讨论与机理】优先展开作者的归因解释、证据链与竞争解释，严格区分直接证据与推断，其余分支从简。',
+            conclusion: '【分析侧重：结论与贡献】优先展开核心结论、对研究问题的回应、已证明贡献与局限，其余分支从简。' })[analysisFocus];
           const intensityGuide = {
             quick: '【分析强度：简要快速】\n导图追求极简精炼与极速概览。全图只保留 3~4 个一级核心分支（如：核心问题、核心方法、关键发现、总结结论）。每个分支下只列出 1~2 个最精炼的关键事实，去除一切铺垫与次要细节，节点文字极度精炼直观。',
             standard: '【分析强度：中等复杂度】\n导图追求学术逻辑结构平衡与清晰层次。保留 5~6 个标准分支（覆盖：研究背景与痛点、研究体系与方法、关键实验/对照条件、主要发现、核心机理、结论与意义）。每个分支展开 2~3 个支撑要点，保留核心定量指标与关键实验结论。',
             deep: '【分析强度：详细深析】\n导图追求全景多层级解构与深入机理剖析。全面挖掘技术细节：列出具体的实验材料、环境参数、对照基准（Baseline）与定量指标数值（含单位与误差范围）；按“原因 → 过程 → 观测效应 → 结论”因果链条细化机理；提炼研究边界、方法局限性与未来验证方向。',
           }[mode] || '';
-
           const condensation = story ? `凝练主线：最多${mode === 'quick' ? 2 : template.maxTopics || 3}个核心发现主题，按对核心问题的直接相关性排序。合并相同发现的观测、对照与作者解释，删除跨栏目重复。最终显示配额：${JSON.stringify(template.claimBudgets || {})}；配额是上限，不需填满。其余细节放detail，不以每个参数创建分叉。` : '';
-          output = await callLLMForZotero({ config, systemPrompt: systemPrompt + instruction + '\n' + focusGuide + '\n' + intensityGuide + '\n' + condensation,
+          output = await callLLMForZotero({ config, systemPrompt: systemPrompt + instruction + '\n' + readingGuide + focusGuide + '\n' + intensityGuide + '\n' + condensation,
             payload: { ...payload, ...(customPrompt ? { userPreferences: customPrompt } : {}) },
             reasoningLevel, signal: localController?.signal });
         } finally { cancelRequest = null; }

@@ -3,7 +3,7 @@ import { Sliders, Sparkles, Edit3 } from 'lucide-react';
 import { THEMES } from '../../core/theme/themes';
 import {
   ResearchPresetService, builtinResearchPrompts, builtinResearchPresentations,
-  MAX_RESEARCH_PROMPT_LENGTH, type ResearchPresetConfig, type ResearchFocus,
+  MAX_RESEARCH_PROMPT_LENGTH, type ResearchPresetConfig,
 } from '../../services/zotero/researchPresets';
 import type { LayoutType } from '../../core/model/types';
 import { ResearchPromptEditorModal } from './ResearchPromptEditorModal';
@@ -47,19 +47,13 @@ export const ResearchPresetsPanel: React.FC<Props> = ({ isOpen, value, onChange 
 
   const activeFocus = value.focus || 'all';
 
-  const handleSelectQuickFocus = (focus: ResearchFocus) => {
-    const matchedPrompt = builtinResearchPrompts.find(p => p.focus === focus);
-    if (matchedPrompt) {
-      onChange({
-        ...value,
-        focus,
-        customPrompt: matchedPrompt.text,
-        category: matchedPrompt.category,
-      });
-      setMessage(`已应用【${matchedPrompt.name}】功能属性提示词。`);
-    } else {
-      onChange({ ...value, focus });
-    }
+  const handleSelectQuickPrompt = (promptItem: (typeof builtinResearchPrompts)[number]) => {
+    onChange({
+      ...value,
+      customPrompt: promptItem.text,
+      category: promptItem.category,
+    });
+    setMessage(`已应用【${promptItem.name}】学术预设提示词。`);
   };
 
   const inputClass = 'mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 text-sm dark:border-slate-600 dark:bg-slate-800';
@@ -99,7 +93,7 @@ export const ResearchPresetsPanel: React.FC<Props> = ({ isOpen, value, onChange 
               <button
                 key={p.id}
                 type="button"
-                onClick={() => handleSelectQuickFocus(p.focus)}
+                onClick={() => handleSelectQuickPrompt(p)}
                 className={`p-2 rounded-xl text-left border transition-all text-xs flex flex-col justify-between ${
                   isSelected
                     ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-950/60 dark:border-blue-700 text-blue-900 dark:text-blue-200 shadow-xs ring-1 ring-blue-400/50'

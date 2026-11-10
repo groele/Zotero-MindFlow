@@ -75,14 +75,14 @@ await run('prompt bridge forwards user text and generated maps retain provenance
   } finally { delete (globalThis as any).window; }
 });
 await run('functional focus presets retain category, focus target and bridge forwarding', async () => {
-  const methodsPrompt = builtinResearchPrompts.find(p => p.focus === 'methods')!;
-  assert.equal(methodsPrompt.category, 'methods');
-  assert.ok(methodsPrompt.text.includes('研究方法'));
+  const reproducePrompt = builtinResearchPrompts.find(p => p.id === 'reproduce')!;
+  assert.equal(reproducePrompt.category, 'reproduce');
+  assert.ok(reproducePrompt.text.includes('实验复现'));
   const saved = service.save('方法深度剖析', {
     ...defaultResearchPresetConfig(),
     focus: 'methods',
     category: 'methods',
-    customPrompt: methodsPrompt.text,
+    customPrompt: reproducePrompt.text,
   });
   const loaded = service.read().presets.find(p => p.id === saved.presets[saved.presets.length - 1].id)!;
   assert.equal(loaded.focus, 'methods');

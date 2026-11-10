@@ -8,7 +8,7 @@ import { type PromptEditorModalProps, FOCUS_OPTIONS, PROMPT_CHIPS } from './Rese
 
 export const ResearchPromptEditorModal: React.FC<PromptEditorModalProps> = ({ isOpen, value, onClose, onApply }) => {
   const [store, setStore] = useState<ReturnType<typeof ResearchPresetService.read>>({ version: 1, defaultId: '', presets: [] });
-  const [activeTab, setActiveTab] = useState<string>('methods');
+  const [activeTab, setActiveTab] = useState<string>('general');
   const [editingConfig, setEditingConfig] = useState<ResearchPresetConfig>(value);
   const [name, setName] = useState<string>('');
   const [message, setMessage] = useState<string>('');

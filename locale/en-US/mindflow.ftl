@@ -191,9 +191,9 @@ mindflow-pref-webdav-autoSyncOnSave-desc = Silently upload workspace incremental
 
 
 mindflow-pref-version = v{ $version }
-mindflow-pref-release-notes-text = 16.2.0: Targeted section analysis focus on full text, interactive prompt presets workbench
+mindflow-pref-release-notes-text = 16.2.1: Targeted section analysis focus on full text, interactive prompt presets workbench
 mindflow-pref-release-date = 2026-11-10
-mindflow-pref-release-xpi = zotero-mindflow-16.2.0.xpi
+mindflow-pref-release-xpi = zotero-mindflow-16.2.1.xpi
 mindflow-pref-release-repo = github.com/groele/Zotero-MindFlow
 mindflow-pref-release-aria = Version Information
 mindflow-pref-notice-backup = Tip: The extra backup folder does not replace attachments. History snapshots and rollbacks can be viewed and restored in the workspace "History" panel.

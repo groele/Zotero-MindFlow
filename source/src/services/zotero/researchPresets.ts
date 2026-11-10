@@ -8,7 +8,7 @@ export { type ResearchFocus };
 export const MAX_RESEARCH_PROMPT_LENGTH = 6000;
 const KEY = 'mindflow_research_presets_v1';
 
-export type PresetCategory = 'methods' | 'discussion' | 'results' | 'conclusion' | 'abstract' | 'presentation' | 'evidence' | 'general' | 'custom';
+export type PresetCategory = 'presentation' | 'evidence' | 'reproduce' | 'general' | 'custom';
 
 export interface ResearchPresetConfig {
   templateId: string;
@@ -61,56 +61,6 @@ export const builtinResearchPrompts: BuiltinPrompt[] = [
     text: '',
   },
   {
-    id: 'methods',
-    name: '方法与实验设计重点',
-    category: 'methods',
-    categoryLabel: '方法实验',
-    focus: 'methods',
-    badge: '方法重点',
-    description: '重点剖析实验流程、材料体系、表征手段与测量参数，提取定量参数与对照设计。',
-    text: '【重点分析：研究方法与实验设计】请重点剖析论文的实验方法与测量流程：详细列出材料体系配比、样品制备工艺、测量仪器与输入参数（温度、波长、电压、磁场、气氛等具体数值与单位）；梳理对照组设计与数据处理方法；指出作者未报告的复现条件。',
-  },
-  {
-    id: 'discussion',
-    name: '讨论与深度机理分析',
-    category: 'discussion',
-    categoryLabel: '机理讨论',
-    focus: 'discussion',
-    badge: '讨论机理',
-    description: '深入分析讨论（Discussion）与因果推导，区分直接证据与假说推断，对比竞争解释。',
-    text: '【重点分析：讨论与深入机理分析】请将分析重心聚焦于论文的“讨论”（Discussion）与“机理辨析”（Mechanism）部分：深入剖析作者对实验观测现象的因果归因；梳理证据链条与推导逻辑；对比领域已有假说及竞争解释；严格区分直接实验支持的事实与作者提出的推断。',
-  },
-  {
-    id: 'results',
-    name: '数据结果与核心发现',
-    category: 'results',
-    categoryLabel: '数据发现',
-    focus: 'results',
-    badge: '结果发现',
-    description: '提取直接观测现象、定量指标数值与提升幅度，明确定量对比基准。',
-    text: '【重点分析：实验结果与主要发现】请重点提炼论文的核心实验数据与发现：提取直接观测的物理/化学/计算现象；保留定量指标数值（含单位与误差区间）；明确相对基准（Baseline）的提升幅度；按发现主题分类归纳，不掺杂未经证实的机理推测。',
-  },
-  {
-    id: 'conclusion',
-    name: '结论、学术贡献与局限',
-    category: 'conclusion',
-    categoryLabel: '结论展望',
-    focus: 'conclusion',
-    badge: '结论贡献',
-    description: '重点总结论文核心结论、对科学问题的回应、学术贡献以及工作局限与未来验证。',
-    text: '【重点分析：结论与学术贡献】请重点分析论文末尾总结的核心结论：明确回答论文解决了什么核心科学问题；总结已证实的学术贡献与实际应用启示；提炼论文自身报告的方法局限性、未解疑问及后续验证方向。',
-  },
-  {
-    id: 'abstract',
-    name: '摘要与主旨速览',
-    category: 'abstract',
-    categoryLabel: '摘要主旨',
-    focus: 'abstract',
-    badge: '摘要速览',
-    description: '快速提炼研究核心痛点、创新点与最高层级的关键发现，去除繁琐推导。',
-    text: '【重点分析：摘要与核心主旨】请快速提炼论文的核心主旨与创新点：阐明研究要解决的核心痛点、提出的创新方案、最高层级的1~2个关键结论；去除繁琐的中间推导与次要细节，保持节点文字极简精炼。',
-  },
-  {
     id: 'presentation',
     name: '组会汇报脉络精讲',
     category: 'presentation',
@@ -129,6 +79,16 @@ export const builtinResearchPrompts: BuiltinPrompt[] = [
     badge: '严格证据',
     description: '以科学证据链为核心，逐项核验假设→测量→解释的支撑力度，指出潜在假设缺口。',
     text: '【严谨证据链分析】优先梳理核心研究问题、关键对照和可直接支持结论的证据；明确区分直接观察、作者解释和仍需验证的机理。保留关键数值、条件及不确定性，标明对照缺失与待核验内容。',
+  },
+  {
+    id: 'reproduce',
+    name: '实验复现与参数提取',
+    category: 'reproduce',
+    categoryLabel: '复现提取',
+    focus: 'all',
+    badge: '实验复现',
+    description: '提取具体材料配比、工艺流程、关键仪器参数与测量条件，为实验复现提供依据。',
+    text: '【实验复现与参数提取】重点提取研究中的材料制备配比、关键测量参数（温度、压力、浓度、电压等具象数值与单位）及处理流程；标记作者未明确说明但复现必需的边界条件。',
   },
 ];
 
