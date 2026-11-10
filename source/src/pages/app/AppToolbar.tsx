@@ -14,6 +14,8 @@ export const AppToolbar = ({ ctx }: { ctx: AppContext }) => {
          handleUndo, handleRedo, handleCollapseByLevel, handleOpenSettings, handleCreateFromZoteroItems,
          handleAnalyzeZoteroPaper, handleArchiveAiDraft, handleAppendZoteroItems, handleSaveToZoteroNote, handleSaveToZoteroAttachment,
          handleExportCurrentDocument, handleImportFile } = ctx;
+  const boundTargetKey = !doc.metadata?.mindflowUnlinkedContainer ? doc.metadata?.zoteroItemKey : undefined;
+  const boundTargetTitle = boundTargetKey ? doc.metadata?.zoteroItemTitle : undefined;
   return (
     <>
       {/* Top Toolbar (Hidden in Zen mode) */}
@@ -74,10 +76,10 @@ export const AppToolbar = ({ ctx }: { ctx: AppContext }) => {
           onSaveToZoteroAttachment={handleSaveToZoteroAttachment}
           onAnalyzeZoteroPaper={() => { void handleAnalyzeZoteroPaper(); }}
           isAiAnalyzing={isAiAnalyzing}
-          boundItemKey={doc.metadata?.zoteroItemKey}
-          boundItemTitle={doc.metadata?.zoteroItemTitle}
-          onLocateBoundItem={doc.metadata?.zoteroItemKey ? () => { void locateItemInZotero(doc.metadata!.zoteroItemKey, doc.metadata?.zoteroItemTitle); } : undefined}
-          onOpenBoundPdf={doc.metadata?.zoteroItemKey ? () => { void openItemPdfInZotero(doc.metadata!.zoteroItemKey, doc.metadata?.zoteroItemTitle); } : undefined}
+          boundItemKey={boundTargetKey}
+          boundItemTitle={boundTargetTitle}
+          onLocateBoundItem={boundTargetKey ? () => { void locateItemInZotero(boundTargetKey, boundTargetTitle); } : undefined}
+          onOpenBoundPdf={boundTargetKey ? () => { void openItemPdfInZotero(boundTargetKey, boundTargetTitle); } : undefined}
         />
       )}
 

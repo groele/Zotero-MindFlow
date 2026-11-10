@@ -70,16 +70,19 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
   }, [selectedNode?.internalLink?.documentId, currentDoc.id, currentDoc.root]);
 
   useEffect(() => {
-    if (selectedNode) {
-      setNoteText(selectedNode.note || '');
-      setImageError('');
-      setLinkText(selectedNode.link || '');
-      setLinkError('');
-      setTargetSearch('');
-    }
-  }, [selectedNode?.id]);
+    setImageError('');
+    setLinkError('');
+    setTargetSearch('');
+    setNewTagText('');
+    setSyncStatusMsg(null);
+  }, [currentDoc.id, selectedNode?.id]);
 
-  useEffect(() => { setNodeText(selectedNode?.text || ''); }, [selectedNode?.id, selectedNode?.text]);
+  useEffect(() => {
+    setNoteText(selectedNode?.note || '');
+    setLinkText(selectedNode?.link || '');
+  }, [currentDoc.id, selectedNode?.id, selectedNode?.note, selectedNode?.link]);
+
+  useEffect(() => { setNodeText(selectedNode?.text || ''); }, [currentDoc.id, selectedNode?.id, selectedNode?.text]);
 
   if (!selectedNode) return null;
   const nodeImage = isSafeNodeImage(selectedNode.image) ? selectedNode.image : null;
@@ -93,7 +96,9 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
   };
 
   const handleNoteBlur = () => {
-    onUpdateNode(selectedNode.id, { note: noteText.trim() || undefined });
+    const nextNote = noteText.trim() || undefined;
+    if (nextNote === (selectedNode.note || undefined)) return;
+    onUpdateNode(selectedNode.id, { note: nextNote });
   };
 
   const handleLinkBlur = () => {
@@ -103,7 +108,9 @@ export const PropertySidebar: React.FC<PropertySidebarProps> = ({
       return;
     }
     setLinkError('');
-    onUpdateNode(selectedNode.id, { link: trimmed || undefined });
+    const nextLink = trimmed || undefined;
+    if (nextLink === (selectedNode.link || undefined)) return;
+    onUpdateNode(selectedNode.id, { link: nextLink });
   };
 
   const handleAddTag = () => {

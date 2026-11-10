@@ -290,3 +290,57 @@
       return null;
     },
 
+    isPaneTargetEditable(target) {
+      return Boolean(target && !target.deleted && (typeof target.isEditable !== 'function' || target.isEditable()));
+    },
+
+    isPanePdfAttachment(att) {
+      return Boolean(att && !att.deleted && (att.isPDFAttachment?.() || att.attachmentContentType === 'application/pdf' || /\.pdf$/i.test(att.attachmentFilename || '')));
+    },
+
+    hasPaneTargetPDF(target, selectedItem) {
+      if (!target) return false;
+      if (selectedItem && Number(selectedItem.parentItemID) === Number(target.id) && this.isPanePdfAttachment(selectedItem)) return true;
+      return Boolean(target?.getAttachments?.().some((id) => this.isPanePdfAttachment(Zotero.Items.get(id))));
+    },
+
+    createPaneTemplateSection(createEl, isEditable, T) {
+      const createSection = createEl('div', 'mf-create-section');
+      const sectionTitle = createEl('div', 'mf-section-title', T('快速新建导图', 'Quick create map'));
+      sectionTitle.setAttribute('data-l10n-id', 'mindflow-item-pane-quick-create-title');
+      createSection.appendChild(sectionTitle);
+      const templateBox = createEl('div', 'mf-template-box');
+      const templateRow = createEl('div', 'mf-template-row');
+      const templateLabel = createEl('span', 'mf-template-label', T('导图模板', 'Template'));
+      templateLabel.setAttribute('data-l10n-id', 'mindflow-item-pane-template-label');
+      templateRow.appendChild(templateLabel);
+      const templateSelect = createEl('select', 'mf-template-select');
+      templateSelect.setAttribute('aria-label', T('导图模板', 'Map template'));
+      templateSelect.setAttribute('data-l10n-id', 'mindflow-item-pane-template-select');
+      for (const t of [
+        { id: 'imrad', name: T('经典论文框架 (IMRaD 结构)', 'Research paper (IMRaD)') },
+        { id: 'review', name: T('文献对比与综述导图', 'Literature comparison and review') },
+        { id: 'critical', name: T('批判性精读导图', 'Critical reading') },
+        { id: 'outline', name: T('极简结构大纲', 'Minimal outline') },
+        { id: 'blank', name: T('空白思维导图', 'Blank map') },
+      ]) {
+        const opt = createEl('option', '', t.name);
+        opt.value = t.id;
+        templateSelect.appendChild(opt);
+      }
+      templateRow.appendChild(templateSelect);
+      templateBox.appendChild(templateRow);
+      templateBox.appendChild(createEl('div', 'mf-hint-text', T('选择预设学术模板，一键生成结构化文献研读导图', 'Select an academic template to generate a structured map')));
+      const templateCreateBtn = createEl('button', 'mf-btn-template-create', !isEditable ? T('文献只读，无法按模板生成', 'Read-only item, cannot generate') : T('按所选模板生成导图', 'Generate map from template'));
+      templateCreateBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-template-create');
+      templateCreateBtn.type = 'button';
+      if (!isEditable) {
+        templateCreateBtn.disabled = true;
+        templateCreateBtn.setAttribute('aria-disabled', 'true');
+        templateCreateBtn.title = T('当前文献为只读（或在回收站中）', 'This item is read-only or in Trash');
+      }
+      templateBox.appendChild(templateCreateBtn);
+      createSection.appendChild(templateBox);
+      return { createSection, templateSelect, templateCreateBtn };
+    },
+

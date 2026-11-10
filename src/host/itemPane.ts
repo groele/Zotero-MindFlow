@@ -13,6 +13,7 @@ import {
   cancelItemPaneRefresh,
   resolveContextSelection,
   resolveLiteratureTarget,
+  syncPaneActionStates,
 } from './itemPaneHelpers.js';
 import {
   renderItemPaneFallback,
@@ -49,7 +50,11 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
       let renderItemPaneAsync: any = null;
       let lastPaneBody: any = null;
       const lastPaneTargetRef = { current: null as any };
-      let lastPaneActions: any[] = [];
+      const lastPaneItemRef = { current: null as any };
+      const lastPaneActions: any[] = [];
+      const disablePaneActions = (target: any, selectedItem: any) => {
+        syncPaneActionStates(lastPaneActions, target, selectedItem, getZotero);
+      };
       if (!host._itemPaneStates) host._itemPaneStates = new Set();
       const icon = `${CHROME_ROOT}icons/mindflow.svg`;
 
@@ -129,9 +134,9 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
         onItemChange: ({ doc, body, item, setEnabled }: any) => {
           const document = doc || body?.ownerDocument;
           const win = doc?.defaultView || document?.defaultView || null;
-          const target = resolveLiteratureTarget(item, getZotero) || resolveLiteratureTarget(
+          const target = resolveLiteratureTarget(item, getZotero) || (item === null ? null : resolveLiteratureTarget(
             resolveContextSelection(win, document, getZotero), getZotero
-          );
+          ));
           const state = sectionStates.get(body);
           if (state) {
             if (win) state.window = win;
@@ -141,13 +146,10 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
             state.renderVersion++;
           }
           lastPaneTargetRef.current = target;
-          for (const action of lastPaneActions) {
-            if (action.id === 'ai' || action.id === 'pdf') {
-              action.button.disabled = !target || (action.id === 'pdf' && !action.hasPDF);
-            }
-          }
-          if (!body && lastPaneBody && renderItemPaneAsync) {
-            void renderItemPaneAsync({ doc, body: lastPaneBody, item: target || item, setSectionSummary: null });
+          lastPaneItemRef.current = target ? item : null;
+          disablePaneActions(target, item);
+          if (!body && lastPaneBody && target && renderItemPaneAsync) {
+            void renderItemPaneAsync({ doc, body: lastPaneBody, item, setSectionSummary: null });
           }
           setEnabled(true);
         },
@@ -158,25 +160,33 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
           if (document) {
             ensureItemPaneStyles(document, getZotero);
           }
-          const target = resolveLiteratureTarget(item, getZotero) || resolveLiteratureTarget(
+          const target = resolveLiteratureTarget(item, getZotero) || (item === null ? null : resolveLiteratureTarget(
             resolveContextSelection(win, document, getZotero), getZotero
-          );
+          ));
           lastPaneBody = body;
           lastPaneTargetRef.current = target;
-          lastPaneActions = [];
+          lastPaneItemRef.current = target ? item : null;
           let state = sectionStates.get(body);
           if (!state) {
             state = { itemKey: target?.key || null, libraryID: target?.libraryID || null, targetID: target?.id || null, window: win, renderVersion: 0, saving: false };
-            state.refresh = () => renderItemPaneAsync?.({ doc, body, item: lastPaneTargetRef.current || item, setSectionSummary });
+            state.refresh = () => renderItemPaneAsync?.({
+              doc, body,
+              item: lastPaneTargetRef.current ? (lastPaneItemRef.current || lastPaneTargetRef.current) : null,
+              setSectionSummary,
+            });
             sectionStates.set(body, state);
             host._itemPaneStates.add(state);
-          } else if (win) {
-            state.window = win;
+          } else {
+            if (win) state.window = win;
+            state.itemKey = target?.key || null;
+            state.libraryID = target?.libraryID || null;
+            state.targetID = target?.id || null;
           }
           if (target && renderItemPaneAsync) {
             void renderItemPaneAsync({ doc, body, item, setSectionSummary });
             return;
           }
+          lastPaneActions.length = 0;
           const maps = target ? host.getMindflowAttachments(target) : [];
           renderItemPaneFallback({
             document,
@@ -197,16 +207,24 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
           if (document) {
             ensureItemPaneStyles(document, getZotero);
           }
-          const target = resolveLiteratureTarget(item, getZotero) || resolveLiteratureTarget(
+          const target = resolveLiteratureTarget(item, getZotero) || (item === null ? null : resolveLiteratureTarget(
             resolveContextSelection(win, document, getZotero), getZotero
-          );
+          ));
           lastPaneBody = body;
           lastPaneTargetRef.current = target;
-          lastPaneActions = [];
-          if (!target) return;
+          lastPaneItemRef.current = target ? item : null;
+          if (!target) {
+            disablePaneActions(null, null);
+            return;
+          }
 
           const state = sectionStates.get(body);
-          if (state && win) state.window = win;
+          if (state) {
+            if (win) state.window = win;
+            state.itemKey = target.key || null;
+            state.libraryID = target.libraryID || null;
+            state.targetID = target.id || null;
+          }
           const renderVersion = state ? ++state.renderVersion : 0;
 
           await renderItemPaneContent({
@@ -221,6 +239,7 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
             T,
             setSectionSummary,
             lastPaneTargetRef,
+            lastPaneItemRef,
             lastPaneActions,
           });
         },

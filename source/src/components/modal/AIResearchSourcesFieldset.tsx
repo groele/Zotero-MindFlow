@@ -14,26 +14,79 @@ export const AIResearchSourcesFieldset = ({ ctx }: { ctx: AIResearchModalContext
         <fieldset className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
           <legend className="px-1 font-semibold text-slate-900 dark:text-white">本次发送的资料</legend>
           <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">取消勾选的来源不会发送给模型，也不会用于引文核对。调整范围后重新分析会使用独立的会话结果。</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {sourceRows.map(({ key, label, available }) => (
-              <label key={key} className="flex items-center gap-2 text-xs">
-                <input type="checkbox" checked={available && sources[key]} disabled={!available || busy}
-                  onChange={(event) => setSources((current) => ({ ...current, [key]: event.target.checked }))} />
-                <span className={!available ? 'text-slate-400' : ''}>
-                  {key === 'abstract' && scope?.abstractSource === 'manual'
-                    ? '摘要（待核对）'
-                    : key === 'abstract' && scope?.abstractSource === 'pdf-selected'
-                      ? '摘要（已选 PDF 片段）'
-                      : label}
-                </span>
-              </label>
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {sourceRows.map(({ key, label, available, hint, canSwitchToPdf }) => (
+              <div key={key} className="flex flex-col gap-0.5">
+                <label className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={available && sources[key]} disabled={!available || busy}
+                    onChange={(event) => setSources((current) => ({ ...current, [key]: event.target.checked }))} />
+                  <span className={!available ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}>
+                    {key === 'abstract' && scope?.abstractSource === 'manual'
+                      ? '摘要（待核对）'
+                      : key === 'abstract' && scope?.abstractSource === 'pdf-selected'
+                        ? '摘要（已选 PDF 片段）'
+                        : label}
+                  </span>
+                  {hint && <span className="text-[11px] text-slate-400 dark:text-slate-500">（{hint}）</span>}
+                </label>
+                {canSwitchToPdf && (
+                  <div className="ml-5 flex items-center gap-1.5 text-[11px]">
+                    <span className="text-blue-600 dark:text-blue-400">想读取正文？</span>
+                    <button type="button" onClick={() => onRefresh('full')}
+                      className="font-medium text-blue-700 dark:text-blue-300 underline hover:text-blue-800">
+                      切换全文
+                    </button>
+                    <span className="text-slate-300 dark:text-slate-600">·</span>
+                    <button type="button" onClick={() => onRefresh('key-sections')}
+                      className="font-medium text-blue-700 dark:text-blue-300 underline hover:text-blue-800">
+                      核心章节
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
           <div role="status" aria-live="polite" className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             {hasSelectedContent
               ? `当前将发送 ${Object.values(enabledSources).filter(Boolean).length} 类资料，约 ${selectedCharacters.toLocaleString()} 字符；未勾选的来源不会发送给模型。`
-              : '当前没有选中可发送的资料；请至少勾选一种已有内容的来源。'}
+              : (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium text-amber-700 dark:text-amber-300">当前没有选中可发送的资料；请至少勾选一种已有内容的来源。</span>
+                  <div className="flex items-center gap-1.5">
+                    {Boolean(scope?.hasAbstract || preview?.abstractText) && (
+                      <button type="button" onClick={() => setSources(s => ({ ...s, abstract: true }))}
+                        className="rounded bg-blue-600 px-2 py-0.5 text-xs text-white hover:bg-blue-700">
+                        恢复勾选摘要
+                      </button>
+                    )}
+                    {Boolean(scope?.pdfAttachmentCount) && preview.readingMode === 'abstract' && (
+                      <button type="button" onClick={() => onRefresh('full')}
+                        className="rounded border border-blue-400 bg-white px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-50 dark:bg-slate-800 dark:text-blue-300">
+                        切换为全文精读
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
           </div>
+          {preview.readingMode === 'abstract' && Boolean(scope?.pdfAttachmentCount) && (
+            <div className="mt-2.5 flex items-center justify-between rounded-lg border border-blue-200/70 bg-blue-50/60 px-3 py-2 text-xs text-blue-900 dark:border-blue-800/50 dark:bg-blue-950/30 dark:text-blue-200">
+              <span className="flex items-center gap-1.5">
+                <span>📄</span>
+                <span>本文献检测到本地 PDF 附件。当前为<strong>聚焦摘要</strong>模式，未读取正文。如需分析正文：</span>
+              </span>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button type="button" onClick={() => onRefresh('key-sections')}
+                  className="rounded border border-blue-300 bg-white px-2 py-0.5 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:bg-slate-800 dark:text-blue-300">
+                  摘要＋引言＋结论
+                </button>
+                <button type="button" onClick={() => onRefresh('full')}
+                  className="rounded border border-blue-300 bg-white px-2 py-0.5 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:bg-slate-800 dark:text-blue-300">
+                  全文精读
+                </button>
+              </div>
+            </div>
+          )}
           {preview.readingMode === 'abstract' && <div className="mt-3 space-y-2">
             <button type="button" aria-expanded={abstractEditor} onClick={() => setAbstractEditor(current => !current)}
               className="rounded-lg border border-blue-300 px-3 py-2 text-xs text-blue-700 dark:text-blue-300">

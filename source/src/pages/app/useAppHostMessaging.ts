@@ -27,15 +27,15 @@ export const useAppHostMessaging = (ctx: AppContext): void => {
       ? ((window as any)._mindflowInitialAction || (window.frameElement as any)?._mindflowInitialAction || window.arguments?.[0]?.wrappedJSObject || window.arguments?.[0])
       : null;
 
-    const hasInitialAction = initialAction && (
+    const hasInitialAction = Boolean(initialAction && (
       initialAction.mode === 'create_blank' ||
       initialAction.mode === 'import_file' ||
-      (initialAction.mode === 'open_document' && !!initialAction.doc) ||
-      ((initialAction.mode === 'create_from_selection' || initialAction.mode === 'create_from_items') &&
-        Array.isArray(initialAction.items) && initialAction.items.length > 0) ||
-      (initialAction.mode === 'create_from_collection' && Array.isArray(initialAction.items)) ||
-      (initialAction.mode === 'ai_analyze' && Array.isArray(initialAction.items) && !!initialAction.items[0]?.zoteroUri)
-    );
+      initialAction.mode === 'open_document' ||
+      initialAction.mode === 'create_from_selection' ||
+      initialAction.mode === 'create_from_items' ||
+      initialAction.mode === 'create_from_collection' ||
+      initialAction.mode === 'ai_analyze'
+    ));
 
     let workspaceReady: Promise<void>;
     if (hasInitialAction && !initialZoteroActionRef.current) {
@@ -48,19 +48,35 @@ export const useAppHostMessaging = (ctx: AppContext): void => {
           } else if (initialAction.mode === 'create_blank') {
             await createBlankDocRef.current();
           } else if (initialAction.mode === 'open_document') {
-            await openIncomingZoteroDocument(initialAction.doc, initialAction.workspaceDocumentId);
+            if (initialAction.doc) {
+              await openIncomingZoteroDocument(initialAction.doc, initialAction.workspaceDocumentId);
+            } else {
+              throw new Error('未读取到有效的导图数据，无法打开文档');
+            }
           } else if (initialAction.mode === 'create_from_selection' || initialAction.mode === 'create_from_items') {
-            await createMindMapFromZoteroItems(initialAction.items, true, initialAction.forceNew === true);
+            if (Array.isArray(initialAction.items) && initialAction.items.length > 0) {
+              await createMindMapFromZoteroItems(initialAction.items, true, initialAction.forceNew === true);
+            } else {
+              await createBlankDocRef.current();
+            }
           } else if (initialAction.mode === 'create_from_collection') {
-            await importZoteroCollection(initialAction.collectionName || initialAction.collection?.name || '文献分类', initialAction.items);
-          } else {
-            void analyzeRequestRef.current(initialAction.items[0].zoteroUri);
+            await importZoteroCollection(initialAction.collectionName || initialAction.collection?.name || '文献分类', initialAction.items || []);
+          } else if (initialAction.mode === 'ai_analyze') {
+            const uri = initialAction.items?.[0]?.zoteroUri;
+            if (uri) {
+              void analyzeRequestRef.current(uri);
+            } else {
+              setSaveStatus({ state: 'warning', message: '未指定目标文献，无法启动 AI 论文分析；已创建独立空白导图。' });
+              await createBlankDocRef.current();
+            }
           }
         } catch (e: any) {
           console.error('[MindFlow] Failed to load initial Zotero action:', e);
           if (appMountedRef.current) setSaveStatus({ state: 'error', message: `打开 Zotero 文献失败：${e?.message || e}` });
-          // Keep the failure visible; loading the global last document would
-          // make a failed item open appear to succeed with another paper.
+          // Ensure a clean blank document is active rather than exposing a stale previous document
+          try {
+            await createBlankDocRef.current();
+          } catch (_) {}
         }
       })();
     } else {
@@ -91,15 +107,34 @@ export const useAppHostMessaging = (ctx: AppContext): void => {
         }
       } else if (data.type === 'MINDFLOW_OPEN_ACTION' && data.action) {
         const action = data.action;
-        if (action.mode === 'open_document') await openIncomingZoteroDocument(action.doc, action.workspaceDocumentId);
+        if (action.mode === 'open_document') {
+          if (action.doc) await openIncomingZoteroDocument(action.doc, action.workspaceDocumentId);
+          else {
+            setSaveStatus({ state: 'error', message: '打开导图失败：未接收到有效的文档数据。' });
+            await createBlankDocRef.current();
+          }
+        }
         else if (action.mode === 'import_file') {
           if (importFileInputRef.current) importFileInputRef.current.click();
           else pendingFileImportRef.current = true;
         }
         else if (action.mode === 'create_blank') await createBlankDocRef.current();
-        else if (action.mode === 'ai_analyze') await analyzeRequestRef.current(action.items?.[0]?.zoteroUri);
+        else if (action.mode === 'ai_analyze') {
+          const uri = action.items?.[0]?.zoteroUri;
+          if (uri) await analyzeRequestRef.current(uri);
+          else {
+            setSaveStatus({ state: 'warning', message: '未指定目标文献，无法启动 AI 论文分析。' });
+          }
+        }
         else if (action.mode === 'create_from_collection') await importZoteroCollection(action.collectionName || '文献分类', action.items || []);
-        else if (Array.isArray(action.items)) await createMindMapFromZoteroItems(action.items, true, action.forceNew === true);
+        else if (action.mode === 'create_from_selection' || action.mode === 'create_from_items') {
+          if (Array.isArray(action.items) && action.items.length > 0) {
+            await createMindMapFromZoteroItems(action.items, true, action.forceNew === true);
+          } else {
+            await createBlankDocRef.current();
+          }
+        }
+        else if (Array.isArray(action.items) && action.items.length > 0) await createMindMapFromZoteroItems(action.items, true, action.forceNew === true);
       } else if (data.type === 'MINDFLOW_LOAD_DOCUMENT' && data.doc) {
         await openIncomingZoteroDocument(data.doc).catch((e: any) => {
           console.error('[MindFlow] Failed to load document from message:', e);
@@ -110,7 +145,11 @@ export const useAppHostMessaging = (ctx: AppContext): void => {
         (data.mode === 'create_from_selection' && Array.isArray(data.items))
       ) {
         const items = data.items || [];
-        await createMindMapFromZoteroItems(items, true, data.forceNew === true);
+        if (items.length === 0) {
+          await createBlankDocRef.current();
+        } else {
+          await createMindMapFromZoteroItems(items, true, data.forceNew === true);
+        }
       } else if (data.type === 'MINDFLOW_IMPORT_ZOTERO_ITEMS' || data.type === 'MINDFLOW_APPEND_ZOTERO_ITEMS') {
         const items = data.items || [];
         if (data.action === 'append' || data.type === 'MINDFLOW_APPEND_ZOTERO_ITEMS') {

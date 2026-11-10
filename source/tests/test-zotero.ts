@@ -613,5 +613,43 @@ await run('openItemPdfInZotero dispatches MINDFLOW_OPEN_PDF and awaits MINDFLOW_
     (globalThis as any).window = prevWindow;
   }
 });
+await run('extractZoteroItemData safely returns null for null/empty/non-regular items without generating ghost literature', () => {
+  assert.equal(extractZoteroItemData(null), null);
+  assert.equal(extractZoteroItemData(undefined), null);
+  assert.equal(extractZoteroItemData({}), null);
+  assert.equal(extractZoteroItemData({ isRegularItem: () => false }), null);
+});
+await run('document summary hides unlinked-container Zotero item keys while keeping real paper bindings', async () => {
+  safeStorage.clear();
+  await StorageService.saveDocument({
+    ...doc('unlinked_summary', 'UNL1'),
+    title: 'Topic Collection Map',
+    metadata: {
+      zoteroItemKey: 'zotero://select/library/items/CONTAINER1',
+      zoteroUri: 'zotero://select/library/items/CONTAINER1',
+      zoteroItemTitle: 'MindFlow 独立导图',
+      mindflowUnlinkedContainer: true,
+      autoSyncToZotero: true,
+    },
+  });
+  await StorageService.saveDocument({
+    ...doc('linked_summary', 'LNK1'),
+    title: 'Single Paper Map',
+    metadata: {
+      zoteroItemKey: 'zotero://select/library/items/REALPAPER1',
+      zoteroUri: 'zotero://select/library/items/REALPAPER1',
+      zoteroItemTitle: 'Real Paper Title',
+      mindflowUnlinkedContainer: false,
+      autoSyncToZotero: true,
+    },
+  });
+  const list = await StorageService.getDocumentList();
+  const unlinkedSummary = list.find(item => item.id === 'unlinked_summary');
+  const linkedSummary = list.find(item => item.id === 'linked_summary');
+  assert.equal(unlinkedSummary?.zoteroItemKey, undefined);
+  assert.equal(unlinkedSummary?.zoteroItemTitle, undefined);
+  assert.equal(linkedSummary?.zoteroItemKey, 'zotero://select/library/items/REALPAPER1');
+  assert.equal(linkedSummary?.zoteroItemTitle, 'Real Paper Title');
+});
 console.log(`${count} frontend data-chain tests passed`);
 

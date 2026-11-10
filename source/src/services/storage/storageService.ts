@@ -85,6 +85,17 @@ function revisionOf(doc: MindMapDocument | null): number {
   return doc && Number.isSafeInteger(doc.revision) && (doc.revision as number) >= 0 ? doc.revision as number : 0;
 }
 
+function summaryForDoc(doc: MindMapDocument, updatedAt?: number): DocumentSummary {
+  const realBound = !doc.metadata?.mindflowUnlinkedContainer;
+  return {
+    id: doc.id,
+    title: doc.title,
+    updatedAt: updatedAt ?? (Number.isFinite(doc.updatedAt) ? doc.updatedAt : 0),
+    zoteroItemKey: realBound ? doc.metadata?.zoteroItemKey : undefined,
+    zoteroItemTitle: realBound ? doc.metadata?.zoteroItemTitle : undefined,
+  };
+}
+
 export interface DocumentSummary {
   id: string;
   title: string;
@@ -207,13 +218,7 @@ export class StorageService {
     const savedDoc = { ...doc, revision: currentRevision + 1, updatedAt: Date.now() };
     const index = await this.getDocumentList();
     const existingIdx = index.findIndex(item => item.id === savedDoc.id);
-    const summary: DocumentSummary = {
-      id: savedDoc.id,
-      title: savedDoc.title,
-      updatedAt: savedDoc.updatedAt,
-      zoteroItemKey: savedDoc.metadata?.zoteroItemKey,
-      zoteroItemTitle: savedDoc.metadata?.zoteroItemTitle,
-    };
+    const summary = summaryForDoc(savedDoc, savedDoc.updatedAt);
 
     if (existingIdx >= 0) {
       index[existingIdx] = summary;
@@ -244,8 +249,7 @@ export class StorageService {
         if (await getItem(STORAGE_KEYS.DELETED_PREFIX + id)) continue;
         try {
           const doc = await this.getDocument(id, { trackRevision: false });
-          if (doc) summaries.push({ id, title: doc.title, updatedAt: doc.updatedAt || 0,
-            zoteroItemKey: doc.metadata?.zoteroItemKey, zoteroItemTitle: doc.metadata?.zoteroItemTitle });
+          if (doc) summaries.push(summaryForDoc(doc));
         } catch {
           summaries.push({ id, title: `数据损坏（${id}）`, updatedAt: 0 });
         }
@@ -295,13 +299,7 @@ export class StorageService {
       try {
         const parsed: unknown = JSON.parse(value);
         if (!isStoredDocument(parsed) || parsed.id !== id) throw new Error('导图文件名与内容 ID 不一致');
-        rebuilt.push({
-          id: parsed.id,
-          title: parsed.title,
-          updatedAt: Number.isFinite(parsed.updatedAt) ? parsed.updatedAt : 0,
-          zoteroItemKey: parsed.metadata?.zoteroItemKey,
-          zoteroItemTitle: parsed.metadata?.zoteroItemTitle,
-        });
+        rebuilt.push(summaryForDoc(parsed));
       } catch {
         // Keep damaged records visible so users can see why they will not open.
         rebuilt.push({ id, title: `数据损坏（${id}）`, updatedAt: 0 });
@@ -323,7 +321,12 @@ export class StorageService {
   public static deleteDocumentDirect(id: string, expectedRevision: number): Promise<void> {
     const operation = this.writeQueue.then(async () => {
       if (isZoteroWorkspace()) {
-        try { await zoteroWorkspaceStorage('deleteDocument', { id, expectedRevision }); }
+        try {
+          await zoteroWorkspaceStorage('deleteDocument', { id, expectedRevision });
+          if (await getItem(STORAGE_KEYS.ACTIVE_DOC_ID) === id) {
+            await removeItem(STORAGE_KEYS.ACTIVE_DOC_ID);
+          }
+        }
         catch (error) {
           const message = storageErrorMessage(error);
           if (message.startsWith('MINDFLOW_REVISION_CONFLICT:')) throw new DocumentConflictError(message.slice('MINDFLOW_REVISION_CONFLICT:'.length));
@@ -338,6 +341,9 @@ export class StorageService {
       await setItem(STORAGE_KEYS.DELETED_PREFIX + id, String(Date.now()));
       await removeItem(STORAGE_KEYS.DOC_PREFIX + id);
       await setItem(STORAGE_KEYS.DOC_INDEX, JSON.stringify(index));
+      if (await getItem(STORAGE_KEYS.ACTIVE_DOC_ID) === id) {
+        await removeItem(STORAGE_KEYS.ACTIVE_DOC_ID);
+      }
     });
     this.writeQueue = operation.catch(() => undefined);
     return operation;

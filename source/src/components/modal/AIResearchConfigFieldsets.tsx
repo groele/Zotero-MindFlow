@@ -14,22 +14,30 @@ export const AIResearchConfigFieldsets = ({ ctx }: { ctx: AIResearchModalContext
       {(stage === 'ready' || stage === 'error') && (
         <fieldset className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
           <legend className="px-1 font-semibold text-slate-900 dark:text-white">分析框架与内容组织</legend>
-          <label className="block text-xs">论文类型
-            <select aria-label="论文分析框架" value={template.family} disabled={busy}
-              onChange={event => setTemplateId(event.target.value === 'experimental' ? defaultResearchTemplateId : event.target.value)}
-              className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-2 dark:border-slate-600 dark:bg-slate-800">
-              <option value="experimental">实验研究</option><option value="theoretical">理论与计算</option>
-              <option value="mechanism">机理辨析</option><option value="review">综述与对比</option>
-            </select>
-          </label>
-          {template.family === 'experimental' && <label className="block text-xs">实验论文内容模板
-            <select aria-label="实验论文内容模板" value={templateId} disabled={busy}
-              onChange={event => setTemplateId(event.target.value)}
-              className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-2 dark:border-slate-600 dark:bg-slate-800">
-              {researchTemplates.filter(entry => entry.family === 'experimental').map(entry =>
-                <option key={entry.id} value={entry.id}>{entry.name}</option>)}
-            </select>
-          </label>}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-xs">论文类型
+              <select aria-label="论文分析框架" value={template.family} disabled={busy}
+                onChange={event => setTemplateId(event.target.value === 'experimental' ? defaultResearchTemplateId : event.target.value)}
+                className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white p-2 text-xs sm:text-sm dark:border-slate-600 dark:bg-slate-800">
+                <option value="experimental">实验研究</option><option value="theoretical">理论与计算</option>
+                <option value="mechanism">机理辨析</option><option value="review">综述与对比</option>
+              </select>
+            </label>
+            {template.family === 'experimental' ? (
+              <label className="block text-xs">实验论文内容模板
+                <select aria-label="实验论文内容模板" value={templateId} disabled={busy}
+                  onChange={event => setTemplateId(event.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white p-2 text-xs sm:text-sm dark:border-slate-600 dark:bg-slate-800">
+                  {researchTemplates.filter(entry => entry.family === 'experimental').map(entry =>
+                    <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+                </select>
+              </label>
+            ) : (
+              <div className="flex flex-col justify-end text-xs text-slate-500 pb-1">
+                <span>框架风格：{template.style === 'story' ? '主线叙事 · 重点突出' : '标准多维结构'}</span>
+              </div>
+            )}
+          </div>
           <p className="text-xs leading-5 text-slate-500">{template.description} {template.framework}</p>
           <div className="flex flex-wrap gap-1.5" aria-label="导图内容范围">
             {template.keys.map(key => <span key={key} className="rounded bg-slate-100 px-2 py-1 text-xs dark:bg-slate-800">
@@ -44,24 +52,26 @@ export const AIResearchConfigFieldsets = ({ ctx }: { ctx: AIResearchModalContext
       {(stage === 'ready' || stage === 'error') && (
         <fieldset className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
           <legend className="px-1 font-semibold text-slate-900 dark:text-white">本次使用的模型</legend>
-          <label className="block text-xs">llm-for-zotero 已配置模型
-            <select aria-label="本次分析模型" value={modelEntryId} disabled={busy}
-              onChange={(event) => { setModelEntryId(event.target.value); setReasoningLevel('default'); }}
-              className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-2 dark:border-slate-600 dark:bg-slate-800">
-              {preview.models?.map((entry) => <option key={entry.entryId} value={entry.entryId} disabled={!entry.available}>
-                {entry.model}{entry.host ? ` · ${entry.host}` : ''}{entry.available ? '' : '（暂不支持）'}
-              </option>)}
-            </select>
-          </label>
-          <label className="block text-xs">推理强度
-            <select aria-label="本次推理强度" value={modelSelection.reasoningLevel}
-              disabled={busy || !selectedModel?.reasoningSupported}
-              onChange={(event) => setReasoningLevel(event.target.value as ResearchReasoningLevel)}
-              className="mt-2 w-full rounded-lg border border-slate-300 bg-white p-2 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800">
-              {(selectedModel?.reasoningOptions || [{ id: 'default', label: '模型默认' }]).map((option) =>
-                <option key={option.id} value={option.id}>{option.label}</option>)}
-            </select>
-          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-xs">llm-for-zotero 已配置模型
+              <select aria-label="本次分析模型" value={modelEntryId} disabled={busy}
+                onChange={(event) => { setModelEntryId(event.target.value); setReasoningLevel('default'); }}
+                className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white p-2 text-xs sm:text-sm dark:border-slate-600 dark:bg-slate-800">
+                {preview.models?.map((entry) => <option key={entry.entryId} value={entry.entryId} disabled={!entry.available}>
+                  {entry.model}{entry.host ? ` · ${entry.host}` : ''}{entry.available ? '' : '（暂不支持）'}
+                </option>)}
+              </select>
+            </label>
+            <label className="block text-xs">推理强度
+              <select aria-label="本次推理强度" value={modelSelection.reasoningLevel}
+                disabled={busy || !selectedModel?.reasoningSupported}
+                onChange={(event) => setReasoningLevel(event.target.value as ResearchReasoningLevel)}
+                className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white p-2 text-xs sm:text-sm disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800">
+                {(selectedModel?.reasoningOptions || [{ id: 'default', label: '模型默认' }]).map((option) =>
+                  <option key={option.id} value={option.id}>{option.label}</option>)}
+              </select>
+            </label>
+          </div>
           <p className="text-xs leading-5 text-slate-500">仅影响本次分析。{selectedModel?.reasoningOptionsSource === 'llm-for-zotero-profile'
             ? '选项来自该模型在 llm-for-zotero 中的能力配置，参数由该插件发送。'
             : !selectedModel?.reasoningSupported ? '该模型未启用推理强度选择。'

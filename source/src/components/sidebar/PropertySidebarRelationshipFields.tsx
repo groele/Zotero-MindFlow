@@ -13,15 +13,16 @@ const PropertySidebarZoteroBox = ({ ctx }: { ctx: PropertySidebarCtx }) => {
   const nodeSpecificTarget =
     (selectedNode.link && selectedNode.link.startsWith('zotero://') ? selectedNode.link : null) ||
     (nodeDoi ? `https://doi.org/${nodeDoi}` : null);
-  const zoteroTargetKey =
-    nodeSpecificTarget ||
-    currentDoc.metadata?.zoteroItemKey ||
-    currentDoc.metadata?.zoteroUri;
+  const docBoundTarget = !currentDoc.metadata?.mindflowUnlinkedContainer
+    ? (currentDoc.metadata?.zoteroItemKey || currentDoc.metadata?.zoteroUri)
+    : undefined;
+  const docArchiveTarget = currentDoc.metadata?.zoteroItemKey || currentDoc.metadata?.zoteroUri;
+  const zoteroTargetKey = nodeSpecificTarget || docBoundTarget;
 
-  if (!zoteroTargetKey) return null;
+  if (!zoteroTargetKey && !docArchiveTarget) return null;
 
   const handleLocateItem = async () => {
-    if (isLocatingItem) return;
+    if (isLocatingItem || !zoteroTargetKey) return;
     setIsLocatingItem(true);
     try {
       const success = await locateItemInZotero(zoteroTargetKey, selectedNode.text, { noteText: selectedNode.note });
@@ -43,6 +44,7 @@ const PropertySidebarZoteroBox = ({ ctx }: { ctx: PropertySidebarCtx }) => {
   };
 
   const handleOpenPdf = async () => {
+    if (!zoteroTargetKey) return;
     setIsOpeningPdf(true);
     try {
       const success = await openItemPdfInZotero(zoteroTargetKey, selectedNode.text, selectedNode.note);
@@ -59,10 +61,11 @@ const PropertySidebarZoteroBox = ({ ctx }: { ctx: PropertySidebarCtx }) => {
   };
 
   const handleManualSync = async () => {
+    if (!docArchiveTarget) return;
     setIsSyncingToZotero(true);
     setSyncStatusMsg(null);
     try {
-      const res = await saveMindMapToZoteroAttachment(currentDoc, zoteroTargetKey, { silent: true });
+      const res = await saveMindMapToZoteroAttachment(currentDoc, docArchiveTarget, { silent: true });
       if (res.success) {
         setSyncStatusMsg(res.message || '已同步至文献附件');
       } else {
@@ -76,7 +79,7 @@ const PropertySidebarZoteroBox = ({ ctx }: { ctx: PropertySidebarCtx }) => {
     }
   };
 
-  const docZoteroTitle = currentDoc.metadata?.zoteroItemTitle;
+  const docZoteroTitle = docBoundTarget ? currentDoc.metadata?.zoteroItemTitle : undefined;
 
   return (
     <div className="p-3 rounded-xl border border-sky-200 dark:border-sky-900 bg-sky-50/60 dark:bg-sky-950/20 space-y-2.5">
@@ -97,54 +100,58 @@ const PropertySidebarZoteroBox = ({ ctx }: { ctx: PropertySidebarCtx }) => {
         </div>
       )}
 
-      <div className="flex gap-2">
+      {zoteroTargetKey && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleLocateItem}
+            disabled={isLocatingItem}
+            className="flex-1 py-1.5 px-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer disabled:opacity-75"
+          >
+            {isLocatingItem ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>正在定位...</span>
+              </>
+            ) : (
+              <>
+                <MapPin className="w-3.5 h-3.5" />
+                <span>文库定位</span>
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleOpenPdf}
+            disabled={isOpeningPdf}
+            className="flex-1 py-1.5 px-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer disabled:opacity-75"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>{isOpeningPdf ? '正在打开...' : '阅读 PDF'}</span>
+          </button>
+        </div>
+      )}
+
+      {docArchiveTarget && (
         <button
           type="button"
-          onClick={handleLocateItem}
-          disabled={isLocatingItem}
-          className="flex-1 py-1.5 px-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer disabled:opacity-75"
+          onClick={handleManualSync}
+          disabled={isSyncingToZotero}
+          className="w-full py-1.5 px-2 bg-sky-100 hover:bg-sky-200 dark:bg-sky-900/40 dark:hover:bg-sky-900/70 text-sky-800 dark:text-sky-200 border border-sky-300/60 dark:border-sky-800 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
         >
-          {isLocatingItem ? (
+          {isSyncingToZotero ? (
             <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>正在定位...</span>
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <span>正在同步归档...</span>
             </>
           ) : (
             <>
-              <MapPin className="w-3.5 h-3.5" />
-              <span>文库定位</span>
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>立即同步至条目附件与笔记</span>
             </>
           )}
         </button>
-        <button
-          type="button"
-          onClick={handleOpenPdf}
-          disabled={isOpeningPdf}
-          className="flex-1 py-1.5 px-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer disabled:opacity-75"
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>{isOpeningPdf ? '正在打开...' : '阅读 PDF'}</span>
-        </button>
-      </div>
-
-      <button
-        type="button"
-        onClick={handleManualSync}
-        disabled={isSyncingToZotero}
-        className="w-full py-1.5 px-2 bg-sky-100 hover:bg-sky-200 dark:bg-sky-900/40 dark:hover:bg-sky-900/70 text-sky-800 dark:text-sky-200 border border-sky-300/60 dark:border-sky-800 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-      >
-        {isSyncingToZotero ? (
-          <>
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            <span>正在同步归档...</span>
-          </>
-        ) : (
-          <>
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>立即同步至条目附件与笔记</span>
-          </>
-        )}
-      </button>
+      )}
 
       {syncStatusMsg && (
         <div className="text-[10px] text-center text-emerald-600 dark:text-emerald-400 font-medium flex items-center justify-center gap-1">

@@ -98,8 +98,18 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
     e.stopPropagation();
     if (confirm('确定删除该导图文档吗？此操作无法撤销。')) {
       try {
+        const isCurrent = currentDoc.id === id;
         await StorageService.deleteDocument(id);
-        setDocList(await StorageService.getDocumentList());
+        const remaining = await StorageService.getDocumentList();
+        setDocList(remaining);
+        if (isCurrent) {
+          const nextDoc = remaining.find((d) => d.id !== id);
+          if (nextDoc) {
+            onSelectDoc(nextDoc.id);
+          } else {
+            onNewDoc();
+          }
+        }
       } catch (error: any) {
         alert(`删除失败：${error?.message || '请稍后重试'}`);
         setDocList(await StorageService.getDocumentList());

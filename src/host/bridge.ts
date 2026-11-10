@@ -59,7 +59,25 @@ export function createBridgeModule(deps: any = {}) {
     const owner = workspaceOwner(host, source);
     if (!owner || typeof data.documentId !== 'string' || typeof data.title !== 'string') return false;
     const { win, tab } = owner;
-    const switched = tab.data?.docId && tab.data.docId !== data.documentId;
+    const switched = Boolean(tab.data?.docId && tab.data.docId !== data.documentId);
+    const prevTarget = String(tab.data?.targetItemId || '');
+    let nextTarget: string;
+    if (data.attachmentKey && data.attachmentLibraryID) {
+      nextTarget = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
+    } else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
+      const parent = host.resolveItemReference?.(data.parentItemUri);
+      nextTarget = parent ? `items:${parent.libraryID}:${parent.key}` : `document:${data.documentId}`;
+    } else {
+      const aiParent = data.aiDraft && data.parentItemUri ? host.resolveItemReference?.(data.parentItemUri) : null;
+      if (data.aiDraft && aiParent) {
+        nextTarget = `ai:${aiParent.libraryID}:${aiParent.key}`;
+      } else if (data.unlinkedContainer && !switched && prevTarget.startsWith('collection:')) {
+        nextTarget = prevTarget;
+      } else {
+        nextTarget = `document:${data.documentId}`;
+      }
+    }
+    const targetChanged = Boolean(prevTarget && prevTarget !== nextTarget);
     tab.data = {
       ...tab.data,
       docId: data.documentId,
@@ -67,31 +85,40 @@ export function createBridgeModule(deps: any = {}) {
       parentItemUri: data.parentItemUri || null,
       openedAttachmentKey: data.attachmentKey || null,
       openedAttachmentLibraryID: data.attachmentLibraryID || null,
+      targetItemId: nextTarget,
+      ...(switched || targetChanged ? {
+        items: [],
+        collectionName: undefined,
+        collectionKey: undefined,
+        collectionLibraryID: undefined,
+        mode: ['open', 'import_file'].includes(tab.data?.mode) ? tab.data.mode : 'open_document',
+      } : {}),
     };
-    if (data.attachmentKey && data.attachmentLibraryID) {
-      tab.data.targetItemId = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
-    } else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
-      const parent = host.resolveItemReference?.(data.parentItemUri);
-      tab.data.targetItemId = parent ? `items:${parent.libraryID}:${parent.key}` : `document:${data.documentId}`;
-    } else if (switched) {
-      tab.data.targetItemId = `document:${data.documentId}`;
-    }
     win.Zotero_Tabs?.rename?.(tab.id, `MindFlow - ${data.title.trim().slice(0, 140)}`);
     return true;
   }
 
   function updateStandaloneContext(host: any, source: any, data: any) {
-    if (!host._standaloneWindows) return;
+    if (!host._standaloneWindows || typeof data.documentId !== 'string') return;
     const entry = [...host._standaloneWindows].find(([, win]) => sameWindow(win, source));
     if (!entry) return;
-    let target = entry[0];
+    const switched = Boolean(source._mindflowDocumentId && source._mindflowDocumentId !== data.documentId);
+    const prevTarget = String(entry[0]);
+    let target = prevTarget;
     if (data.attachmentKey && data.attachmentLibraryID) {
       target = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
     } else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
       const parent = host.resolveItemReference?.(data.parentItemUri);
       target = parent ? `items:${parent.libraryID}:${parent.key}` : `document:${data.documentId}`;
-    } else if (source._mindflowDocumentId && source._mindflowDocumentId !== data.documentId) {
-      target = `document:${data.documentId}`;
+    } else {
+      const aiParent = data.aiDraft && data.parentItemUri ? host.resolveItemReference?.(data.parentItemUri) : null;
+      if (data.aiDraft && aiParent) {
+        target = `ai:${aiParent.libraryID}:${aiParent.key}`;
+      } else if (data.unlinkedContainer && !switched && prevTarget.startsWith('collection:')) {
+        target = prevTarget;
+      } else {
+        target = `document:${data.documentId}`;
+      }
     }
     source._mindflowDocumentId = data.documentId;
     if (target !== entry[0]) {
@@ -115,6 +142,9 @@ export function createBridgeModule(deps: any = {}) {
     if (options.mode === 'create_blank') return `blank:${Date.now()}:${Math.random().toString(36).slice(2)}`;
     if (items.length) {
       return `${options.mode === 'ai_analyze' ? 'ai' : 'items'}:${items.map(i => `${i.libraryID}:${i.key}`).sort().join('|')}`;
+    }
+    if (options.mode === 'create_from_selection' || options.mode === 'create_from_items' || options.mode === 'ai_analyze') {
+      return `blank:${Date.now()}:${Math.random().toString(36).slice(2)}`;
     }
     return 'workspace';
   }

@@ -92,7 +92,7 @@ export const useAppZoteroArchive = (ctx: AppContext): void => {
       parentKey = snapshot.items[0].zoteroUri;
       archiveDoc = { ...current, metadata: { ...current.metadata,
         zoteroItemKey: parentKey, zoteroUri: parentKey, zoteroLibraryID: snapshot.items[0].libraryID,
-        zoteroAttachmentKey: undefined, zoteroAttachmentLibraryID: undefined } };
+        zoteroAttachmentKey: undefined, zoteroAttachmentLibraryID: undefined, mindflowUnlinkedContainer: false } };
     }
     await zoteroSyncQueueRef.current;
     const res = await saveMindMapToZoteroAttachment(archiveDoc, parentKey, { silent: false });
@@ -102,6 +102,7 @@ export const useAppZoteroArchive = (ctx: AppContext): void => {
           (current.metadata?.zoteroAttachmentKey !== res.attachmentKey || current.metadata?.zoteroItemKey !== res.parentItemUri ||
            Boolean(current.metadata?.mindflowUnlinkedContainer) !== Boolean(res.usedUnlinkedContainer)) &&
           !(await persistArchiveAssociation(current.id, res))) return;
+      if (currentDocIdRef.current !== current.id) return;
       setSaveStatus({ state: res.noteRequested && !res.savedNote ? 'warning' : 'saved',
         message: res.message || '已成功归档至 Zotero 文献条目！' });
     } else {
@@ -165,7 +166,7 @@ export const useAppZoteroArchive = (ctx: AppContext): void => {
       setWorkspaceRestoring(null);
       // Reload even after a partial restore so old editor state cannot write
       // over documents that were already restored successfully.
-      await reloadWorkspace();
+      await reloadWorkspace(true);
     }
   }, [flushCurrentDocument, reloadWorkspace]);
 

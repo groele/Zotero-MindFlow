@@ -14,8 +14,13 @@ export function renderItemPaneFallback(opts: {
   win: any;
   Zotero: any;
 }): void {
-  const { document, body, target, totalMaps, maps, state, host, win, Zotero } = opts;
+  const { document, body, target, totalMaps, maps, state, host, win } = opts;
   const createEl = makeElementFactory(document);
+  body.replaceChildren();
+  if (state) {
+    state.paneSignature = null;
+    state.paneActions = [];
+  }
 
   const fallback = createEl('div', 'mf-pane-wrap mf-pane-fallback');
   const primaryBtn = createEl('button', 'mf-btn-primary', target
@@ -25,18 +30,17 @@ export function renderItemPaneFallback(opts: {
   primaryBtn.disabled = Boolean(state?.saving);
   primaryBtn.addEventListener('click', async () => {
     if (primaryBtn.disabled) return;
-    const currentTarget = state?.targetID ? Zotero.Items.get(state.targetID) : null;
     primaryBtn.disabled = true;
     try {
-      if (totalMaps > 0 && maps[0]) {
+      if (target && totalMaps > 0 && maps[0]) {
         await host.openMindflowAttachment(maps[0], win);
-      } else if (currentTarget) {
-        await host.openMindFlow({ mode: 'create_from_selection', items: [currentTarget], forceNew: false }, win);
+      } else if (target) {
+        await host.openMindFlow({ mode: 'create_from_selection', items: [target], forceNew: false }, win);
       } else {
         await host.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
       }
       await state?.refresh?.();
-    } catch (_) {
+    } finally {
       primaryBtn.disabled = false;
     }
   });

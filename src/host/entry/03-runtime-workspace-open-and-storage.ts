@@ -145,15 +145,41 @@
       const owner = this.workspaceOwner(source);
       if (!owner || typeof data.documentId !== 'string' || typeof data.title !== 'string') return false;
       const { win, tab } = owner;
-      const switched = tab.data?.docId && tab.data.docId !== data.documentId;
-      tab.data = { ...tab.data, docId: data.documentId, doc: null,
-        parentItemUri: data.parentItemUri || null, openedAttachmentKey: data.attachmentKey || null,
-        openedAttachmentLibraryID: data.attachmentLibraryID || null };
-      if (data.attachmentKey && data.attachmentLibraryID) tab.data.targetItemId = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
-      else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
+      const switched = Boolean(tab.data?.docId && tab.data.docId !== data.documentId);
+      const prevTarget = String(tab.data?.targetItemId || '');
+      let nextTarget;
+      if (data.attachmentKey && data.attachmentLibraryID) {
+        nextTarget = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
+      } else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
         const parent = resolveItemReference(data.parentItemUri);
-        tab.data.targetItemId = parent ? `items:${itemIdentity(parent)}` : `document:${data.documentId}`;
-      } else if (switched) tab.data.targetItemId = `document:${data.documentId}`;
+        nextTarget = parent ? `items:${itemIdentity(parent)}` : `document:${data.documentId}`;
+      } else {
+        const aiParent = data.aiDraft && data.parentItemUri ? resolveItemReference(data.parentItemUri) : null;
+        if (data.aiDraft && aiParent) {
+          nextTarget = `ai:${itemIdentity(aiParent)}`;
+        } else if (data.unlinkedContainer && !switched && prevTarget.startsWith('collection:')) {
+          nextTarget = prevTarget;
+        } else {
+          nextTarget = `document:${data.documentId}`;
+        }
+      }
+      const targetChanged = Boolean(prevTarget && prevTarget !== nextTarget);
+      tab.data = {
+        ...tab.data,
+        docId: data.documentId,
+        doc: null,
+        parentItemUri: data.parentItemUri || null,
+        openedAttachmentKey: data.attachmentKey || null,
+        openedAttachmentLibraryID: data.attachmentLibraryID || null,
+        targetItemId: nextTarget,
+        ...(switched || targetChanged ? {
+          items: [],
+          collectionName: undefined,
+          collectionKey: undefined,
+          collectionLibraryID: undefined,
+          mode: ['open', 'import_file'].includes(tab.data?.mode) ? tab.data.mode : 'open_document',
+        } : {}),
+      };
       win.Zotero_Tabs.rename?.(tab.id, `MindFlow - ${data.title.trim().slice(0,140)}`);
       return true;
     },
@@ -172,17 +198,26 @@
       return true;
     },
     updateStandaloneContext(source, data) {
-      if (!this._standaloneWindows) return;
+      if (!this._standaloneWindows || typeof data.documentId !== 'string') return;
       const entry = [...this._standaloneWindows].find(([, win]) => sameWindow(win, source));
       if (!entry) return;
-      let target = entry[0];
+      const switched = Boolean(source._mindflowDocumentId && source._mindflowDocumentId !== data.documentId);
+      const prevTarget = String(entry[0]);
+      let target = prevTarget;
       if (data.attachmentKey && data.attachmentLibraryID) {
         target = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
       } else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
         const parent = resolveItemReference(data.parentItemUri);
         target = parent ? `items:${itemIdentity(parent)}` : `document:${data.documentId}`;
-      } else if (source._mindflowDocumentId && source._mindflowDocumentId !== data.documentId) {
-        target = `document:${data.documentId}`;
+      } else {
+        const aiParent = data.aiDraft && data.parentItemUri ? resolveItemReference(data.parentItemUri) : null;
+        if (data.aiDraft && aiParent) {
+          target = `ai:${itemIdentity(aiParent)}`;
+        } else if (data.unlinkedContainer && !switched && prevTarget.startsWith('collection:')) {
+          target = prevTarget;
+        } else {
+          target = `document:${data.documentId}`;
+        }
       }
       source._mindflowDocumentId = data.documentId;
       if (target !== entry[0]) {

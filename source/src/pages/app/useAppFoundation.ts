@@ -110,6 +110,8 @@ export const useAppFoundation = (ctx: AppContext): void => {
     saveGenerationRef.current += 1;
     emergencyDraftRef.current = null;
     setEditingId(null);
+    setIsSearchOpen(false);
+    setSearchMatchedIds([]);
     setContextMenuState(null);
     setCanvasContextMenuState(null);
     setIsPresentationOpen(false);
@@ -134,12 +136,13 @@ export const useAppFoundation = (ctx: AppContext): void => {
         ? ((window as any)._mindflowInitialAction || (window.frameElement as any)?._mindflowInitialAction || window.arguments?.[0]?.wrappedJSObject || window.arguments?.[0])
         : null;
       if (initialAction && (
+        initialAction.mode === 'create_blank' ||
         initialAction.mode === 'import_file' ||
-        (initialAction.mode === 'open_document' && !!initialAction.doc) ||
-        ((initialAction.mode === 'create_from_selection' || initialAction.mode === 'create_from_items') &&
-          Array.isArray(initialAction.items) && initialAction.items.length > 0) ||
-        (initialAction.mode === 'create_from_collection' && Array.isArray(initialAction.items)) ||
-        (initialAction.mode === 'ai_analyze' && Array.isArray(initialAction.items) && !!initialAction.items[0]?.zoteroUri)
+        initialAction.mode === 'open_document' ||
+        initialAction.mode === 'create_from_selection' ||
+        initialAction.mode === 'create_from_items' ||
+        initialAction.mode === 'create_from_collection' ||
+        initialAction.mode === 'ai_analyze'
       )) {
         hasDirectAction = true;
       }

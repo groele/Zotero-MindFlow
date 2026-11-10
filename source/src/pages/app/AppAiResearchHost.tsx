@@ -3,7 +3,7 @@ import { openZoteroPreferences } from '../../services/zotero/zoteroBridge';
 import type { AppContext } from './appContext';
 
 export const AppAiResearchHost = ({ ctx }: { ctx: AppContext }) => {
-  const { doc, aiWorkflow, setAiWorkflow, settings, handleAnalyzeZoteroPaper,
+  const { doc, aiWorkflow, setAiWorkflow, setSaveStatus, settings, handleAnalyzeZoteroPaper,
          handleCancelAiAnalysis, handleStartAiAnalysis } = ctx;
   return (
     <>
@@ -20,7 +20,12 @@ export const AppAiResearchHost = ({ ctx }: { ctx: AppContext }) => {
           else if (aiWorkflow?.reference) void handleAnalyzeZoteroPaper(aiWorkflow.reference);
         }}
         onCancel={handleCancelAiAnalysis}
-        onClose={() => setAiWorkflow(null)}
+        onClose={() => {
+          setAiWorkflow(null);
+          if (!doc) {
+            setSaveStatus({ state: 'warning', message: '未创建论文研究导图；可点击下方按钮新建空白导图。' });
+          }
+        }}
         onRefresh={(readingMode, abstractSelection) => { if (aiWorkflow?.reference) void handleAnalyzeZoteroPaper(aiWorkflow.reference, readingMode || aiWorkflow.preview?.readingMode, abstractSelection); }}
         onSettings={() => openZoteroPreferences('llm-for-zotero')}
       />

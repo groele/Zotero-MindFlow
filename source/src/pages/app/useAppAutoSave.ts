@@ -49,9 +49,10 @@ export const useAppAutoSave = (ctx: AppContext): void => {
               createdAt: Date.now(),
             });
             if (currentDocIdRef.current !== doc.id) return;
+            await StorageService.setActiveDocumentId(copy.id);
+            if (currentDocIdRef.current !== doc.id) return;
             cleanDocRef.current = copy;
             cleanRelationshipsRef.current = latestRelationships;
-            await StorageService.setActiveDocumentId(copy.id);
             const afterCopy = latestDocRef.current;
             setDoc(afterCopy?.id === doc.id && afterCopy !== latestLocal
               ? { ...afterCopy, root: retargetDocumentLinks(afterCopy.root, doc.id, copy.id), id: copy.id, title: copy.title, revision: copy.revision, createdAt: copy.createdAt, metadata: copy.metadata }

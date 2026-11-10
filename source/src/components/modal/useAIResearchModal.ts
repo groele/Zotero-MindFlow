@@ -36,12 +36,53 @@ export const useAIResearchModal = ({
     abstract: true, pdf: true, notes: false, highlights: false, comments: false,
   });
   const scope = preview?.sourceScope;
-  const sourceRows: Array<{ key: keyof ResearchSourceSelection; label: string; available: boolean }> = [
-    { key: 'abstract', label: '摘要', available: Boolean(scope?.hasAbstract || preview?.abstractText) },
-    { key: 'pdf', label: 'PDF 正文 / 节选', available: Boolean((scope?.pdfCharacters && scope.pdfCharacters > 0) || (preview?.sourceCharacters?.pdf && preview.sourceCharacters.pdf > 0)) },
-    { key: 'notes', label: `Zotero 笔记（${scope?.noteCount || 0} 条）`, available: Boolean(scope?.noteCount) },
-    { key: 'highlights', label: `批注划线（${scope?.highlightCount || 0} 条）`, available: Boolean(scope?.highlightCount) },
-    { key: 'comments', label: `读者评论（${scope?.commentCount || 0} 条）`, available: Boolean(scope?.commentCount) },
+  const isAbstractMode = preview?.readingMode === 'abstract';
+  const hasPdfAttachment = Boolean(scope?.pdfAttachmentCount && scope.pdfAttachmentCount > 0);
+  const pdfAvailable = Boolean((scope?.pdfCharacters && scope.pdfCharacters > 0) || (preview?.sourceCharacters?.pdf && preview.sourceCharacters.pdf > 0));
+  const sourceRows: Array<{
+    key: keyof ResearchSourceSelection;
+    label: string;
+    available: boolean;
+    hint?: string;
+    canSwitchToPdf?: boolean;
+  }> = [
+    {
+      key: 'abstract',
+      label: '摘要',
+      available: Boolean(scope?.hasAbstract || preview?.abstractText),
+      hint: Boolean(scope?.hasAbstract || preview?.abstractText) ? undefined : '文献摘要为空',
+    },
+    {
+      key: 'pdf',
+      label: 'PDF 正文 / 节选',
+      available: pdfAvailable,
+      hint: pdfAvailable
+        ? undefined
+        : hasPdfAttachment && isAbstractMode
+          ? '聚焦摘要模式未载入正文'
+          : hasPdfAttachment
+            ? 'PDF 未提取到可分析文字'
+            : '文献无本地 PDF 附件',
+      canSwitchToPdf: !pdfAvailable && hasPdfAttachment && isAbstractMode,
+    },
+    {
+      key: 'notes',
+      label: `Zotero 笔记（${scope?.noteCount || 0} 条）`,
+      available: Boolean(scope?.noteCount),
+      hint: scope?.noteCount ? undefined : '文献暂无笔记',
+    },
+    {
+      key: 'highlights',
+      label: `批注划线（${scope?.highlightCount || 0} 条）`,
+      available: Boolean(scope?.highlightCount),
+      hint: scope?.highlightCount ? undefined : '暂无高亮划线',
+    },
+    {
+      key: 'comments',
+      label: `读者评论（${scope?.commentCount || 0} 条）`,
+      available: Boolean(scope?.commentCount),
+      hint: scope?.commentCount ? undefined : '暂无批注评论',
+    },
   ];
   const enabledSources: ResearchSourceSelection = {
     abstract: sources.abstract && Boolean(scope?.hasAbstract || preview?.abstractText),

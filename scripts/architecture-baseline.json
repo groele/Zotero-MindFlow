@@ -4,8 +4,18 @@
   "capturedAt": "2026-11-06",
   "debtCleared": true,
   "note": "Known §5.9 debt. Listed files may stay at or below the recorded line count, but must never grow; any other source file above 360 lines fails the guard. Remove an entry only after splitting that module below 360 lines. Every entry must still exist and must still exceed the ceiling - stale entries are rejected by the baseline integrity test.",
-  "lastReleasedVersion": "16.1.0",
+  "lastReleasedVersion": "16.1.1",
   "splitHistory": [
+    {
+      "version": "16.1.1",
+      "date": "2026-11-10",
+      "resolved": [
+        "Harden data flow and lifecycle against stale state reuse, empty selection leaks and dangling active doc pointers",
+        "Streamline AI Research modal layout: literature preview prioritized, collapsible custom prompts and presets",
+        "Enrich source selection fieldset with explicit disabled state explanations and direct full-text reading shortcuts",
+        "Maintained 100% compliance across all 182 source files under 360-line ceiling"
+      ]
+    },
     {
       "version": "16.1.0",
       "date": "2026-11-10",

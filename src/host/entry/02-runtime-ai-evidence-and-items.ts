@@ -300,8 +300,8 @@
     if (options.mode === 'create_from_collection') {
       return `collection:${options.collectionLibraryID}:${options.collectionKey}`;
     }
-    if (options.mode === 'create_blank') return `blank:${Date.now()}:${Math.random().toString(36).slice(2)}`;
     if (items.length) return `${options.mode === 'ai_analyze' ? 'ai' : 'items'}:${items.map(itemIdentity).sort().join('|')}`;
+    if (options.mode === 'create_blank' || options.mode === 'create_from_selection' || options.mode === 'create_from_items' || options.mode === 'ai_analyze') return `blank:${Date.now()}:${Math.random().toString(36).slice(2)}`;
     return 'workspace';
   };
   const openActionMessage = (options, items) => ({

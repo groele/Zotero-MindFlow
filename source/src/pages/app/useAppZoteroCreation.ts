@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { ZoteroItemData, convertZoteroItemToNode, extractZoteroItemData, saveMindMapToZoteroAttachment } from '../../services/zotero/zoteroBridge';
+import { ZoteroItemData, convertZoteroItemToNode, extractZoteroItemData, getSelectedZoteroItems, saveMindMapToZoteroAttachment } from '../../services/zotero/zoteroBridge';
 import { MindMapDocument, MindMapNode } from '../../core/model/types';
 import { generateId } from '../../core/model/treeOps';
 import { StorageService } from '../../services/storage/storageService';
@@ -9,7 +9,7 @@ export const useAppZoteroCreation = (ctx: AppContext): void => {
   const { setDoc, setSelectedId, setSelectedIds, isZoteroMode, zoteroHostConnectedRef,
          setIsWelcomeOpen, setRelationships, settings, setSaveStatus, cleanDocRef,
          cleanRelationshipsRef, latestDocRef, latestRelationshipsRef, activeDocLoadTokenRef, currentDocIdRef,
-         historyRef, syncHistoryState, centerCanvas, flushCurrentDocument, persistArchiveAssociation } = ctx;
+         createBlankDocRef, historyRef, syncHistoryState, centerCanvas, flushCurrentDocument, persistArchiveAssociation } = ctx;
   /**
    * Create a brand-new dedicated mind map document from Zotero literature item(s),
    * set the root node and document title to the paper, and immediately archive
@@ -17,13 +17,20 @@ export const useAppZoteroCreation = (ctx: AppContext): void => {
    */
   const createMindMapFromZoteroItems = useCallback(
     async (rawItems: any[] | ZoteroItemData[], fromZoteroHost = false, forceNew = false) => {
-      if (!Array.isArray(rawItems) || rawItems.length === 0) return;
+      if (!Array.isArray(rawItems) || rawItems.length === 0) {
+        await createBlankDocRef?.current?.();
+        return;
+      }
       const parsedItems: ZoteroItemData[] = [];
       for (const raw of rawItems) {
         const d = extractZoteroItemData(raw);
         if (d) parsedItems.push(d);
       }
-      if (parsedItems.length === 0) return;
+      if (parsedItems.length === 0) {
+        setSaveStatus({ state: 'warning', message: '所选项目不包含有效的科研文献元数据，已为您创建空白思维导图。' });
+        await createBlankDocRef?.current?.();
+        return;
+      }
 
       const token = ++activeDocLoadTokenRef.current;
       if (!(await flushCurrentDocument()) || token !== activeDocLoadTokenRef.current) return;
@@ -35,7 +42,9 @@ export const useAppZoteroCreation = (ctx: AppContext): void => {
       // If this tab already has this single item open, don't overwrite user's work unless explicitly forced
       const isForcedNew = forceNew;
       if (parsedItems.length === 1 && latestDocRef.current && !isForcedNew) {
-        const currentMetaUri = latestDocRef.current.metadata?.zoteroUri || latestDocRef.current.metadata?.zoteroItemKey;
+        const currentMetaUri = !latestDocRef.current.metadata?.mindflowUnlinkedContainer
+          ? (latestDocRef.current.metadata?.zoteroUri || latestDocRef.current.metadata?.zoteroItemKey)
+          : undefined;
         if (currentMetaUri && currentMetaUri === primaryItemKey) {
           setSaveStatus({ state: 'saved', message: `当前标签页正在研读文献【${primaryItem.title || ''}】` });
           setTimeout(() => centerCanvas(), 60);
@@ -115,6 +124,7 @@ export const useAppZoteroCreation = (ctx: AppContext): void => {
         savedDoc = await StorageService.saveDocument(newDoc);
         if (token !== activeDocLoadTokenRef.current) return;
         await StorageService.setActiveDocumentId(savedDoc.id);
+        if (token !== activeDocLoadTokenRef.current) return;
       } catch (error: any) {
         setSaveStatus({ state: 'error', message: `新导图未完成本地保存：${error?.message || error}` });
         return;
@@ -139,10 +149,13 @@ export const useAppZoteroCreation = (ctx: AppContext): void => {
         setSaveStatus({ state: 'saving', message: '正在自动归档至 Zotero 文献条目…' });
         try {
           const res = await saveMindMapToZoteroAttachment(savedDoc, primaryItemKey, { silent: false });
-          if (res.success) await persistArchiveAssociation(savedDoc.id, res);
+          if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== savedDoc.id) return;
+          if (res.success && !(await persistArchiveAssociation(savedDoc.id, res))) return;
+          if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== savedDoc.id) return;
           setSaveStatus({ state: res.success && (!res.noteRequested || res.savedNote) ? 'saved' : 'warning', message: res.message });
         } catch (e: any) {
           console.warn('[MindFlow] Auto-archive note:', e);
+          if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== savedDoc.id) return;
           setSaveStatus({ state: 'warning', message: '导图已创建，但归档至条目附件受阻：' + (e?.message || e) });
         }
       } else {
@@ -152,9 +165,12 @@ export const useAppZoteroCreation = (ctx: AppContext): void => {
             const result = await saveMindMapToZoteroAttachment(savedDoc, {
               archiveToUnlinkedContainer: true,
             });
+            if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== savedDoc.id) return;
             if (result.success && !(await persistArchiveAssociation(savedDoc.id, result))) return;
+            if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== savedDoc.id) return;
             setSaveStatus({ state: result.success ? 'saved' : 'warning', message: result.message });
           } catch (error: any) {
+            if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== savedDoc.id) return;
             setSaveStatus({ state: 'warning', message: `专题导图已保存在本机，Zotero 归档失败：${error?.message || error}` });
           }
         } else {
@@ -239,16 +255,34 @@ export const useAppZoteroCreation = (ctx: AppContext): void => {
           const result = await saveMindMapToZoteroAttachment(saved, {
             archiveToUnlinkedContainer: true,
           });
+          if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== saved.id) return;
           if (result.success && !(await persistArchiveAssociation(saved.id, result))) return;
+          if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== saved.id) return;
           setSaveStatus({ state: result.success ? 'saved' : 'warning', message: result.message });
         } catch (error: any) {
+          if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== saved.id) return;
           setSaveStatus({ state: 'warning', message: `分类导图已保存在本机，Zotero 归档失败：${error?.message || error}` });
         }
       } else {
         setSaveStatus({ state: 'saved', message: '分类导图已保存到本机工作区。' });
       }
     },
-    [centerCanvas, flushCurrentDocument, isZoteroMode, persistArchiveAssociation, settings, syncHistoryState]
+    [centerCanvas, createBlankDocRef, flushCurrentDocument, isZoteroMode, persistArchiveAssociation, settings, syncHistoryState]
   );
-  Object.assign(ctx, { createMindMapFromZoteroItems, importZoteroCollection });
+
+  const handleCreateFromZoteroItems = useCallback(async () => {
+    if (!isZoteroMode) {
+      setSaveStatus({ state: 'warning', message: 'Zotero 连接尚未就绪；请从 Zotero 打开 MindFlow 后再选择论文。' });
+      return;
+    }
+    const items = getSelectedZoteroItems();
+    if (!items.length) {
+      setSaveStatus({ state: 'warning', message: '未在 Zotero 中选中任何文献条目，已为您创建空白思维导图。' });
+      await createBlankDocRef?.current?.();
+      return;
+    }
+    await createMindMapFromZoteroItems(items, true, true);
+  }, [createBlankDocRef, createMindMapFromZoteroItems, isZoteroMode, setSaveStatus]);
+
+  Object.assign(ctx, { createMindMapFromZoteroItems, importZoteroCollection, handleCreateFromZoteroItems });
 };

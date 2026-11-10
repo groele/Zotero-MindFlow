@@ -91,6 +91,7 @@ export const useAppTemplates = (ctx: AppContext): void => {
     setRelationships(cleanRelationshipsRef.current);
     setDoc(savedDoc);
     setSelectedId(newDoc.root.id);
+    setSelectedIds([]);
     historyRef.current.clear();
     syncHistoryState();
     setIsTemplateModalOpen(false);
@@ -102,9 +103,12 @@ export const useAppTemplates = (ctx: AppContext): void => {
         const result = await saveMindMapToZoteroAttachment(savedDoc, target?.zoteroUri, {
           archiveToUnlinkedContainer: !target,
         });
+        if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== savedDoc.id) return;
         if (result.success && !(await persistArchiveAssociation(savedDoc.id, result))) return;
+        if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== savedDoc.id) return;
         setSaveStatus({ state: result.success && (!result.noteRequested || result.savedNote) ? 'saved' : 'warning', message: result.message });
       } catch (error: any) {
+        if (token !== activeDocLoadTokenRef.current || currentDocIdRef.current !== savedDoc.id) return;
         setSaveStatus({ state: 'warning', message: `模板导图已保存在本机，Zotero 归档失败：${error?.message || error}` });
       }
     }

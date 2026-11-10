@@ -190,9 +190,9 @@ mindflow-pref-webdav-autoSyncOnSave-desc = 每次在工作台保存导图时，�
 
 
 mindflow-pref-version = v{ $version }
-mindflow-pref-release-notes-text = 16.1.0：AI 解析论文生成导图功能独立至主工具栏，支持响应式与状态指示
+mindflow-pref-release-notes-text = 16.1.1：全链路数据流防穿透加固、AI分析弹窗文献居首重排与资料来源快捷导流
 mindflow-pref-release-date = 2026-11-10
-mindflow-pref-release-xpi = zotero-mindflow-16.1.0.xpi
+mindflow-pref-release-xpi = zotero-mindflow-16.1.1.xpi
 mindflow-pref-release-repo = github.com/groele/Zotero-MindFlow
 mindflow-pref-release-aria = 版本信息
 mindflow-pref-notice-backup = 提示：额外保存文件夹不代替文献条目下的 .mindflow 附件。历史快照与完整版本回溯可在导图工作台顶栏的「历史」面板中直接浏览与一键恢复。

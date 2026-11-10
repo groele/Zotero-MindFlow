@@ -300,3 +300,58 @@ test('sidebar errors are visible and repeated renders register only one refresh 
   queued[1]();
   assert.equal(count, 1);
 });
+
+test('triggerMindFlowOpen with no literature selection dispatches clean create_blank rather than previous tab', async () => {
+  const f = fixture();
+  const paper = f.paper('PAPER_PREVIOUS');
+  // 1. Open an existing MindFlow tab for a paper
+  f.host.openMindFlow({ mode: 'create_from_selection', items: [paper], forceNew: true }, f.win);
+  assert.equal(f.tabs._tabs.filter(tab => tab.type === 'mindflow').length, 1);
+  const paperTab = f.tabs._tabs.find(tab => tab.type === 'mindflow');
+
+  // 2. User switches to library pane with NO selection
+  f.tabs.selectedID = 'zotero-pane';
+  f.win.ZoteroPane.getSelectedItems = () => [];
+
+  // 3. User clicks MindFlow toolbar button (triggerMindFlowOpen)
+  await f.host.triggerMindFlowOpen(f.win);
+
+  // 4. Must open a NEW blank tab, NOT focus or reuse the previous paper's tab
+  const mindflowTabs = f.tabs._tabs.filter(tab => tab.type === 'mindflow');
+  assert.equal(mindflowTabs.length, 2, 'must create a new dedicated blank tab');
+  const blankTab = mindflowTabs.find(tab => tab.id !== paperTab.id);
+  assert.ok(blankTab, 'new blank tab must exist');
+  assert.equal(blankTab.data?.mode, 'create_blank');
+  assert.equal(f.tabs.selectedID, blankTab.id);
+});
+
+test('item pane section clears stale target when selection is empty and clicking button creates blank map', async () => {
+  const f = fixture();
+  const paper = f.paper('PAPER_STALE');
+  f.host.registerItemPaneSection();
+  const section = f.Zotero.ItemPaneManager.sections.get(f.host.itemPaneSectionID);
+  const body = f.doc.createElement('div');
+
+  // 1. Render for a literature item
+  section.onRender({ body, item: paper });
+
+  // 2. Deselect all items (item: null, even if getSelectedItems is stale)
+  f.win.ZoteroPane.getSelectedItems = () => [paper]; // Simulating stale pane selection
+  section.onItemChange({ item: null, setEnabled() {} });
+  section.onRender({ body, item: null });
+
+  // 3. Verify fallback button is "新建空白思维导图"
+  const all = node => [node, ...node.children.flatMap(all)];
+  const createBtn = all(body).find(node => node.className === 'mf-btn-primary');
+  assert.ok(createBtn);
+  assert.equal(createBtn.textContent, '新建空白思维导图');
+
+  // 4. Clicking button must open create_blank, NOT create_from_selection with the stale paper
+  let openOptions = null;
+  f.host.openMindFlow = (opts) => { openOptions = opts; };
+  await createBtn.click({ preventDefault() {}, stopPropagation() {} });
+  assert.ok(openOptions);
+  assert.equal(openOptions.mode, 'create_blank');
+  assert.equal(openOptions.forceNew, true);
+  assert.equal(openOptions.items, undefined);
+});

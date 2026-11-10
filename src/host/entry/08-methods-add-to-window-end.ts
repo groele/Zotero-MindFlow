@@ -20,18 +20,6 @@
               tabs.rename?.(ownerTab.id, displayTitle);
               if (data.type === 'MINDFLOW_DOCUMENT_CONTEXT' && typeof data.documentId === 'string') {
                 this.updateWorkspaceContext(source, data);
-                const switchedDocument = ownerTab.data?.docId && ownerTab.data.docId !== data.documentId;
-                ownerTab.data = { ...ownerTab.data, docId: data.documentId, doc: null,
-                  parentItemUri: data.parentItemUri || null,
-                  openedAttachmentKey: data.attachmentKey || null };
-                if (data.attachmentKey && data.attachmentLibraryID) {
-                  ownerTab.data.targetItemId = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
-                } else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
-                  const parent = resolveItemReference(data.parentItemUri);
-                  ownerTab.data.targetItemId = parent ? `items:${itemIdentity(parent)}` : `document:${data.documentId}`;
-                } else if (switchedDocument) {
-                  ownerTab.data.targetItemId = `document:${data.documentId}`;
-                }
               }
             }
           }

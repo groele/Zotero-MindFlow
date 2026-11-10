@@ -132,6 +132,7 @@ export const AppWorkspace = ({ ctx }: { ctx: AppContext }) => {
 
           {/* In-Canvas Search Floating Widget */}
           <CanvasSearch
+            key={doc.id}
             isOpen={isSearchOpen}
             onClose={() => setIsSearchOpen(false)}
             rootNode={doc.root}
@@ -159,6 +160,7 @@ export const AppWorkspace = ({ ctx }: { ctx: AppContext }) => {
         {/* Opposite Inspector Sidebar (Node Style, Task, Icons, Tags, Note, Link) */}
         {!isZenMode && isPropertySidebarOpen && selectedNode && (
           <PropertySidebar
+            key={doc.id}
             selectedNode={selectedNode}
             currentDoc={doc}
             onUpdateNode={handleUpdateNodePatch}

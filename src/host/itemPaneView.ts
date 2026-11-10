@@ -2,7 +2,8 @@
  * Zotero MindFlow - ItemPane DOM View & Interactive Actions
  */
 
-import { makeElementFactory } from './itemPaneDom.js';
+import { makeElementFactory, createTemplateSection } from './itemPaneDom.js';
+import { hasTargetPDF, isPdfAttachmentItem, isTargetEditable, syncPaneActionStates } from './itemPaneHelpers.js';
 export { renderItemPaneFallback } from './itemPaneFallback.js';
 
 export async function renderItemPaneContent(opts: {
@@ -17,24 +18,36 @@ export async function renderItemPaneContent(opts: {
   T: (zh: string, en: string) => string;
   setSectionSummary?: (summary: string) => void;
   lastPaneTargetRef: { current: any };
+  lastPaneItemRef: { current: any };
   lastPaneActions: any[];
 }): Promise<void> {
-  const { document, body, target, item, state, host, win, Zotero, T, setSectionSummary, lastPaneTargetRef, lastPaneActions } = opts;
+  const { document, body, target, item, state, host, win, Zotero, T, setSectionSummary, lastPaneTargetRef, lastPaneItemRef, lastPaneActions } = opts;
   const createEl = makeElementFactory(document);
 
   const maps = host.getMindflowAttachments(target);
   const totalMaps = maps.length;
+  const isEditable = isTargetEditable(target);
+  const hasPDF = hasTargetPDF(target, item, () => Zotero);
 
   const signature = JSON.stringify([
-    target.id, target.getField?.('title') || '', item?.id || null, host.paneText('zh', 'en'),
+    target.id, target.getField?.('title') || '', item?.id || null, isEditable, hasPDF, host.paneText('zh', 'en'),
     maps.map((att: any) => [att.id, att.dateModified || '', att.getField?.('title') || att.attachmentFilename || '']),
     (target.getAttachments?.() || []).length,
   ]);
   if (state && state.paneSignature === signature && body.children?.length > 0 && body.children[0]?.className === 'mf-pane-wrap') {
+    if (Array.isArray(state.paneActions)) {
+      lastPaneActions.length = 0;
+      lastPaneActions.push(...state.paneActions);
+    }
+    syncPaneActionStates(lastPaneActions, target, item, () => Zotero);
     return;
   }
+  lastPaneActions.length = 0;
   body.replaceChildren();
-  if (state) state.paneSignature = null;
+  if (state) {
+    state.paneSignature = null;
+    state.paneActions = [];
+  }
 
   setSectionSummary?.(totalMaps ? String(totalMaps) : host.paneText('展开后快速新建', 'Create quickly'));
 
@@ -48,7 +61,6 @@ export async function renderItemPaneContent(opts: {
   const headerCard = createEl('div', 'mf-header-card');
   const headerTop = createEl('div', 'mf-header-top');
 
-  const isEditable = Boolean(target && !target.deleted && (typeof target.isEditable !== 'function' || target.isEditable()));
   const statusBadge = createEl('span', `mf-status-badge ${!isEditable ? 'mf-status-readonly' : (totalMaps > 0 ? 'mf-status-active' : 'mf-status-empty')}`);
   if (!isEditable) {
     statusBadge.textContent = T('只读文献', 'Read-only');
@@ -58,12 +70,6 @@ export async function renderItemPaneContent(opts: {
     statusBadge.setAttribute('data-l10n-id', totalMaps > 0 ? 'mindflow-item-pane-linked-maps-title' : 'mindflow-item-pane-no-map');
   }
   headerTop.appendChild(statusBadge);
-
-  const selectedPDF = item?.isPDFAttachment?.() || /\.pdf$/i.test(item?.attachmentFilename || '') ? item : null;
-  const hasPDF = Boolean(selectedPDF || (target?.getAttachments?.().some((id: any) => {
-    const att = Zotero.Items.get(id);
-    return att && !att.deleted && (att.isPDFAttachment?.() || att.attachmentContentType === 'application/pdf' || /\.pdf$/i.test(att.attachmentFilename || ''));
-  })));
 
   const metaIndicator = createEl('span', 'mf-header-meta', hasPDF ? T('PDF 就绪', 'PDF ready') : T('无 PDF', 'No PDF'));
   metaIndicator.setAttribute('data-l10n-id', hasPDF ? 'mindflow-item-pane-pdf-ready' : 'mindflow-item-pane-pdf-missing');
@@ -85,11 +91,13 @@ export async function renderItemPaneContent(opts: {
     primaryBtn.textContent = T('文献只读，无法新增导图', 'Read-only item, cannot add map');
     primaryBtn.title = T('当前文献为只读（或在回收站中）', 'This item is read-only or in Trash');
   } else {
+    primaryBtn.disabled = false;
     primaryBtn.removeAttribute('aria-disabled');
     primaryBtn.textContent = totalMaps > 0 ? T('＋ 按所选模板新增导图', '＋ Add map with template') : T('＋ 一键生成文献思维导图', '＋ Create map for this item');
     primaryBtn.setAttribute('data-l10n-id', totalMaps > 0 ? 'mindflow-item-pane-add-from-template' : 'mindflow-item-pane-generate-map');
   }
   wrapper.appendChild(primaryBtn);
+  lastPaneActions.push({ id: 'create', button: primaryBtn });
 
   const primaryHint = createEl('div', 'mf-add-hint', !isEditable
     ? T('当前文献为只读（或在回收站中），导图仅保存在本地工作区，不会写入附件。', 'This item is read-only or in Trash. Maps are kept in local workspace and will not be saved as attachments.')
@@ -98,64 +106,35 @@ export async function renderItemPaneContent(opts: {
   wrapper.appendChild(primaryHint);
 
   // 3. Quick Create Map Section
-  const createSection = createEl('div', 'mf-create-section');
-  const sectionTitle = createEl('div', 'mf-section-title', T('快速新建导图', 'Quick create map'));
-  sectionTitle.setAttribute('data-l10n-id', 'mindflow-item-pane-quick-create-title');
-  createSection.appendChild(sectionTitle);
-
-  const templateBox = createEl('div', 'mf-template-box');
-  const templateRow = createEl('div', 'mf-template-row');
-  const templateLabel = createEl('span', 'mf-template-label', T('导图模板', 'Template'));
-  templateLabel.setAttribute('data-l10n-id', 'mindflow-item-pane-template-label');
-  templateRow.appendChild(templateLabel);
-
-  const templateSelect = createEl('select', 'mf-template-select');
-  templateSelect.setAttribute('aria-label', T('导图模板', 'Map template'));
-  templateSelect.setAttribute('data-l10n-id', 'mindflow-item-pane-template-select');
-  const templates = [
-    { id: 'imrad', name: T('经典论文框架 (IMRaD 结构)', 'Research paper (IMRaD)') },
-    { id: 'review', name: T('文献对比与综述导图', 'Literature comparison and review') },
-    { id: 'critical', name: T('批判性精读导图', 'Critical reading') },
-    { id: 'outline', name: T('极简结构大纲', 'Minimal outline') },
-    { id: 'blank', name: T('空白思维导图', 'Blank map') },
-  ];
-  for (const t of templates) {
-    const opt = createEl('option', '', t.name);
-    (opt as HTMLOptionElement).value = t.id;
-    templateSelect.appendChild(opt);
-  }
-  templateRow.appendChild(templateSelect);
-  templateBox.appendChild(templateRow);
-
-  const templateDesc = createEl('div', 'mf-hint-text', T('选择预设学术模板，一键生成结构化文献研读导图', 'Select an academic template to generate a structured map'));
-  templateBox.appendChild(templateDesc);
-
-  const templateCreateBtn = createEl('button', 'mf-btn-template-create', !isEditable ? T('文献只读，无法按模板生成', 'Read-only item, cannot generate') : T('按所选模板生成导图', 'Generate map from template'));
-  templateCreateBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-template-create');
-  templateCreateBtn.type = 'button';
-  if (!isEditable) {
-    templateCreateBtn.disabled = true;
-    templateCreateBtn.setAttribute('aria-disabled', 'true');
-    templateCreateBtn.title = T('当前文献为只读（或在回收站中）', 'This item is read-only or in Trash');
-  }
-  templateBox.appendChild(templateCreateBtn);
-  createSection.appendChild(templateBox);
+  const { createSection, templateSelect, templateCreateBtn } = createTemplateSection({ createEl, isEditable, T });
   wrapper.appendChild(createSection);
+  lastPaneActions.push({ id: 'template', button: templateCreateBtn });
 
-  const onGenerate = async (e: any) => {
-    e.preventDefault(); e.stopPropagation();
-    if (!isEditable) return;
+  const makeGenerateHandler = (button: any) => async (e: any = {}) => {
+    e.preventDefault?.(); e.stopPropagation?.();
+    const currentTarget = lastPaneTargetRef.current;
+    if (button.disabled || !currentTarget || !isTargetEditable(currentTarget)) return;
+    button.disabled = true;
     try {
-      const currentTarget = lastPaneTargetRef.current || target;
-      if (!currentTarget) return;
-      await host.openMindFlow({ mode: 'create_from_selection', items: [currentTarget], template: (templateSelect as any).value || 'imrad', forceNew: totalMaps > 0 }, win);
+      const currentMaps = host.getMindflowAttachments(currentTarget);
+      await host.openMindFlow({
+        mode: 'create_from_selection',
+        items: [currentTarget],
+        template: (templateSelect as any).value || 'imrad',
+        forceNew: currentMaps.length > 0,
+      }, win);
       state?.refresh?.();
     } catch (err) {
       Zotero.logError?.('[MindFlow] Create map failed: ' + err);
+    } finally {
+      const latestEditable = isTargetEditable(lastPaneTargetRef.current);
+      button.disabled = !latestEditable;
+      if (latestEditable) button.removeAttribute?.('aria-disabled');
+      else button.setAttribute?.('aria-disabled', 'true');
     }
   };
-  primaryBtn.addEventListener('click', onGenerate);
-  templateCreateBtn.addEventListener('click', onGenerate);
+  primaryBtn.addEventListener('click', makeGenerateHandler(primaryBtn));
+  templateCreateBtn.addEventListener('click', makeGenerateHandler(templateCreateBtn));
 
   wrapper.appendChild(createEl('div', 'mf-divider'));
 
@@ -186,8 +165,10 @@ export async function renderItemPaneContent(opts: {
   toolSubwin.addEventListener('click', (e: any = {}) => {
     e.preventDefault?.(); e.stopPropagation?.();
     try {
-      if (totalMaps > 0 && maps[0]) {
-        host.openMindflowAttachment(maps[0], win);
+      const currentTarget = lastPaneTargetRef.current;
+      const currentMaps = currentTarget ? host.getMindflowAttachments(currentTarget) : [];
+      if (currentMaps.length > 0 && currentMaps[0]) {
+        host.openMindflowAttachment(currentMaps[0], win);
       } else {
         host.openMindFlow({ mode: 'open' }, win);
       }
@@ -200,17 +181,21 @@ export async function renderItemPaneContent(opts: {
   const toolAi = createEl('button', 'mf-tool-btn', T('AI 论文精读', 'AI Reading'));
   toolAi.setAttribute('data-l10n-id', 'mindflow-item-pane-action-ai');
   toolAi.type = 'button';
+  toolAi.disabled = false;
   toolAi.setAttribute?.('data-mindflow-action', 'ai');
   toolAi.title = T('为本文献启动 AI 智能精读与思维导图生成', 'Start AI reading and map generation for this item');
   toolAi.addEventListener('click', async (e: any = {}) => {
     e.preventDefault?.(); e.stopPropagation?.();
+    const currentTarget = lastPaneTargetRef.current;
+    if (toolAi.disabled || !currentTarget) return;
+    toolAi.disabled = true;
     try {
-      const currentTarget = lastPaneTargetRef.current || target;
-      if (!currentTarget) return;
       await host.openMindFlow({ mode: 'ai_analyze', items: [currentTarget] }, win);
     } catch (err) {
       Zotero.logError?.('[MindFlow] AI analyze action failed: ' + err);
       actionStatus.textContent = host.paneText('操作失败，请重试。', 'The action failed. Please try again.');
+    } finally {
+      toolAi.disabled = !lastPaneTargetRef.current;
     }
   });
   toolsGrid.appendChild(toolAi);
@@ -220,18 +205,29 @@ export async function renderItemPaneContent(opts: {
     const toolPdf = createEl('button', 'mf-tool-btn mf-tool-btn-pdf', T('打开 PDF', 'Open PDF'));
     toolPdf.setAttribute('data-l10n-id', 'mindflow-item-pane-action-pdf');
     toolPdf.type = 'button';
+    toolPdf.disabled = false;
     toolPdf.setAttribute?.('data-mindflow-action', 'pdf');
     toolPdf.title = T('在 Zotero 内置阅读器中打开本文献的 PDF 全文', 'Open this item\'s PDF in the Zotero reader');
     toolPdf.addEventListener('click', async (e: any = {}) => {
       e.preventDefault?.(); e.stopPropagation?.();
+      const currentTarget = lastPaneTargetRef.current;
+      if (toolPdf.disabled || !currentTarget) return;
+      const currentItem = lastPaneItemRef.current;
+      const pdfTarget = currentItem && Number(currentItem.parentItemID) === Number(currentTarget.id) && isPdfAttachmentItem(currentItem)
+        ? currentItem
+        : currentTarget;
+      toolPdf.disabled = true;
       try {
-        if (!await host.openPDFForItem(selectedPDF || target, win)) throw new Error('PDF could not be opened');
+        if (!await host.openPDFForItem(pdfTarget, win)) throw new Error('PDF could not be opened');
         actionStatus.textContent = '';
         actionStatus.removeAttribute('data-l10n-id');
       } catch (error) {
         Zotero.logError?.('[MindFlow] Sidebar PDF open failed: ' + error);
         actionStatus.textContent = T('无法打开 PDF，请检查附件是否已下载。', 'Unable to open the PDF. Check that the attachment has been downloaded.');
         actionStatus.setAttribute('data-l10n-id', 'mindflow-item-pane-pdf-open-failed');
+      } finally {
+        const latestTarget = lastPaneTargetRef.current;
+        toolPdf.disabled = !latestTarget || !hasTargetPDF(latestTarget, lastPaneItemRef.current, () => Zotero);
       }
     });
     toolsGrid.appendChild(toolPdf);
@@ -325,15 +321,20 @@ export async function renderItemPaneContent(opts: {
       }
       exportBtn.addEventListener('click', async (e: any) => {
         e.preventDefault(); e.stopPropagation();
-        if (exportBtn.disabled || !isEditable) return;
+        const currentEditable = isTargetEditable(lastPaneTargetRef.current);
+        if (exportBtn.disabled || !currentEditable) return;
         exportBtn.disabled = true;
         try {
           await host.exportAttachmentToNote(att, win);
         } finally {
-          exportBtn.disabled = !isEditable;
+          const latestEditable = isTargetEditable(lastPaneTargetRef.current);
+          exportBtn.disabled = !latestEditable;
+          if (latestEditable) exportBtn.removeAttribute?.('aria-disabled');
+          else exportBtn.setAttribute?.('aria-disabled', 'true');
         }
       });
       cardActions.appendChild(exportBtn);
+      lastPaneActions.push({ id: 'export', button: exportBtn });
 
       const locateBtn = createEl('button', 'mf-card-btn', T('定位附件', 'Locate Attachment'));
       locateBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-card-locate');

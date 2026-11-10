@@ -221,8 +221,8 @@
           return;
         }
 
-        // D. Fallback: Open MindFlow workspace
-        this.openMindFlow({ mode: 'open' }, win);
+        // D. Fallback: No literature item selected; open a clean blank MindFlow mindmap
+        this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
       } catch (err) {
         Zotero.logError?.('[MindFlow] triggerMindFlowOpen error: ' + err);
         showMindFlowNotice('MindFlow 打开失败', '无法确认目标条目，已停止打开。请检查错误日志。');

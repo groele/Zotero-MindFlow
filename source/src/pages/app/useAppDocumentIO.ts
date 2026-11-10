@@ -95,6 +95,7 @@ export const useAppDocumentIO = (ctx: AppContext): void => {
         });
         if (currentDocIdRef.current !== latest.id) return false;
         await StorageService.setActiveDocumentId(copy.id);
+        if (currentDocIdRef.current !== latest.id) return false;
         cleanDocRef.current = copy;
         cleanRelationshipsRef.current = latestRelationships;
         setDoc((previous: any) => previous?.id === latest.id ? {
@@ -133,13 +134,13 @@ export const useAppDocumentIO = (ctx: AppContext): void => {
   }, [captureCurrentDrafts]);
 
   // Reload current workspace (e.g. after full backup restore)
-  const reloadWorkspace = useCallback(async () => {
+  const reloadWorkspace = useCallback(async (force = false) => {
     const token = ++activeDocLoadTokenRef.current;
     const currentId = currentDocIdRef.current;
     const loadedDoc = (currentId ? await StorageService.getDocument(currentId) : null) || await StorageService.getActiveDocument();
     if (token !== activeDocLoadTokenRef.current) return;
     // Guard against race conditions: don't overwrite if current doc is already active and same or newer
-    if (currentDocIdRef.current === loadedDoc.id && latestDocRef.current &&
+    if (!force && currentDocIdRef.current === loadedDoc.id && latestDocRef.current &&
         (loadedDoc.revision || 0) <= (latestDocRef.current.revision || 0) && loadedDoc.updatedAt <= latestDocRef.current.updatedAt) {
       return;
     }
@@ -151,6 +152,7 @@ export const useAppDocumentIO = (ctx: AppContext): void => {
     latestDocRef.current = loadedDoc;
     latestRelationshipsRef.current = loadedRelationships;
     currentDocIdRef.current = loadedDoc.id;
+    setEditingId(null);
     setSelectedId(loadedDoc.root.id);
     setSelectedIds([]);
     historyRef.current.clear();
@@ -183,6 +185,7 @@ export const useAppDocumentIO = (ctx: AppContext): void => {
     };
     try {
       const saved = await StorageService.saveDocument({ ...latest, metadata: linkedMetadata });
+      if (currentDocIdRef.current !== saved.id) return false;
       cleanDocRef.current = saved;
       cleanRelationshipsRef.current = saved.relationships || latestRelationshipsRef.current;
       if (latestDocRef.current === latest) latestDocRef.current = saved;

@@ -191,9 +191,9 @@ mindflow-pref-webdav-autoSyncOnSave-desc = Silently upload workspace incremental
 
 
 mindflow-pref-version = v{ $version }
-mindflow-pref-release-notes-text = 16.1.0: Promote AI paper analysis to standalone toolbar action with responsive labels
+mindflow-pref-release-notes-text = 16.1.1: Data flow hardening, literature-first AI research modal layout, source status explanations
 mindflow-pref-release-date = 2026-11-10
-mindflow-pref-release-xpi = zotero-mindflow-16.1.0.xpi
+mindflow-pref-release-xpi = zotero-mindflow-16.1.1.xpi
 mindflow-pref-release-repo = github.com/groele/Zotero-MindFlow
 mindflow-pref-release-aria = Version Information
 mindflow-pref-notice-backup = Tip: The extra backup folder does not replace attachments. History snapshots and rollbacks can be viewed and restored in the workspace "History" panel.

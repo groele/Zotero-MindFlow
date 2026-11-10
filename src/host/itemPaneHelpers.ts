@@ -54,6 +54,27 @@ export function resolveContextSelection(win: any, doc: any, getZotero?: () => an
   return null;
 }
 
+export function isTargetEditable(target: any): boolean {
+  return Boolean(target && !target.deleted && (typeof target.isEditable !== 'function' || target.isEditable()));
+}
+
+export function isPdfAttachmentItem(att: any): boolean {
+  return Boolean(
+    att &&
+    !att.deleted &&
+    (att.isPDFAttachment?.() || att.attachmentContentType === 'application/pdf' || /\.pdf$/i.test(att.attachmentFilename || '')),
+  );
+}
+
+export function hasTargetPDF(target: any, selectedItem?: any, getZotero?: () => any): boolean {
+  if (!target) return false;
+  if (selectedItem && Number(selectedItem.parentItemID) === Number(target.id) && isPdfAttachmentItem(selectedItem)) {
+    return true;
+  }
+  const Zotero = getZotero?.() || (globalThis as any).Zotero;
+  return Boolean(target?.getAttachments?.().some((id: any) => isPdfAttachmentItem(Zotero?.Items?.get?.(id))));
+}
+
 export function resolveLiteratureTarget(item: any, getZotero?: () => any): any | null {
   const Zotero = getZotero?.() || (globalThis as any).Zotero;
   if (!item) return null;
@@ -65,4 +86,18 @@ export function resolveLiteratureTarget(item: any, getZotero?: () => any): any |
     }
   }
   return null;
+}
+
+export function syncPaneActionStates(actions: any[], target: any, selectedItem?: any, getZotero?: () => any): void {
+  const editable = isTargetEditable(target);
+  const hasPDF = target ? hasTargetPDF(target, selectedItem, getZotero) : false;
+  for (const action of actions) {
+    if (action.id === 'ai') action.button.disabled = !target;
+    else if (action.id === 'pdf') action.button.disabled = !target || !hasPDF;
+    else if (action.id === 'create' || action.id === 'template' || action.id === 'export') {
+      action.button.disabled = !target || !editable;
+      if (!target || !editable) action.button.setAttribute?.('aria-disabled', 'true');
+      else action.button.removeAttribute?.('aria-disabled');
+    }
+  }
 }

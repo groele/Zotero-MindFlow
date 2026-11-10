@@ -196,3 +196,165 @@ test('exportAttachmentToNote rejects read-only and deleted parent items', async 
     'Should reject exportAttachmentToNote on deleted parent item'
   );
 });
+
+test('item-pane selection switches, empty selection, cache hits, and refresh keep actions isolated', async () => {
+  const f = fixture();
+  const paper1 = f.paper('PANE_P1');
+  paper1.title = 'First Paper';
+  const pdf1 = f.attachment('PANE_PDF1', 1, paper1.id, '/storage/p1.pdf');
+  pdf1.attachmentFilename = 'p1.pdf';
+  const mapAtt = f.attachment('PANE_MAP1', 1, paper1.id, '/storage/p1.mindflow');
+  mapAtt.attachmentFilename = 'p1.mindflow';
+  mapAtt.title = 'p1.mindflow';
+  paper1.attachments.push(pdf1.id, mapAtt.id);
+
+  const paper2 = f.paper('PANE_P2');
+  paper2.title = 'Second Paper Without PDF';
+
+  f.host.registerItemPaneSection();
+  const section = f.Zotero.ItemPaneManager.sections.get(f.host.itemPaneSectionID);
+  const body = f.doc.createElement('div');
+  const all = node => [node, ...node.children.flatMap(all)];
+  const findByClass = cls => all(body).find(node => String(node.className || '').split(/\s+/).includes(cls));
+  const findByAction = id => all(body).find(node => node.attrs?.['data-mindflow-action'] === id);
+  const findExport = () => all(body).find(node => node.attrs?.['data-l10n-id'] === 'mindflow-item-pane-card-export');
+
+  section.onRender({ body, item: pdf1 });
+  const createBtn = findByClass('mf-btn-primary');
+  const templateBtn = findByClass('mf-btn-template-create');
+  const aiBtn = findByAction('ai');
+  const pdfBtn = findByAction('pdf');
+  const exportBtn = findExport();
+  const workbenchBtn = findByAction('workbench');
+  assert.ok(createBtn && templateBtn && aiBtn && pdfBtn && exportBtn && workbenchBtn);
+
+  const opened = [];
+  let exported = 0;
+  f.host.openMindFlow = async (opts) => { opened.push(opts); };
+  f.host.exportAttachmentToNote = async () => { exported++; };
+
+  // Empty selection disables all item-scoped buttons and blocks stale clicks.
+  section.onItemChange({ body, item: null, setEnabled() {} });
+  assert.equal(createBtn.disabled, true);
+  assert.equal(templateBtn.disabled, true);
+  assert.equal(aiBtn.disabled, true);
+  assert.equal(pdfBtn.disabled, true);
+  assert.equal(exportBtn.disabled, true);
+  assert.equal(createBtn.attrs['aria-disabled'], 'true');
+  assert.equal(templateBtn.attrs['aria-disabled'], 'true');
+  assert.equal(exportBtn.attrs['aria-disabled'], 'true');
+
+  await createBtn.click({ preventDefault() {}, stopPropagation() {} });
+  await templateBtn.click({ preventDefault() {}, stopPropagation() {} });
+  await aiBtn.click({ preventDefault() {}, stopPropagation() {} });
+  await pdfBtn.click({ preventDefault() {}, stopPropagation() {} });
+  await exportBtn.click({ preventDefault() {}, stopPropagation() {} });
+  assert.equal(opened.length, 0);
+  assert.equal(exported, 0);
+
+  await workbenchBtn.click({ preventDefault() {}, stopPropagation() {} });
+  assert.equal(opened.length, 1);
+  assert.equal(opened[0].mode, 'open');
+  assert.equal(opened[0].targetMode, 'tab');
+  assert.equal(opened[0].items, undefined);
+
+  // Scheduled/state refresh while deselected must not resurrect Paper 1.
+  const state = [...f.host._itemPaneStates][0];
+  await state.refresh();
+  assert.equal(createBtn.disabled, true);
+  assert.equal(aiBtn.disabled, true);
+
+  // Re-selecting the same PDF hits the signature cache and must re-enable all actions.
+  section.onRender({ body, item: pdf1 });
+  assert.equal(createBtn.disabled, false);
+  assert.equal(templateBtn.disabled, false);
+  assert.equal(aiBtn.disabled, false);
+  assert.equal(pdfBtn.disabled, false);
+  assert.equal(exportBtn.disabled, false);
+  assert.equal(createBtn.attrs['aria-disabled'], undefined);
+  assert.equal(templateBtn.attrs['aria-disabled'], undefined);
+  assert.equal(exportBtn.attrs['aria-disabled'], undefined);
+
+  // Switching via onItemChange without body re-renders the active body for Paper 2.
+  section.onItemChange({ item: paper2, setEnabled() {} });
+  assert.equal(findByClass('mf-target-title')?.textContent, 'Second Paper Without PDF');
+  assert.equal(findByAction('pdf'), undefined);
+
+  // Empty fallback button resets disabled in finally even if openMindFlow throws.
+  section.onRender({ body, item: null });
+  const fallbackBtn = findByClass('mf-btn-primary');
+  f.host.openMindFlow = async () => { throw new Error('simulated blank failure'); };
+  await assert.rejects(() => fallbackBtn.click({ preventDefault() {}, stopPropagation() {} }), /simulated blank failure/);
+  assert.equal(fallbackBtn.disabled, false);
+});
+
+test('context routing clears stale initial ai/items targets while preserving collection target until switch', () => {
+  const f = fixture();
+  const paper = f.paper('CTX_PAPER');
+
+  // 1. Initial AI tab receiving an unrelated blank document drops stale ai: key and items array.
+  f.host.openMindFlow({ mode: 'ai_analyze', items: [paper] }, f.win);
+  const aiTab = f.tabs._tabs.find(tab => tab.type === 'mindflow');
+  const aiFrame = f.tabs.getTabContent(aiTab.id).children[0];
+  assert.match(aiTab.data.targetItemId, /^ai:/);
+  assert.equal(aiTab.data.docId, null);
+  assert.equal(f.host.updateWorkspaceContext(aiFrame.contentWindow, {
+    documentId: 'doc_blank_after_ai',
+    title: '未命名空白导图',
+    unlinkedContainer: false,
+    aiDraft: false,
+  }), true);
+  assert.equal(aiTab.data.targetItemId, 'document:doc_blank_after_ai');
+  assert.equal(aiTab.data.items.length, 0);
+  assert.equal(aiTab.data.parentItemUri, null);
+  assert.equal(aiTab.data.mode, 'open_document');
+
+  // 2. Collection tab keeps collection: key on first unlinked-container archive, then clears on doc switch.
+  f.host.openMindFlow({
+    mode: 'create_from_collection',
+    collectionLibraryID: 1,
+    collectionKey: 'COL_KEY_1',
+    collectionName: 'Research Collection',
+    items: [paper],
+  }, f.win);
+  const colTab = f.tabs._tabs.at(-1);
+  const colFrame = f.tabs.getTabContent(colTab.id).children[0];
+  assert.equal(colTab.data.targetItemId, 'collection:1:COL_KEY_1');
+  f.host.updateWorkspaceContext(colFrame.contentWindow, {
+    documentId: 'doc_collection_1',
+    title: 'Research Collection',
+    parentItemUri: 'zotero://select/library/items/UNLINKED01',
+    unlinkedContainer: true,
+    aiDraft: false,
+  });
+  assert.equal(colTab.data.targetItemId, 'collection:1:COL_KEY_1');
+  assert.equal(colTab.data.collectionKey, 'COL_KEY_1');
+
+  f.host.updateWorkspaceContext(colFrame.contentWindow, {
+    documentId: 'doc_other_2',
+    title: 'Other Doc',
+    unlinkedContainer: false,
+    aiDraft: false,
+  });
+  assert.equal(colTab.data.targetItemId, 'document:doc_other_2');
+  assert.equal(colTab.data.collectionKey, undefined);
+  assert.equal(colTab.data.collectionName, undefined);
+  assert.equal(colTab.data.mode, 'open_document');
+
+  // 3. Open-workspace tab keeps mode === 'open' on document updates so workspace reuse keeps working.
+  const fWs = fixture();
+  fWs.host.openMindFlow({ mode: 'open' }, fWs.win);
+  const wsTab = fWs.tabs._tabs.find(tab => tab.type === 'mindflow');
+  const wsFrame = fWs.tabs.getTabContent(wsTab.id).children[0];
+  assert.equal(wsTab.data.mode, 'open');
+  fWs.host.updateWorkspaceContext(wsFrame.contentWindow, { documentId: 'doc_ws_1', title: 'Workspace Map' });
+  assert.equal(wsTab.data.targetItemId, 'document:doc_ws_1');
+  assert.equal(wsTab.data.mode, 'open');
+
+  // 4. Standalone window clears initial items: key when blank doc reports without parent URI.
+  const standalone = { closed: false };
+  f.host._standaloneWindows = new Map([[`items:${paper.libraryID}:${paper.key}`, standalone]]);
+  f.host.updateStandaloneContext(standalone, { documentId: 'doc_standalone_blank', title: 'Standalone Blank' });
+  assert.equal(f.host._standaloneWindows.has(`items:${paper.libraryID}:${paper.key}`), false);
+  assert.equal(f.host._standaloneWindows.get('document:doc_standalone_blank'), standalone);
+});

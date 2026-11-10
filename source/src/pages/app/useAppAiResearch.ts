@@ -11,11 +11,11 @@ export const useAppAiResearch = (ctx: AppContext): void => {
          setIsAiAnalyzing, aiAnalyzingRef, analyzeRequestRef, aiAbortRef, aiRequestTokenRef,
          setAiWorkflow, aiWorkflow, setIsArchivingAiDraft, aiArchivingRef, setIsWelcomeOpen,
          setRelationships, settings, setSaveStatus, cleanDocRef, cleanRelationshipsRef,
-         latestDocRef, zoteroSyncQueueRef, historyRef, syncHistoryState, centerCanvas,
+         latestDocRef, latestRelationshipsRef, currentDocIdRef, zoteroSyncQueueRef, historyRef, syncHistoryState, centerCanvas,
          flushCurrentDocument, persistArchiveAssociation, handleOpenSettings } = ctx;
   // The welcome-card action analyzes the selected Zotero paper/PDF. It must
   // never substitute sample records when the host selection is unavailable.
-  const handleCreateFromZoteroItems = useCallback(() => {
+  const handleCreateAiResearchFromSelection = useCallback(() => {
     if (!isZoteroMode) {
       setSaveStatus({ state: 'warning', message: 'Zotero 连接尚未就绪；请从 Zotero 打开 MindFlow 后再选择论文。' });
       return;
@@ -45,7 +45,10 @@ export const useAppAiResearch = (ctx: AppContext): void => {
       setSaveStatus({ state: 'warning', message: 'AI 论文分析一次只能处理一篇文献；请只选中一篇。' });
       return;
     }
-    const reference = referenceOverride || selected[0]?.zoteroUri || latestDocRef.current?.metadata?.zoteroItemKey;
+    const boundReference = !latestDocRef.current?.metadata?.mindflowUnlinkedContainer
+      ? (latestDocRef.current?.metadata?.zoteroUri || latestDocRef.current?.metadata?.zoteroItemKey)
+      : undefined;
+    const reference = referenceOverride || selected[0]?.zoteroUri || boundReference;
     if (!reference) {
       setSaveStatus({ state: 'warning', message: '请先在 Zotero 文献列表选择一篇论文，或打开一份关联文献的导图。' });
       return;
@@ -128,6 +131,9 @@ export const useAppAiResearch = (ctx: AppContext): void => {
       if (controller.signal.aborted || token !== aiRequestTokenRef.current) return;
       cleanDocRef.current = savedDoc;
       cleanRelationshipsRef.current = [];
+      latestDocRef.current = savedDoc;
+      latestRelationshipsRef.current = cleanRelationshipsRef.current;
+      currentDocIdRef.current = savedDoc.id;
       setRelationships(cleanRelationshipsRef.current);
       setDoc(savedDoc);
       setSelectedId(savedDoc.root.id);
@@ -161,29 +167,35 @@ export const useAppAiResearch = (ctx: AppContext): void => {
 
   const handleArchiveAiDraft = useCallback(async () => {
     if (aiArchivingRef.current || !doc?.metadata?.aiDraft) return;
+    const targetId = doc.id;
     aiArchivingRef.current = true;
     setIsArchivingAiDraft(true);
     try {
       if (!(await flushCurrentDocument(true))) return;
       const current = latestDocRef.current;
-      if (!current?.metadata?.aiDraft || !current.metadata.zoteroItemKey) return;
+      if (!current?.metadata?.aiDraft || !current.metadata.zoteroItemKey || current.id !== targetId) return;
       setSaveStatus({ state: 'saving', message: '正在将已审阅草稿归档到 Zotero 文献…' });
       await zoteroSyncQueueRef.current;
+      if (currentDocIdRef.current !== current.id) return;
       const archivedDoc = { ...current, metadata: {
         ...current.metadata, aiDraft: false, autoSyncToZotero: true,
       } };
       const archived = await saveMindMapToZoteroAttachment(archivedDoc, current.metadata.zoteroItemKey, { silent: true });
+      if (currentDocIdRef.current !== current.id) return;
       if (!archived.success) throw new Error(archived.message);
       if (!(await persistArchiveAssociation(current.id, archived, true))) return;
+      if (currentDocIdRef.current !== current.id) return;
       setSaveStatus(archived.noteRequested && !archived.savedNote
         ? { state: 'warning', message: `导图附件已归档，但 Zotero 大纲笔记保存失败：${archived.noteError || '请检查 Zotero 日志'}。本地草稿状态正在保存。` }
         : { state: 'saving', message: '导图附件已归档至 Zotero；正在保存本地归档状态，后续编辑将自动同步。' });
     } catch (error: any) {
-      setSaveStatus({ state: 'warning', message: `草稿仍保存在本机，Zotero 归档失败：${error?.message || error}` });
+      if (currentDocIdRef.current === targetId) {
+        setSaveStatus({ state: 'warning', message: `草稿仍保存在本机，Zotero 归档失败：${error?.message || error}` });
+      }
     } finally {
       aiArchivingRef.current = false;
       setIsArchivingAiDraft(false);
     }
   }, [doc?.metadata?.aiDraft, flushCurrentDocument, persistArchiveAssociation]);
-  Object.assign(ctx, { handleCreateFromZoteroItems, handleAnalyzeZoteroPaper, handleCancelAiAnalysis, handleStartAiAnalysis, handleArchiveAiDraft });
+  Object.assign(ctx, { handleCreateAiResearchFromSelection, handleAnalyzeZoteroPaper, handleCancelAiAnalysis, handleStartAiAnalysis, handleArchiveAiDraft });
 };
