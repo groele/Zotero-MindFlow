@@ -17,9 +17,8 @@
         if (options.signal?.aborted || this._lifecycleActive === false) throw new Error(AI_CANCELLED);
         prepared = this._aiPrepared.get(preview.preparedId);
       }
-      if (options.readingMode && options.readingMode !== prepared.readingMode) {
+      if (options.readingMode && options.readingMode !== prepared.readingMode)
         throw new Error('读取范围已变化，请重新读取并确认分析范围。');
-      }
       const modelEntryId = options.modelEntryId || prepared.config.entryId;
       const previewConfig = prepared.models?.find((entry) => entry.entryId === modelEntryId && entry.available) ||
         (modelEntryId === prepared.config.entryId ? prepared.config : null);
@@ -27,17 +26,13 @@
       const latestConfig = this.getAIConfiguration(modelEntryId);
       const latestPagePref = Number(Zotero.Prefs.get('extensions.mindflow.aiMaxPdfPages', true));
       const latestMaxPages = [50, 120, 200].includes(latestPagePref) ? latestPagePref : 120;
-      if (latestConfig.fingerprint !== previewConfig.fingerprint || latestMaxPages !== prepared.maxPages) {
-        throw new Error('模型配置已变化，请重新读取并确认分析范围。');
-      }
+      if (latestConfig.fingerprint !== previewConfig.fingerprint || latestMaxPages !== prepared.maxPages) throw new Error('模型配置已变化，请重新读取并确认分析范围。');
       const selectedSources = Object.fromEntries(['abstract', 'pdf', 'notes', 'highlights', 'comments']
         .map((key) => [key, ['abstract', 'pdf'].includes(key) ? options.sources?.[key] !== false : options.sources?.[key] === true]));
       const { item, itemData, pdfURI } = prepared;
       const config = latestConfig;
       const reasoningLevel = options.reasoningLevel || 'default';
-      if (!(previewConfig.reasoningOptions || []).some((option) => option.id === reasoningLevel)) {
-        throw new Error('推理强度选项无效，请重新选择。');
-      }
+      if (!(previewConfig.reasoningOptions || []).some((option) => option.id === reasoningLevel)) throw new Error('推理强度选项无效，请重新选择。');
       if (reasoningLevel !== 'default' && previewConfig.reasoningSupported === false) {
         throw new Error('此模型不支持推理强度选择，请采用默认强度或更换模型。');
       }
@@ -114,13 +109,18 @@
         cancelRequest = () => localController?.abort();
         let output;
         try {
+          const chosenFocus = options.analysisFocus || options.focus;
           const focusGuide = {
+            methods: '【分析重点：研究方法与实验设计】\n即使提供了全文资料，请重点剖析论文的研究方法、实验流程、材料体系与测量表征条件。详细梳理各实验步骤与输入参数（温度/波长/电压等具体数值与单位）、对照组设计与复现细节；指出未报告的复现参数。',
+            discussion: '【分析重点：讨论与深入机理分析】\n即使提供了全文资料，请重点剖析论文的讨论（Discussion）与机理推导。深入梳理作者对实验现象的归因解释、证据链条逻辑、与已有文献的对比争议，明确区分直接证据与推断。',
+            results: '【分析重点：实验结果与核心发现】\n即使提供了全文资料，请重点提炼直接观测现象、定量指标数值（含单位与误差范围）、对照基准提升幅度，按发现主题归纳汇总。',
+            conclusion: '【分析焦点：仅分析结论与未来展望】\n重点分析作者在文末总结的核心结论、论文对核心科学问题的明确回应、实际应用启示、以及工作存在的局限性（Limitations）与未来研究方向。',
             abstract: '【分析焦点：仅分析摘要与核心贡献】\n重点提炼论文阐述的核心研究问题、主要创新点/贡献以及最高层级的关键发现。忽略具体的繁琐实验步骤与中间推导。若输入为论文前页文字，请直接定位作者对研究主旨与核心发现的陈述。',
             introduction: '【分析焦点：仅分析引言与背景动机】\n聚焦研究背景、前人工作的不足与研究缺口（Research Gap）、作者提出该研究的问题意识与立论假设。若提供了正文，请主要聚焦于引言与背景部分，无需展开后续详细实验数据。',
-            conclusion: '【分析焦点：仅分析结论与未来展望】\n重点分析作者在文末总结的核心结论、论文对核心科学问题的明确回应、实际应用启示、以及工作存在的局限性（Limitations）与未来研究方向。',
             'key-sections': '【分析焦点：核心框架（摘要＋引言＋结论）】\n以“提出问题（引言）→ 核心主张（摘要）→ 最终回应与展望（结论）”为脉络组织导图。重点串联论文的出发点与最终落脚点，省略正文中间的非关键实验细节。',
             full: '【分析焦点：全文综合研读】\n全面综合研读整篇论文。系统梳理背景问题、材料体系、实验/计算方法、关键条件对照、主要实验结果、机理推导链条与最终结论。',
-          }[prepared.readingMode] || '';
+            all: '【分析焦点：全文综合研读】\n全面综合研读整篇论文。系统梳理背景问题、材料体系、实验/计算方法、关键条件对照、主要实验结果、机理推导链条与最终结论。',
+          }[chosenFocus || prepared.readingMode] || '';
 
           const intensityGuide = {
             quick: '【分析强度：简要快速】\n导图追求极简精炼与极速概览。全图只保留 3~4 个一级核心分支（如：核心问题、核心方法、关键发现、总结结论）。每个分支下只列出 1~2 个最精炼的关键事实，去除一切铺垫与次要细节，节点文字极度精炼直观。',

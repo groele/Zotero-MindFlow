@@ -84,12 +84,14 @@ export interface ResearchModelOption {
 }
 export type ResearchReasoningLevel = string;
 export type ResearchReadingMode = 'abstract' | 'introduction' | 'conclusion' | 'key-sections' | 'full';
+export type ResearchFocus = 'all' | 'abstract' | 'methods' | 'results' | 'discussion' | 'conclusion';
 export interface ResearchModelSelection {
   modelEntryId: string;
   reasoningLevel: ResearchReasoningLevel;
   templateId?: string;
   customPrompt?: string;
   presentation?: ResearchAppearance | null;
+  analysisFocus?: ResearchFocus;
 }
 
 export type ResearchSourceCharacters = Record<keyof ResearchSourceSelection, number>;
@@ -113,6 +115,7 @@ export interface ResearchRequestOptions {
   customPrompt?: string;
   sources?: ResearchSourceSelection;
   expectedCalls?: number;
+  analysisFocus?: ResearchFocus;
   signal?: AbortSignal;
   onProgress?: (progress: ResearchProgress) => void;
 }

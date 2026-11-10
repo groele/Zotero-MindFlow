@@ -4,8 +4,18 @@
   "capturedAt": "2026-11-06",
   "debtCleared": true,
   "note": "Known §5.9 debt. Listed files may stay at or below the recorded line count, but must never grow; any other source file above 360 lines fails the guard. Remove an entry only after splitting that module below 360 lines. Every entry must still exist and must still exceed the ceiling - stale entries are rejected by the baseline integrity test.",
-  "lastReleasedVersion": "16.1.1",
+  "lastReleasedVersion": "16.2.0",
   "splitHistory": [
+    {
+      "version": "16.2.0",
+      "date": "2026-11-10",
+      "resolved": [
+        "Support targeted section analysis focus on full text (methods, discussion, results, conclusion, abstract)",
+        "Build standalone interactive prompt presets & academic functional attributes editor workbench",
+        "Expand builtin academic prompt presets library with 8 tailored reading scenarios and quick chips",
+        "Maintained 100% compliance across all 185 source files under 360-line ceiling"
+      ]
+    },
     {
       "version": "16.1.1",
       "date": "2026-11-10",

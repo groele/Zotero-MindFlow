@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertCircle, CheckCircle2, Loader2, RotateCw, Settings, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import type { ResearchReadingMode } from '../../services/zotero/researchAnalysis';
+import { builtinResearchPrompts } from '../../services/zotero/researchPresets';
 import { ResearchPresetsPanel } from './ResearchPresetsPanel';
 import { useAIResearchModal } from './useAIResearchModal';
 import type { AIResearchModalProps } from './aiResearchModalUtils';
@@ -86,7 +87,12 @@ export const AIResearchModal: React.FC<AIResearchModalProps> = (props) => {
                     <span className="flex items-center gap-2">
                       <SlidersHorizontal size={14} className="text-slate-500 dark:text-slate-400" />
                       <span>提示词与导图风格进阶定制</span>
-                      <span className="font-normal text-[11px] text-slate-400 dark:text-slate-500">（可选 · 补充自定义提示词与预设）</span>
+                      {preset.focus && preset.focus !== 'all' && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-medium">
+                          侧重：{builtinResearchPrompts.find(p => p.focus === preset.focus)?.name || preset.focus}
+                        </span>
+                      )}
+                      <span className="font-normal text-[11px] text-slate-400 dark:text-slate-500">（可选 · 切换预设与提示词工作台）</span>
                     </span>
                     <span className="text-[11px] font-normal text-blue-600 dark:text-blue-400 group-open:hidden">展开定制 ▾</span>
                     <span className="text-[11px] font-normal text-blue-600 dark:text-blue-400 hidden group-open:inline">收起定制 ▴</span>

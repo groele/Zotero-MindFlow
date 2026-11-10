@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type {
   ResearchSourceSelection, ResearchModelSelection, ResearchReasoningLevel,
-  ResearchReadingMode, ResearchAnalysisIntensity,
+  ResearchReadingMode, ResearchAnalysisIntensity, ResearchFocus,
 } from '../../services/zotero/researchAnalysis';
 import { getResearchTemplate } from '../../services/zotero/researchTemplates';
 import { defaultResearchPresetConfig, type ResearchPresetConfig } from '../../services/zotero/researchPresets';
@@ -29,8 +29,11 @@ export const useAIResearchModal = ({
   const validAbstractDraft = abstractDraft.trim().length >= 50 && abstractDraft.trim().length <= 12000;
   const template = getResearchTemplate(templateId);
   const selectedModel = preview?.models?.find((entry) => entry.entryId === modelEntryId);
+  const focus = preset.focus || 'all';
+  const setFocus = (newFocus: ResearchFocus) => setPreset(current => ({ ...current, focus: newFocus }));
   const modelSelection: ResearchModelSelection = { modelEntryId, templateId, customPrompt: preset.customPrompt,
     presentation: preset.presentation,
+    analysisFocus: focus,
     reasoningLevel: selectedModel?.reasoningSupported ? reasoningLevel : 'default' };
   const [sources, setSources] = useState<ResearchSourceSelection>({
     abstract: true, pdf: true, notes: false, highlights: false, comments: false,
@@ -178,6 +181,7 @@ export const useAIResearchModal = ({
     modelEntryId, setModelEntryId,
     reasoningLevel, setReasoningLevel,
     preset, setPreset,
+    focus, setFocus,
     templateId, setTemplateId,
     generatedAppearance,
     abstractEditor, setAbstractEditor,

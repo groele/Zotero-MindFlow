@@ -62,6 +62,7 @@ function requestFromHost<T>(type: 'MINDFLOW_PREPARE_PAPER' | 'MINDFLOW_ANALYZE_P
       preparedId: options.preparedId, mode: options.mode, sources: options.sources,
       modelEntryId: options.modelEntryId, reasoningLevel: options.reasoningLevel, templateId: options.templateId, readingMode: options.readingMode,
       customPrompt: options.customPrompt,
+      analysisFocus: options.analysisFocus,
       abstractSelection: options.abstractSelection }, '*'); }
     catch { finish(new Error('无法向 Zotero 主窗口发送 AI 分析请求。')); }
   });

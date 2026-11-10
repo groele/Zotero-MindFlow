@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { ResearchPresetService as service, defaultResearchPresetConfig, validateResearchPresetConfig } from '../src/services/zotero/researchPresets';
+import { ResearchPresetService as service, defaultResearchPresetConfig, validateResearchPresetConfig, builtinResearchPrompts } from '../src/services/zotero/researchPresets';
 import { safeStorage } from '../src/services/storage/safeStorage';
 import { createResearchDocument, requestResearchAnalysis } from '../src/services/zotero/researchAnalysis';
 
@@ -73,5 +73,27 @@ await run('prompt bridge forwards user text and generated maps retain provenance
     assert.equal(doc.metadata?.aiSourceScope.customPrompt, '保留关键条件');
     assert.equal(doc.metadata?.aiDraft, true); assert.equal(doc.metadata?.autoSyncToZotero, false);
   } finally { delete (globalThis as any).window; }
+});
+await run('functional focus presets retain category, focus target and bridge forwarding', async () => {
+  const methodsPrompt = builtinResearchPrompts.find(p => p.focus === 'methods')!;
+  assert.equal(methodsPrompt.category, 'methods');
+  assert.ok(methodsPrompt.text.includes('研究方法'));
+  const saved = service.save('方法深度剖析', {
+    ...defaultResearchPresetConfig(),
+    focus: 'methods',
+    category: 'methods',
+    customPrompt: methodsPrompt.text,
+  });
+  const loaded = service.read().presets.find(p => p.id === saved.presets[saved.presets.length - 1].id)!;
+  assert.equal(loaded.focus, 'methods');
+  assert.equal(loaded.category, 'methods');
+
+  let forwarded: any;
+  (globalThis as any).window = { Zotero: { MindFlow: { analyzePaperWithAI: async (_ref: string, options: any) => { forwarded = options; return { title: 'T', zoteroUri: 'uri', sourceScope: {}, sections: { question: [{ text: 'Q', detail: '', basis: 'inference', source: 'none', quote: '' }] } }; } } } };
+  try {
+    await requestResearchAnalysis('uri', { analysisFocus: 'methods' });
+    assert.equal(forwarded.analysisFocus, 'methods');
+  } finally { delete (globalThis as any).window; }
+  service.remove(loaded.id);
 });
 console.log(`${count} research preset tests passed`);
