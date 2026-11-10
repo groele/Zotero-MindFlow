@@ -34,7 +34,12 @@ export const useAppAiResearch = (ctx: AppContext): void => {
 
   const handleAnalyzeZoteroPaper = useCallback(async (referenceOverride?: string, readingMode: ResearchReadingMode = 'abstract',
     abstractSelection?: ResearchRequestOptions['abstractSelection']) => {
-    if (!isZoteroMode || aiAnalyzingRef.current) return;
+    if (!isZoteroMode || aiAnalyzingRef.current) {
+      if (!isZoteroMode) {
+        setSaveStatus({ state: 'warning', message: 'Zotero 连接尚未就绪；请从 Zotero 打开 MindFlow 后再选择论文。' });
+      }
+      return;
+    }
     const selected = getSelectedZoteroItems();
     if (!referenceOverride && selected.length > 1) {
       setSaveStatus({ state: 'warning', message: 'AI 论文分析一次只能处理一篇文献；请只选中一篇。' });

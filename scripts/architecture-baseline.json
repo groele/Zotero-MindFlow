@@ -4,8 +4,17 @@
   "capturedAt": "2026-11-06",
   "debtCleared": true,
   "note": "Known §5.9 debt. Listed files may stay at or below the recorded line count, but must never grow; any other source file above 360 lines fails the guard. Remove an entry only after splitting that module below 360 lines. Every entry must still exist and must still exceed the ceiling - stale entries are rejected by the baseline integrity test.",
-  "lastReleasedVersion": "16.0.0",
+  "lastReleasedVersion": "16.1.0",
   "splitHistory": [
+    {
+      "version": "16.1.0",
+      "date": "2026-11-10",
+      "resolved": [
+        "Promoted 'AI 解析论文并生成导图' to standalone first-class toolbar action",
+        "Responsive toolbar layout scaling across 2xl/xl/sm breakpoints",
+        "Maintained 100% compliance across all source files; zero debt baseline preserved"
+      ]
+    },
     {
       "version": "16.0.0",
       "date": "2026-11-06",

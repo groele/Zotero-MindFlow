@@ -7,10 +7,43 @@ export const ToolbarZoteroGroup = ({ ctx }: ToolbarGroupProps) => {
     setIsThemeMenuOpen, setIsLayoutMenuOpen, isZoteroMode, boundItemKey, boundItemTitle,
     onLocateBoundItem, onOpenBoundPdf, onAnalyzeZoteroPaper, isAiAnalyzing,
     onCreateFromZoteroItems, onAppendZoteroItems, onSaveToZoteroAttachment, onSaveToZoteroNote,
+    setPopup,
   } = ctx;
 
   return (
     <>
+      {/* Standalone AI Paper Analysis Button on Toolbar */}
+      {onAnalyzeZoteroPaper && (
+        <button
+          type="button"
+          disabled={isAiAnalyzing}
+          onClick={() => {
+            setPopup?.(null);
+            setIsZoteroMenuOpen(false);
+            setIsExportMenuOpen(false);
+            setIsLevelMenuOpen(false);
+            setIsThemeMenuOpen(false);
+            setIsLayoutMenuOpen(false);
+            onAnalyzeZoteroPaper();
+          }}
+          title="AI 解析论文并生成导图：研究问题、体系、证据、意义与局限"
+          aria-label="AI 解析论文并生成导图"
+          className={`flex shrink-0 items-center gap-1.5 px-2 py-1 sm:px-2.5 rounded-lg text-xs font-medium transition-colors ${
+            isAiAnalyzing
+              ? 'bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 opacity-80 cursor-wait'
+              : 'text-violet-700 dark:text-violet-300 bg-violet-50/80 hover:bg-violet-100 dark:bg-violet-950/40 dark:hover:bg-violet-900/60 border border-violet-200/70 dark:border-violet-800/60 shadow-xs'
+          }`}
+        >
+          <Sparkles className={`w-3.5 h-3.5 text-violet-600 dark:text-violet-400 shrink-0 ${isAiAnalyzing ? 'animate-spin' : ''}`} />
+          <span className="hidden 2xl:inline whitespace-nowrap">
+            {isAiAnalyzing ? '正在解析论文…' : 'AI 解析论文并生成导图'}
+          </span>
+          <span className="hidden sm:inline 2xl:hidden whitespace-nowrap">
+            {isAiAnalyzing ? '正在解析…' : 'AI 解析导图'}
+          </span>
+        </button>
+      )}
+
       {/* Zotero Academic Hub */}
       <div className="relative">
         <button data-mindflow-popup-trigger="zotero" aria-haspopup="menu" aria-expanded={isZoteroMenuOpen}
