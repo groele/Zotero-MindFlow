@@ -36,8 +36,8 @@
           }
 
           /* ItemPane Section Header Icon (Native & Custom fallbacks) */
-          item-pane-custom-section[data-pane*="mindflow-item-pane"] collapsible-section > .head .title::before,
-          item-pane-custom-section[data-pane*="mindflow-item-pane"] .title::before,
+          /* Note: title::before disabled to avoid phantom whitespace before section title */
+          /* item-pane-custom-section[data-pane*="mindflow-item-pane"] .title::before disabled */
           item-pane-custom-section[data-pane*="mindflow-item-pane"] .icon,
           item-pane-custom-section[data-pane*="mindflow-item-pane"] button.header .icon,
           item-pane-custom-section[data-pane*="mindflow-item-pane"] collapsible-section .icon {
