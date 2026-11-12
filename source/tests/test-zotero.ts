@@ -525,7 +525,7 @@ await run('extractZoteroItemData extracts DOI from extra field when DOI field is
   const extracted = extractZoteroItemData(item);
   assert.equal(extracted?.doi, '10.1038/s41586-extra');
 });
-await run('searchItemByDoi in-memory fallback resolves attachment items to parent item', async () => {
+await run('searchItemByDoi resolves attachment items to parent via Search and never calls Items.getAll on miss', async () => {
   const parentItem = { id: 101, isRegularItem: () => true, getField: () => '' };
   const attachmentItem = {
     id: 102,
@@ -533,15 +533,28 @@ await run('searchItemByDoi in-memory fallback resolves attachment items to paren
     parentItemID: 101,
     getField: (f: string) => (f === 'extra' ? 'DOI: 10.1038/s41586-parent-test' : ''),
   };
+  let getAllCalls = 0;
   const mockZ = {
     Libraries: { userLibraryID: 1, getAll: () => [{ libraryID: 1 }] },
+    Search: class {
+      conditions: any[] = [];
+      addCondition(field: string, op: string, val: string) { this.conditions.push({ field, op, val }); }
+      async search() {
+        const extraCond = this.conditions.find(c => c.field === 'extra');
+        if (extraCond && extraCond.val.toLowerCase() === '10.1038/s41586-parent-test') return [102];
+        return [];
+      }
+    },
     Items: {
-      getAll: () => [attachmentItem],
+      getAll: () => { getAllCalls += 1; return [attachmentItem]; },
       get: (id: number) => (id === 101 ? parentItem : (id === 102 ? attachmentItem : null)),
     },
   };
   const found = await searchItemByDoi('10.1038/s41586-parent-test', mockZ);
   assert.equal(found?.id, 101);
+  const missed = await searchItemByDoi('10.1038/not-found-doi', mockZ);
+  assert.equal(missed, null);
+  assert.equal(getAllCalls, 0);
 });
 await run('searchItemByDoi matches item when DOI field has different/outdated DOI but Extra field contains target DOI', async () => {
   const itemMock = {

@@ -70,14 +70,13 @@
         colItem.addEventListener('command', () => {
           const collection = getActiveCollection();
           if (collection) {
-            const items = typeof collection.getChildItems === 'function' ? collection.getChildItems() : [];
             this.openMindFlow(
               {
                 mode: 'create_from_collection',
                 collectionName: collection.name,
                 collectionKey: collection.key,
                 collectionLibraryID: collection.libraryID,
-                items: items,
+                items: resolveCollectionItems(collection),
               },
               window
             );

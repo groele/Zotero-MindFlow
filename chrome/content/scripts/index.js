@@ -585,27 +585,29 @@
       }
     }
 
-    try {
-      for (const libID of scopes) {
-        const cached = Zotero.Items?.getAll?.(libID) || [];
-        for (const item of cached) {
-          if (!item || item.deleted) continue;
-          const doiVal = (typeof item.getField === 'function' ? item.getField('DOI') : item.doi) || '';
-          const extraVal = (typeof item.getField === 'function' ? item.getField('extra') : item.extra) || '';
-          const itemDoi = normalizeDOI(doiVal);
-          const extraDoi = normalizeDOI(extraVal);
-          if (itemDoi === doi || extraDoi === doi || (extraVal && extraVal.toLowerCase().includes(doi))) {
-            if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
-              const parent = Zotero.Items?.get?.(item.parentItemID);
-              if (parent && !parent.deleted) return parent;
-            }
-            return item;
-          }
-        }
-      }
-    } catch (_) {}
-
     return null;
+  };
+
+  const resolveCollectionItems = (collection) => {
+    const raw = typeof collection?.getChildItems === 'function' ? collection.getChildItems() : [];
+    const resolved = [];
+    const seen = new Set();
+    for (const entry of Array.isArray(raw) ? raw : []) {
+      const obj = typeof entry === 'number' || typeof entry === 'string' ? Zotero.Items?.get?.(Number(entry)) : entry;
+      if (!obj || obj.deleted) continue;
+      const reg = (typeof obj.isRegularItem === 'function' && obj.isRegularItem()) ? obj : (obj.parentItemID ? Zotero.Items?.get?.(obj.parentItemID) : null);
+      if (!reg || reg.deleted || typeof reg.isRegularItem !== 'function' || !reg.isRegularItem()) continue;
+      const regId = reg.id ?? reg.key;
+      if (regId && seen.has(regId)) continue;
+      if (regId) seen.add(regId);
+      resolved.push(reg);
+    }
+    const MAX = 100;
+    if (resolved.length > MAX) {
+      showMindFlowNotice?.(T(`分类文献较多（${resolved.length} 篇），已截取前 ${MAX} 篇生成导图`, `Collection has ${resolved.length} items; capped to ${MAX}`), true);
+      return resolved.slice(0, MAX);
+    }
+    return resolved;
   };
   const tabContainer = (tabs, tab, win) => tab?.container ||
     tabs?.getTabContent?.(tab?.id) || tabs?.getTabContainer?.(tab?.id) ||
@@ -1975,14 +1977,13 @@
         colItem.addEventListener('command', () => {
           const collection = getActiveCollection();
           if (collection) {
-            const items = typeof collection.getChildItems === 'function' ? collection.getChildItems() : [];
             this.openMindFlow(
               {
                 mode: 'create_from_collection',
                 collectionName: collection.name,
                 collectionKey: collection.key,
                 collectionLibraryID: collection.libraryID,
-                items: items,
+                items: resolveCollectionItems(collection),
               },
               window
             );
@@ -2532,7 +2533,7 @@
       if ('label' in btn) {
         try { btn.label = ''; } catch (_) {}
       }
-      btn.setAttribute('tooltiptext', '打开 MindFlow 思维导图与文献研读工作区');
+      btn.setAttribute('tooltiptext', T('打开 Zotero MindFlow 思维导图工作区', 'Open Zotero MindFlow Mind Map Workspace'));
       btn.setAttribute('aria-label', 'MindFlow');
       btn.setAttribute('image', `${CHROME_ROOT}icons/icon.svg`);
       btn.setAttribute('class', 'zotero-tb-button toolbarbutton-1 chromeclass-toolbar-additional');
@@ -2810,12 +2811,10 @@
           // and reopen keeps the same tab/workspace identity instead of
           // briefly advertising the stale embedded ID.
           try {
-            const all = await this.workspaceStorage('getAll');
-            const matches = Object.values(all || {}).map((raw) => {
-              try { return JSON.parse(raw); } catch (_) { return null; }
-            }).filter((candidate) => candidate?.id &&
-              candidate.metadata?.zoteroAttachmentKey === attItem.key &&
-              Number(candidate.metadata?.zoteroAttachmentLibraryID) === Number(attItem.libraryID));
+            const docs = await this.workspaceStorage('listDocs');
+            const matches = (Array.isArray(docs) ? docs : []).filter((candidate) => candidate?.id &&
+              candidate.zoteroAttachmentKey === attItem.key &&
+              Number(candidate.zoteroAttachmentLibraryID) === Number(attItem.libraryID));
             if (matches.length === 1 && matches[0].id !== docData.id) {
               docData.id = matches[0].id;
             }
@@ -2977,8 +2976,9 @@
 
         if (tabs && typeof tabs.add === 'function') {
           this.installTabLifecycle(win);
+          const serializeOpts = { includeChildren: options.mode !== 'create_from_collection' && !(Array.isArray(options.items) && options.items.length > 20) };
           const serializedItems = Array.isArray(options.items)
-            ? options.items.map((i) => this.serializeZoteroItem(i)).filter(Boolean)
+            ? options.items.map((i) => this.serializeZoteroItem(i, serializeOpts)).filter(Boolean)
             : [];
 
           const targetItemId = openTargetIdentity(options, serializedItems);
@@ -3134,8 +3134,9 @@
           'chrome,dialog=no,all,centerscreen,resizable=yes,minimizable=yes,close=yes,titlebar=yes,width=1440,height=920';
         const url = this.workspaceURL;
 
+        const serializeOpts = { includeChildren: options.mode !== 'create_from_collection' && !(Array.isArray(options.items) && options.items.length > 20) };
         const serializedItems = Array.isArray(options.items)
-          ? options.items.map((i) => this.serializeZoteroItem(i)).filter(Boolean)
+          ? options.items.map((i) => this.serializeZoteroItem(i, serializeOpts)).filter(Boolean)
           : [];
 
         const targetId = openTargetIdentity(options, serializedItems);
@@ -3199,10 +3200,11 @@
     /**
      * Serialize a live Zotero.Item or attachment into a structured, JSON-safe item descriptor
      */
-    serializeZoteroItem(item) {
+    serializeZoteroItem(item, options = {}) {
       try {
-        if (!item) return null;
-        let target = item;
+        if (item == null) return null;
+        let target = (typeof item === 'number' || typeof item === 'string') ? Zotero.Items?.get?.(Number(item)) : item;
+        if (!target) return null;
         const isChildItem =
           (typeof target.isAttachment === 'function' && target.isAttachment()) ||
           (typeof target.isNote === 'function' && target.isNote());
@@ -3256,6 +3258,7 @@
         const annotations = [];
         let noteReadErrors = 0;
         let annotationReadErrors = 0;
+        if (options?.includeChildren !== false) {
         try {
           if (typeof target.getNotes === 'function') {
             const noteIds = target.getNotes();
@@ -3303,6 +3306,7 @@
             }
           }
         } catch (_) { annotationReadErrors += 1; }
+        }
 
         return {
           key: target.key || String(target.id),
@@ -4196,7 +4200,10 @@
               const path = await existingAtt.getFilePathAsync?.();
               if (!path || !await IOUtils.exists(path)) throw new Error('已有导图附件未下载；请先下载再更新');
               const original = JSON.parse(await IOUtils.readUTF8(path));
-              if (original.updatedAt > doc.updatedAt && JSON.stringify(original.root) !== JSON.stringify(doc.root)) {
+              const baselineUpdatedAt = mfStorage?.getBaselineUpdatedAt?.(doc.id, doc.revision);
+              const compareUpdatedAt = Number.isFinite(baselineUpdatedAt) ? baselineUpdatedAt : doc.updatedAt;
+              const comparableDoc = (d) => JSON.stringify([d?.title ?? '', d?.root ?? null, Array.isArray(d?.relationships) ? d.relationships : []]);
+              if (original.updatedAt > compareUpdatedAt && comparableDoc(original) !== comparableDoc(doc)) {
                 throw new Error('附件包含较新的编辑；已停止覆盖，请重新打开后核对');
               }
             }
@@ -4280,6 +4287,7 @@
               if (archivedAtt.parentItemID !== parentItem.id || archivedAtt.libraryID !== parentItem.libraryID ||
                   !parentAttachments.includes(archivedAtt.id) || !path || !await IOUtils.exists(path) ||
                   await IOUtils.readUTF8(path) !== serializedDoc) throw new Error('附件归属或写后回读校验失败');
+              if (doc?.id) mfStorage?.markAttachmentSynced?.(doc.id, doc.updatedAt);
             } catch (error) {
               savedAttachment = false;
               noteError = `附件未通过验证：${error.message}`;
@@ -4390,16 +4398,18 @@
       if (!node) return '';
       const indent = '  '.repeat(level);
 
-      const isAbstractText = (str) => typeof str === 'string' && /摘要|abstract|summary/i.test(str);
+      const isAbstractText = (str) =>
+        typeof str === 'string' && /^(?:💡\s*)?(?:核心摘要|文献摘要|摘要|abstract)$/i.test(str.trim());
       const hasAbstractChild = level === 1 && Array.isArray(node.children) && node.children.some(c => c && isAbstractText(c.text));
       const isRedundantRootAbstract = hasAbstractChild && (
-        (node.note && (/(?:【文献摘要】|文献摘要|abstract|summary)/i.test(node.note))) ||
+        (node.note && (/(?:【文献摘要】|文献摘要|^\s*abstract\b)/i.test(node.note))) ||
         (Array.isArray(node.children) && node.children.some(c => c && c.note && (c.note === node.note || node.note?.includes(c.note))))
       );
 
       const isDuplicateAbstractChild = Boolean(parentNode && isAbstractText(parentNode.text) && (
         (node.note && parentNode.note && (node.note === parentNode.note || parentNode.note.includes(node.note))) ||
-        (node.text && parentNode.note && parentNode.note.startsWith(node.text.replace(/\.\.\.$/, '')))
+        (typeof node.text === 'string' && node.text.trim().length >= 16 && parentNode.note &&
+          parentNode.note.startsWith(node.text.replace(/\.\.\.$/, '')))
       ));
 
       if (isDuplicateAbstractChild && (!node.children || node.children.length === 0)) {

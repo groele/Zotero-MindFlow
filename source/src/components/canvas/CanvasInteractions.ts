@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { relationshipCurves } from '../../core/layout/relationshipGeometry';
+import { computeWorldViewport, cullViewportConnections, cullViewportNodes } from '../../core/layout/viewportCull';
 import type { CanvasProps } from './CanvasTypes';
 import { useCanvasTouch } from './CanvasTouch';
 
@@ -246,10 +247,37 @@ export const useCanvasInteractions = ({
       ? nodes.find((n) => n.id === selectedId)
       : null;
 
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const sync = () => setContainerSize({ width: el.clientWidth, height: el.clientHeight });
+    sync();
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(sync); ro.observe(el); return () => ro.disconnect();
+    }
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
+  }, []);
+
+  const worldViewport = useMemo(() => computeWorldViewport(viewport, containerSize.width, containerSize.height),
+    [viewport, containerSize.width, containerSize.height]);
+  const pinnedIds = useMemo(() => {
+    const set = new Set<string>(selectedIds);
+    if (selectedId) set.add(selectedId);
+    if (editingId) set.add(editingId);
+    if (connectingFromId) set.add(connectingFromId);
+    return set;
+  }, [selectedIds, selectedId, editingId, connectingFromId]);
+  const visibleNodes = useMemo(() => cullViewportNodes(nodes, worldViewport, { pinnedIds }), [nodes, worldViewport, pinnedIds]);
+  const visibleConnections = useMemo(() => cullViewportConnections(connections, nodes, worldViewport), [connections, nodes, worldViewport]);
+
   return {
     // props (defaults applied)
     nodes,
+    visibleNodes,
     connections,
+    visibleConnections,
     relationships,
     theme,
     selectedId,

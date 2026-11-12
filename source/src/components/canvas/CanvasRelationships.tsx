@@ -1,7 +1,7 @@
 import type { CanvasCtx } from './CanvasInteractions';
 
 export const CanvasRelationships = ({ ctx }: { ctx: CanvasCtx }) => {
-  const { curves, connections, focusedTag } = ctx;
+  const { curves, visibleConnections, focusedTag } = ctx;
   return (
     <svg
       className="absolute overflow-visible w-full h-full pointer-events-none"
@@ -26,7 +26,7 @@ export const CanvasRelationships = ({ ctx }: { ctx: CanvasCtx }) => {
       </defs>
 
       {/* Tree Hierarchical Connections */}
-      {connections.map((conn) => (
+      {visibleConnections.map((conn) => (
         <path
           key={conn.id}
           d={conn.path}

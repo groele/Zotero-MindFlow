@@ -236,7 +236,7 @@ export const useAppDocumentIO = (ctx: AppContext): void => {
             id: 'doc_' + generateId(), title: `${local.title}（附件导入前副本）`,
             revision: 0, createdAt: Date.now(), metadata: detachedMetadata(local.metadata) });
         }
-        documentToOpen = await StorageService.saveDocumentDirect(incoming, local?.revision || 0);
+        documentToOpen = await StorageService.saveDocumentDirect(incoming, local?.revision || 0, { preserveUpdatedAt: true });
         if (local) setSaveStatus({ state: 'warning', message: '已打开较新的附件，原本地编辑已保存为独立副本。' });
       }
     }

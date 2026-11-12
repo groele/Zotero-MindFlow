@@ -52,15 +52,18 @@ export async function saveMindMapToZoteroNote(doc: MindMapDocument): Promise<{ s
     function nodeToHtml(node: MindMapNode, level: number = 1, parentNode: MindMapNode | null = null): string {
       const indent = '  '.repeat(level);
 
-      const hasAbstractChild = level === 1 && Array.isArray(node.children) && node.children.some(c => c && c.text && c.text.includes('摘要'));
+      const isAutoAbstractHeading = (str: unknown) =>
+        typeof str === 'string' && /^(?:💡\s*)?(?:核心摘要|文献摘要|摘要|abstract)$/i.test(str.trim());
+      const hasAbstractChild = level === 1 && Array.isArray(node.children) && node.children.some(c => c && isAutoAbstractHeading(c.text));
       const isRedundantRootAbstract = hasAbstractChild && (
         (node.note && (node.note.startsWith('【文献摘要】') || node.note.includes('文献摘要'))) ||
         (Array.isArray(node.children) && node.children.some(c => c && c.note && (c.note === node.note || node.note?.includes(c.note))))
       );
 
-      const isDuplicateAbstractChild = Boolean(parentNode && parentNode.text && parentNode.text.includes('摘要') && (
+      const isDuplicateAbstractChild = Boolean(parentNode && isAutoAbstractHeading(parentNode.text) && (
         (node.note && parentNode.note && (node.note === parentNode.note || parentNode.note.includes(node.note))) ||
-        (node.text && parentNode.note && parentNode.note.startsWith(node.text.replace(/\.\.\.$/, '')))
+        (typeof node.text === 'string' && node.text.trim().length >= 16 && parentNode.note &&
+          parentNode.note.startsWith(node.text.replace(/\.\.\.$/, '')))
       ));
 
       if (isDuplicateAbstractChild && (!node.children || node.children.length === 0)) {

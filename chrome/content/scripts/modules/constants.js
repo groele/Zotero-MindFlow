@@ -97,6 +97,102 @@
       }
     }
   };
+  var validateHostInbox = (items) => {
+    if (!Array.isArray(items)) throw new Error("收集箱数据不是列表");
+    const ids = /* @__PURE__ */ new Set();
+    for (const item of items) {
+      if (!item || typeof item.id !== "string" || !item.id || typeof item.text !== "string" || !Number.isFinite(item.createdAt) || typeof item.isProcessed !== "boolean" || ["title", "url", "favIconUrl"].some((field) => item[field] !== void 0 && typeof item[field] !== "string")) {
+        throw new Error("收集箱包含格式无效的记录");
+      }
+      if (ids.has(item.id)) throw new Error("收集箱包含重复的记录 ID");
+      ids.add(item.id);
+    }
+    return items;
+  };
+  var validateHostSnapshots = (snapshots, docId) => {
+    if (!Array.isArray(snapshots)) throw new Error("快照存储数据损坏");
+    const ids = /* @__PURE__ */ new Set();
+    for (const snapshot of snapshots) {
+      if (!snapshot || typeof snapshot.id !== "string" || !snapshot.id || snapshot.docId !== docId || typeof snapshot.title !== "string" || typeof snapshot.data !== "string" || !Number.isFinite(snapshot.timestamp) || snapshot.timestamp < 0 || snapshot.nodeCount !== void 0 && (!Number.isSafeInteger(snapshot.nodeCount) || snapshot.nodeCount < 1)) {
+        throw new Error("快照身份或属性无效");
+      }
+      if (ids.has(snapshot.id)) throw new Error("快照包含重复的 ID");
+      ids.add(snapshot.id);
+      const doc = JSON.parse(snapshot.data);
+      validateHostDocument(doc);
+      if (doc.id !== docId) throw new Error("快照身份与所属导图不一致");
+    }
+    return snapshots;
+  };
+  var toDocSummary = (doc) => {
+    const unlinked = Boolean(doc?.metadata?.mindflowUnlinkedContainer);
+    return {
+      id: doc.id,
+      title: doc.title,
+      updatedAt: Number.isFinite(doc.updatedAt) ? doc.updatedAt : 0,
+      zoteroItemKey: unlinked ? void 0 : doc?.metadata?.zoteroItemKey,
+      zoteroItemTitle: unlinked ? void 0 : doc?.metadata?.zoteroItemTitle,
+      zoteroAttachmentKey: doc?.metadata?.zoteroAttachmentKey,
+      zoteroAttachmentLibraryID: doc?.metadata?.zoteroAttachmentLibraryID
+    };
+  };
+  var fileStamp = async (IOUtils, path) => {
+    if (typeof IOUtils?.stat !== "function") return null;
+    try {
+      const s = await IOUtils.stat(path);
+      return s ? `${s.size}:${s.lastModified}` : null;
+    } catch (_) {
+      return null;
+    }
+  };
+  var listWorkspaceDocs = async ({ keys, directory, Zotero, PathUtils, IOUtils, fileFor, readFile, cache, state }) => {
+    const cachePath = PathUtils.join(directory, "mindflow-doc-index.cache.json");
+    const hasStat = typeof IOUtils?.stat === "function";
+    if (!state.indexLoaded && hasStat) {
+      state.indexLoaded = true;
+      try {
+        if (await IOUtils.exists(cachePath)) {
+          for (const [id, entry] of JSON.parse(await IOUtils.readUTF8(cachePath))) {
+            if (id && entry?.stamp && entry?.summary) cache.set(id, entry);
+          }
+        }
+      } catch (_) {
+      }
+    }
+    const summaries = [];
+    let dirty = false;
+    for (const key of keys) {
+      if (!key.startsWith("mindflow_doc_")) continue;
+      const id = key.slice("mindflow_doc_".length);
+      if (keys.has(`mindflow_deleted_doc_${id}`) || Zotero?.Prefs?.get?.(`mindflow.mindflow_deleted_doc_${id}`, true)) continue;
+      try {
+        const stamp = await fileStamp(IOUtils, fileFor(key));
+        const cached = stamp ? cache.get(id) : null;
+        if (cached && cached.stamp === stamp) {
+          summaries.push(cached.summary);
+          continue;
+        }
+        const raw = await readFile(key);
+        if (!raw) continue;
+        const summary = toDocSummary(JSON.parse(raw));
+        if (stamp) {
+          cache.set(id, { stamp, summary });
+          dirty = true;
+        }
+        summaries.push(summary);
+      } catch (_) {
+        summaries.push({ id, title: `数据损坏（${id}）`, updatedAt: 0, corrupt: true });
+      }
+    }
+    if (dirty && hasStat) {
+      try {
+        await IOUtils.makeDirectory(directory, { createAncestors: true, ignoreExisting: true });
+        await IOUtils.writeUTF8(cachePath, JSON.stringify([...cache.entries()]), { tmpPath: `${cachePath}.tmp`, flush: true });
+      } catch (_) {
+      }
+    }
+    return summaries.sort((a, b) => b.updatedAt - a.updatedAt);
+  };
   var MindFlowConstants = {
     ADDON_ID,
     CHROME_ROOT,
@@ -114,7 +210,12 @@
     isCalendarDate,
     isMindFlowAttachment,
     sameWindow,
-    validateHostDocument
+    validateHostDocument,
+    validateHostInbox,
+    validateHostSnapshots,
+    toDocSummary,
+    fileStamp,
+    listWorkspaceDocs
   };
   (function(global) {
     global.MindFlowConstants = MindFlowConstants;

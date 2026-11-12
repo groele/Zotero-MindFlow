@@ -27,7 +27,7 @@ interface NodeCardProps {
   onDrop?: (targetId: string, e: React.DragEvent) => void;
 }
 
-export const NodeCard: React.FC<NodeCardProps> = ({
+const NodeCardComponent: React.FC<NodeCardProps> = ({
   layoutNode,
   isSelected,
   isEditing,
@@ -302,3 +302,5 @@ export const NodeCard: React.FC<NodeCardProps> = ({
     </div>
   );
 };
+
+export const NodeCard = React.memo(NodeCardComponent);

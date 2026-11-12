@@ -6,7 +6,11 @@ import { HistoryManager } from '../src/core/history/historyManager';
 import { InboxService } from '../src/services/storage/inboxService';
 import { SettingsService, sanitizeSettings } from '../src/services/storage/settingsService';
 import { safeStorage } from '../src/services/storage/safeStorage';
-import { parseOPMLString, importFromMarkdown, exportToInteractiveHTML, generateMermaidMindmap } from '../src/services/io/exporter';
+import { parseOPMLString, importFromMarkdown, importMarkdownDocument, exportToMarkdown, exportToInteractiveHTML, generateMermaidMindmap } from '../src/services/io/exporter';
+import { computeLayout, measureNodeWithLines } from '../src/core/layout/layoutEngine';
+import { computeWorldViewport, cullViewportNodes, cullViewportConnections } from '../src/core/layout/viewportCull';
+import { THEMES } from '../src/core/theme/themes';
+import { uiText } from '../src/services/zotero/zoteroBridge';
 import { BackupService } from '../src/services/storage/backupService';
 import { WebDAVService } from '../src/services/sync/webdavService';
 import type { MindMapNode, MindMapDocument } from '../src/core/model/types';
@@ -453,6 +457,98 @@ await run('setCollapseByLevel controls expansion up to level 3', async () => {
   assert.equal(collapsedTo3.children[0].isExpanded, true);
   assert.equal(collapsedTo3.children[0].children[0].isExpanded, true);
   assert.equal(collapsedTo3.children[0].children[0].children[0].isExpanded, false);
+});
+await run('Markdown round-trip preserves doi:, bare DOI, mailto:, #123 in titles, internalLink and relationships', () => {
+  const md = [
+    '# Issue #42 Review',
+    '- Bare DOI branch [🔗](10.1038/s41586-021-03819-2)',
+    '- Prefixed DOI [🔗](doi:10.1145/12345.67890)',
+    '- Contact [🔗](mailto:author@example.org)',
+    '- Issue #123 handling #bug #priority',
+    '- Issue #456 only',
+  ].join('\n');
+  const parsed = importFromMarkdown(md);
+  assert.equal(parsed.text, 'Issue #42 Review');
+  assert.equal(parsed.children[0].link, '10.1038/s41586-021-03819-2');
+  assert.equal(parsed.children[1].link, 'doi:10.1145/12345.67890');
+  assert.equal(parsed.children[2].link, 'mailto:author@example.org');
+  assert.equal(parsed.children[3].text, 'Issue #123 handling');
+  assert.deepEqual(parsed.children[3].tags, ['bug', 'priority']);
+  assert.equal(parsed.children[4].text, 'Issue #456 only');
+  assert.equal(parsed.children[4].tags, undefined);
+});
+await run('exportToMarkdown + importMarkdownDocument round-trip internalLink, #123 titles and relationships', async () => {
+  let mdOut = '';
+  const srcRoot: MindMapNode = {
+    id: 'n_root',
+    text: 'Doc #99',
+    internalLink: { documentId: 'doc_other', nodeId: 'n_target' },
+    children: [
+      { id: 'n_a', text: 'Branch A', children: [] },
+      { id: 'n_b', text: 'Issue #123', tags: ['v1'], children: [] },
+    ],
+  };
+  const rels = [{ id: 'rel_1', fromId: 'n_a', toId: 'n_b', label: 'supports', style: 'dashed' as const }];
+  let pendingText: Promise<string> | null = null;
+  exportToMarkdown(srcRoot, 'test', (blob) => { pendingText = blob.text(); }, { relationships: rels });
+  mdOut = await pendingText!;
+  const imported = importMarkdownDocument(mdOut);
+  assert.equal(imported.root.text, 'Doc #99');
+  assert.deepEqual(imported.root.internalLink, { documentId: 'doc_other', nodeId: 'n_target' });
+  assert.equal(imported.root.children[1].text, 'Issue #123');
+  assert.deepEqual(imported.root.children[1].tags, ['v1']);
+  assert.equal(imported.relationships?.length, 1);
+  assert.equal(imported.relationships![0].fromId, imported.root.children[0].id);
+  assert.equal(imported.relationships![0].toId, imported.root.children[1].id);
+  assert.equal(imported.relationships![0].label, 'supports');
+});
+await run('layout memoization, collapsed subtree skip, and viewport culling preserve pinned nodes', () => {
+  const sampleNode: MindMapNode = { id: 'm1', text: 'Memoized node with long text for wrapping check', children: [] };
+  const m1 = measureNodeWithLines(sampleNode, 1, false);
+  const m2 = measureNodeWithLines(sampleNode, 1, false);
+  assert.equal(m1, m2);
+
+  const manyChildren: MindMapNode[] = Array.from({ length: 150 }, (_, idx) => ({
+    id: `c_${idx}`,
+    text: `Topic ${idx}`,
+    isExpanded: true,
+    children: idx === 0 ? [{ id: 'gc_0', text: 'Grandchild 0', children: [] }] : [],
+  }));
+  const largeRoot: MindMapNode = {
+    id: 'r_large',
+    text: 'Large Root',
+    isExpanded: true,
+    children: [
+      { id: 'collapsed', text: 'Collapsed', isExpanded: false, children: [{ id: 'hidden_child', text: 'Hidden', children: [] }] },
+      ...manyChildren,
+    ],
+  };
+  const layout = computeLayout(largeRoot, 'logic-right', THEMES['classic-blue']);
+  assert.equal(layout.nodes.some(n => n.id === 'hidden_child'), false);
+  const world = computeWorldViewport({ x: 0, y: 0, scale: 1 }, 800, 600, 50);
+  const culled = cullViewportNodes(layout.nodes, world, { threshold: 120, pinnedIds: new Set(['c_149']) });
+  assert.ok(culled.length < layout.nodes.length);
+  assert.ok(culled.some(n => n.id === 'c_149'));
+  const culledConns = cullViewportConnections(layout.connections, layout.nodes, world, 120);
+  assert.ok(culledConns.length < layout.connections.length);
+  assert.equal(culledConns.some(c => c.toId === 'gc_0'), false);
+});
+await run('uiText switches between Chinese default and English Zotero locale', () => {
+  const g = globalThis as any;
+  const origWindow = g.window;
+  const hadWindow = Object.prototype.hasOwnProperty.call(g, 'window');
+  const origZotero = g.Zotero;
+  try {
+    g.window = g;
+    g.Zotero = { locale: 'en-US' };
+    assert.equal(uiText('关联', 'Link'), 'Link');
+    g.Zotero = { locale: 'zh-CN' };
+    assert.equal(uiText('关联', 'Link'), '关联');
+  } finally {
+    g.Zotero = origZotero;
+    if (hadWindow) g.window = origWindow;
+    else delete g.window;
+  }
 });
 console.log(`${passed} logic tests passed; ${failed} failed`);
 if (failed) process.exitCode = 1;

@@ -113,28 +113,6 @@ export async function searchItemByDoi(doiInput: string, Zotero: any, libraryID?:
     }
   }
 
-  try {
-    for (const libID of scopes) {
-      const cached = Zotero.Items?.getAll?.(libID) || [];
-      for (const item of cached) {
-        if (!item || item.deleted) continue;
-        const doiVal = (typeof item.getField === 'function' ? item.getField('DOI') : item.doi) || '';
-        const extraVal = (typeof item.getField === 'function' ? item.getField('extra') : item.extra) || '';
-        const itemDoi = extractDoi(doiVal);
-        const extraDoi = extractDoi(extraVal);
-        if (itemDoi === doi || extraDoi === doi || (extraVal && extraVal.toLowerCase().includes(doi))) {
-          if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
-            const parent = Zotero.Items?.get?.(item.parentItemID);
-            if (parent && !parent.deleted) return parent;
-          }
-          return item;
-        }
-      }
-    }
-  } catch {
-    // ignore
-  }
-
   return null;
 }
 

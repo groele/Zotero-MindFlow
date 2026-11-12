@@ -1,7 +1,8 @@
-    serializeZoteroItem(item) {
+    serializeZoteroItem(item, options = {}) {
       try {
-        if (!item) return null;
-        let target = item;
+        if (item == null) return null;
+        let target = (typeof item === 'number' || typeof item === 'string') ? Zotero.Items?.get?.(Number(item)) : item;
+        if (!target) return null;
         const isChildItem =
           (typeof target.isAttachment === 'function' && target.isAttachment()) ||
           (typeof target.isNote === 'function' && target.isNote());
@@ -55,6 +56,7 @@
         const annotations = [];
         let noteReadErrors = 0;
         let annotationReadErrors = 0;
+        if (options?.includeChildren !== false) {
         try {
           if (typeof target.getNotes === 'function') {
             const noteIds = target.getNotes();
@@ -102,6 +104,7 @@
             }
           }
         } catch (_) { annotationReadErrors += 1; }
+        }
 
         return {
           key: target.key || String(target.id),

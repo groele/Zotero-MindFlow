@@ -1,12 +1,14 @@
+import { useCallback, useRef } from 'react';
 import {
   Plus, ArrowDown, Edit3, ImagePlus, Link2, Palette, Trash2, X
 } from 'lucide-react';
 import { NodeCard } from '../node/NodeCard';
+import { uiText } from '../../services/zotero/zoteroBridge';
 import type { CanvasCtx } from './CanvasInteractions';
 
 export const CanvasNodes = ({ ctx }: { ctx: CanvasCtx }) => {
   const {
-    curves, onEditRelationshipLabel, onDeleteRelationship, nodes, activeSelectedSet,
+    curves, onEditRelationshipLabel, onDeleteRelationship, visibleNodes, activeSelectedSet,
     editingId, searchMatchedIds, focusedTag, selectedId, onSelectNode,
     connectingFromId, onCreateRelationship, setConnectingFromId, onContextMenuNode,
     onStartEditNode, onCommitEditNode, onCancelEditNode, onToggleCollapse,
@@ -15,6 +17,25 @@ export const CanvasNodes = ({ ctx }: { ctx: CanvasCtx }) => {
     onAddSiblingNode, showQuickColors, setShowQuickColors, onQuickColorNode,
     onDeleteSelectedNode, imageTargetIdRef, nodeImageInputRef,
   } = ctx;
+  const connectingFromRef = useRef(connectingFromId);
+  connectingFromRef.current = connectingFromId;
+
+  const handleNodeSelect = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const fromId = connectingFromRef.current;
+    if (fromId) {
+      if (id !== fromId) onCreateRelationship?.(fromId, id);
+      setConnectingFromId(null);
+      return;
+    }
+    onSelectNode(id, e.shiftKey || e.ctrlKey || e.metaKey);
+  }, [onCreateRelationship, setConnectingFromId, onSelectNode]);
+
+  const handleNodeContextMenu = useCallback((id: string, e: React.MouseEvent) => {
+    onContextMenuNode?.(id, e.clientX, e.clientY);
+  }, [onContextMenuNode]);
+
+  const handleNodeDragEnd = useCallback(() => setDraggedNodeId(null), [setDraggedNodeId]);
   return (
     <div className="absolute inset-0 pointer-events-auto">
       {/* Relationship Editable Labels */}
@@ -30,21 +51,22 @@ export const CanvasNodes = ({ ctx }: { ctx: CanvasCtx }) => {
             className="absolute group flex items-center gap-1 bg-white/95 dark:bg-slate-900/95 border border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-[10px] px-2 py-0.5 rounded-full shadow-md backdrop-blur-xs cursor-pointer hover:scale-105 transition-transform z-30 select-none"
             onClick={(e) => {
               e.stopPropagation();
-              const nextLabel = window.prompt('编辑关联线描述文本:', rel.label || '');
+              const nextLabel = window.prompt(uiText('编辑关联线描述文本:', 'Edit relationship label:'), rel.label || '');
               if (nextLabel !== null) {
                 onEditRelationshipLabel?.(rel.id, nextLabel.trim());
               }
             }}
           >
             <Link2 className="w-2.5 h-2.5 opacity-70" />
-            <span>{rel.label || '关联'}</span>
+            <span>{rel.label || uiText('关联', 'Link')}</span>
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onDeleteRelationship?.(rel.id);
               }}
-              title="删除此关联线"
+              title={uiText('删除此关联线', 'Delete relationship')}
+              aria-label={uiText('删除此关联线', 'Delete relationship')}
               className="opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity ml-0.5"
             >
               <X className="w-2.5 h-2.5" />
@@ -54,7 +76,7 @@ export const CanvasNodes = ({ ctx }: { ctx: CanvasCtx }) => {
       })}
 
       {/* Mind Map Nodes */}
-      {nodes.map((layoutNode) => (
+      {visibleNodes.map((layoutNode) => (
         <NodeCard
           key={layoutNode.id}
           layoutNode={layoutNode}
@@ -63,30 +85,16 @@ export const CanvasNodes = ({ ctx }: { ctx: CanvasCtx }) => {
           isSearchMatched={searchMatchedIds.includes(layoutNode.id)}
           isTagMatched={Boolean(focusedTag && layoutNode.node.tags?.includes(focusedTag))}
           isTagDimmed={Boolean(focusedTag && !layoutNode.node.tags?.includes(focusedTag) && selectedId !== layoutNode.id)}
-          onSelect={(id, e) => {
-            e.stopPropagation();
-            if (connectingFromId) {
-              if (id !== connectingFromId) {
-                onCreateRelationship?.(connectingFromId, id);
-              }
-              setConnectingFromId(null);
-              return;
-            }
-            onSelectNode(id, e.shiftKey || e.ctrlKey || e.metaKey);
-          }}
-          onContextMenu={(id, e) => {
-            if (onContextMenuNode) {
-              onContextMenuNode(id, e.clientX, e.clientY);
-            }
-          }}
-          onStartEdit={(id) => onStartEditNode(id)}
-          onCommitEdit={(id, text) => onCommitEditNode(id, text)}
+          onSelect={handleNodeSelect}
+          onContextMenu={handleNodeContextMenu}
+          onStartEdit={onStartEditNode}
+          onCommitEdit={onCommitEditNode}
           onCancelEdit={onCancelEditNode}
           onToggleCollapse={onToggleCollapse}
           onCycleTaskStatus={onCycleTaskStatus}
           onOpenInternalLink={onOpenInternalLink}
           onDragStart={handleNodeDragStart}
-          onDragEnd={() => setDraggedNodeId(null)}
+          onDragEnd={handleNodeDragEnd}
           onDragOver={handleNodeDragOver}
           onDrop={handleNodeDrop}
         />

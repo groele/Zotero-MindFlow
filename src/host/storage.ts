@@ -13,6 +13,9 @@ export function createStorageModule(deps: any = {}) {
 
   let _workspaceWriteQueue: Promise<any> | null = null;
   let _workspaceRecoveredKeys: Set<string> | null = null;
+  const _indexState = { indexLoaded: false };
+  const _docBaseline = new Map<string, { revision: number; updatedAt: number }>();
+  const _docSummaryCache = new Map<string, { stamp: string; summary: any }>();
 
   const checkedKey = (key: string): string => {
     if (typeof key !== 'string' || !/^mindflow_[a-zA-Z0-9_-]{1,160}$/.test(key)) {
@@ -80,6 +83,21 @@ export function createStorageModule(deps: any = {}) {
     }
   };
 
+  const atomicWrite = async (key: string, value: string, label: string) => {
+    const Zotero = getZotero(), IOUtils = getIOUtils();
+    const path = fileFor(key);
+    const recovering = _workspaceRecoveredKeys?.has(key);
+    if (recovering && await IOUtils.exists(path)) await IOUtils.move(path, `${path}.corrupt-${Date.now()}`);
+    await IOUtils.makeDirectory(getWorkspaceDir(), { createAncestors: true, ignoreExisting: true });
+    await IOUtils.writeUTF8(path, value, recovering
+      ? { tmpPath: `${path}.tmp`, flush: true }
+      : { tmpPath: `${path}.tmp`, backupFile: `${path}.bak`, flush: true });
+    if (await IOUtils.readUTF8(path) !== value) throw new Error(`${label}写入后校验失败`);
+    _workspaceRecoveredKeys?.delete(key);
+    try { Zotero?.Prefs?.clear?.(`mindflow.${key}`, true); } catch (_) {}
+    return path;
+  };
+
   async function workspaceStorage(action: string, payload: any = {}): Promise<any> {
     payload = JSON.parse(JSON.stringify(payload));
     const Zotero = getZotero();
@@ -94,20 +112,7 @@ export function createStorageModule(deps: any = {}) {
     if (action === 'mutateInbox') {
       const key = 'mindflow_inbox_items';
       const patch = JSON.parse(JSON.stringify(payload));
-      const validate = (items: any[]) => {
-        if (!Array.isArray(items)) throw new Error('收集箱数据不是列表');
-        const ids = new Set<string>();
-        for (const item of items) {
-          if (!item || typeof item.id !== 'string' || !item.id || typeof item.text !== 'string' ||
-              !Number.isFinite(item.createdAt) || typeof item.isProcessed !== 'boolean' ||
-              ['title', 'url', 'favIconUrl'].some(field => item[field] !== undefined && typeof item[field] !== 'string')) {
-            throw new Error('收集箱包含格式无效的记录');
-          }
-          if (ids.has(item.id)) throw new Error('收集箱包含重复的记录 ID');
-          ids.add(item.id);
-        }
-        return items;
-      };
+      const validate = (items: any[]): any[] => (constants.validateHostInbox || (globalThis as any).MindFlowConstants?.validateHostInbox)(items);
       validate(patch.additions || []);
       const operation = (_workspaceWriteQueue || Promise.resolve()).catch(() => {}).then(async () => {
         const raw = await readFile(key);
@@ -118,11 +123,7 @@ export function createStorageModule(deps: any = {}) {
         for (const item of patch.additions || []) {
           if (!ids.has(item.id)) { items.unshift(item); ids.add(item.id); }
         }
-        const path = fileFor(key), serialized = JSON.stringify(items);
-        await IOUtils.makeDirectory(directory, { createAncestors: true, ignoreExisting: true });
-        await IOUtils.writeUTF8(path, serialized, { tmpPath: `${path}.tmp`, backupFile: `${path}.bak`, flush: true });
-        if (await IOUtils.readUTF8(path) !== serialized) throw new Error('收集箱写入后校验失败');
-        try { Zotero?.Prefs?.clear?.('mindflow.mindflow_inbox_items', true); } catch (_) {}
+        await atomicWrite(key, JSON.stringify(items), '收集箱');
         return items;
       });
       _workspaceWriteQueue = operation.catch(() => {});
@@ -132,24 +133,8 @@ export function createStorageModule(deps: any = {}) {
     if (action === 'mutateSnapshots') {
       const key = checkedKey(`mindflow_snapshots_${payload.docId}`);
       const additions = JSON.parse(JSON.stringify(payload.snapshots || []));
-      const validateSnapshots = (snapshots: any[]) => {
-        if (!Array.isArray(snapshots)) throw new Error('快照存储数据损坏');
-        const ids = new Set<string>();
-        for (const snapshot of snapshots) {
-          if (!snapshot || typeof snapshot.id !== 'string' || !snapshot.id ||
-              snapshot.docId !== payload.docId || typeof snapshot.title !== 'string' ||
-              typeof snapshot.data !== 'string' || !Number.isFinite(snapshot.timestamp) || snapshot.timestamp < 0 ||
-              (snapshot.nodeCount !== undefined && (!Number.isSafeInteger(snapshot.nodeCount) || snapshot.nodeCount < 1))) {
-            throw new Error('快照身份或属性无效');
-          }
-          if (ids.has(snapshot.id)) throw new Error('快照包含重复的 ID');
-          ids.add(snapshot.id);
-          const doc = JSON.parse(snapshot.data);
-          validateHostDoc(doc);
-          if (doc.id !== payload.docId) throw new Error('快照身份与所属导图不一致');
-        }
-        return snapshots;
-      };
+      const validateSnapshots = (snapshots: any[]): any[] =>
+        (constants.validateHostSnapshots || (globalThis as any).MindFlowConstants?.validateHostSnapshots)(snapshots, payload.docId);
       validateSnapshots(additions);
       const operation = (_workspaceWriteQueue || Promise.resolve()).catch(() => {}).then(async () => {
         const raw = await readFile(key);
@@ -160,11 +145,7 @@ export function createStorageModule(deps: any = {}) {
         }
         snapshots.sort((a, b) => b.timestamp - a.timestamp);
         if (Number.isInteger(payload.limit)) snapshots = snapshots.slice(0, Math.max(10, Math.min(50, payload.limit)));
-        const path = fileFor(key), serialized = JSON.stringify(snapshots);
-        await IOUtils.makeDirectory(directory, { createAncestors: true, ignoreExisting: true });
-        await IOUtils.writeUTF8(path, serialized, { tmpPath: `${path}.tmp`, backupFile: `${path}.bak`, flush: true });
-        if (await IOUtils.readUTF8(path) !== serialized) throw new Error('快照写入后校验失败');
-        try { Zotero?.Prefs?.clear?.(`mindflow.${key}`, true); } catch (_) {}
+        await atomicWrite(key, JSON.stringify(snapshots), '快照');
         return snapshots;
       });
       _workspaceWriteQueue = operation.catch(() => {});
@@ -181,6 +162,8 @@ export function createStorageModule(deps: any = {}) {
         const markerPath = fileFor(`mindflow_deleted_doc_${payload.id}`);
         await IOUtils.writeUTF8(markerPath, JSON.stringify({ deletedAt: Date.now(), revision: payload.expectedRevision }),
           { tmpPath: `${markerPath}.tmp`, flush: true });
+        _docBaseline.delete(payload.id);
+        _docSummaryCache.delete(payload.id);
         try {
           if (await IOUtils.exists(fileFor(key))) await IOUtils.remove(fileFor(key));
           Zotero?.Prefs?.clear?.(`mindflow.${key}`, true);
@@ -205,15 +188,20 @@ export function createStorageModule(deps: any = {}) {
       const operation = (_workspaceWriteQueue || Promise.resolve()).catch(() => {}).then(async () => {
         await IOUtils.makeDirectory(directory, { createAncestors: true, ignoreExisting: true });
         let savedDocument: any = null;
+        let preserve = false;
+        let priorUpdatedAt = Number(commitSnapshot?.updatedAt) || 0;
         if (committing) {
           validateHostDoc(commitSnapshot);
           const key = checkedKey(`mindflow_doc_${commitSnapshot?.id}`);
           const currentRaw = await readFile(key);
-          const currentRevision = currentRaw ? Number(JSON.parse(currentRaw).revision) || 0 : 0;
+          const prev = currentRaw ? JSON.parse(currentRaw) : null;
+          const currentRevision = prev ? Number(prev.revision) || 0 : 0;
+          if (prev && Number.isFinite(prev.updatedAt)) priorUpdatedAt = prev.updatedAt;
           if (payload.force !== true && currentRevision !== payload.expectedRevision) {
             throw new Error('MINDFLOW_REVISION_CONFLICT: 导图已被其他窗口修改');
           }
-          savedDocument = { ...commitSnapshot, revision: currentRevision + 1, updatedAt: Date.now() };
+          preserve = payload.preserveUpdatedAt === true && Number.isFinite(commitSnapshot?.updatedAt);
+          savedDocument = { ...commitSnapshot, revision: currentRevision + 1, updatedAt: preserve ? commitSnapshot.updatedAt : Date.now() };
           entries = [[key, JSON.stringify(savedDocument)]];
         }
         const recreatedIds: string[] = [];
@@ -241,20 +229,22 @@ export function createStorageModule(deps: any = {}) {
           }
           if (!currentRaw && deletionMarker) recreatedIds.push(key.slice('mindflow_doc_'.length));
         }
+        const c = constants.listWorkspaceDocs ? constants : (globalThis as any).MindFlowConstants || {};
         for (const [key, value] of entries) {
-          const path = fileFor(key);
-          const recovering = _workspaceRecoveredKeys?.has(key);
-          if (recovering && await IOUtils.exists(path)) {
-            await IOUtils.move(path, `${path}.corrupt-${Date.now()}`);
+          const path = await atomicWrite(key, value, 'Zotero 数据目录');
+          if (key.startsWith('mindflow_doc_')) {
+            const id = key.slice('mindflow_doc_'.length);
+            const stamp = await c.fileStamp?.(IOUtils, path);
+            if (stamp && c.toDocSummary) _docSummaryCache.set(id, { stamp, summary: c.toDocSummary(JSON.parse(value)) });
+            else _docSummaryCache.delete(id);
           }
-          await IOUtils.writeUTF8(path, value, recovering
-            ? { tmpPath: `${path}.tmp`, flush: true }
-            : { tmpPath: `${path}.tmp`, backupFile: `${path}.bak`, flush: true });
-          if (await IOUtils.readUTF8(path) !== value) {
-            throw new Error(`Zotero 数据目录写入后校验失败：${key}`);
-          }
-          _workspaceRecoveredKeys?.delete(key);
-          try { Zotero?.Prefs?.clear?.(`mindflow.${key}`, true); } catch (_) {}
+        }
+        if (committing && savedDocument?.id) {
+          const prevBase = _docBaseline.get(savedDocument.id);
+          const baselineAt = (preserve || payload.force === true || !prevBase)
+            ? (preserve ? savedDocument.updatedAt : priorUpdatedAt)
+            : prevBase.updatedAt;
+          _docBaseline.set(savedDocument.id, { revision: savedDocument.revision, updatedAt: baselineAt });
         }
         for (const id of recreatedIds) {
           const markerKey = `mindflow_deleted_doc_${id}`;
@@ -273,6 +263,11 @@ export function createStorageModule(deps: any = {}) {
       const operation = (_workspaceWriteQueue || Promise.resolve()).catch(() => {}).then(async () => {
         const path = fileFor(key);
         if (await IOUtils.exists(path)) await IOUtils.remove(path);
+        if (key.startsWith('mindflow_doc_')) {
+          const id = key.slice('mindflow_doc_'.length);
+          _docBaseline.delete(id);
+          _docSummaryCache.delete(id);
+        }
         try { Zotero?.Prefs?.clear?.(`mindflow.${key}`, true); }
         catch (error) { Zotero?.log?.('[MindFlow] Legacy preference cleanup note: ' + error); }
         return true;
@@ -281,14 +276,12 @@ export function createStorageModule(deps: any = {}) {
       return operation;
     }
 
-    if (action === 'getAll' || action === 'keys') {
+    if (action === 'getAll' || action === 'keys' || action === 'listDocs') {
       const keys = new Set<string>();
       if (await IOUtils.exists(directory)) {
         for (const path of await IOUtils.getChildren(directory)) {
           const name = PathUtils.filename(path);
-          if (/^mindflow_[a-zA-Z0-9_-]{1,160}\.json$/.test(name)) {
-            keys.add(name.slice(0, -5));
-          }
+          if (/^mindflow_[a-zA-Z0-9_-]{1,160}\.json$/.test(name)) keys.add(name.slice(0, -5));
         }
       }
       let legacyIndex: unknown = null;
@@ -301,6 +294,10 @@ export function createStorageModule(deps: any = {}) {
         } catch (_) {}
       }
       if (action === 'keys') return [...keys];
+      if (action === 'listDocs') {
+        const listFn = constants.listWorkspaceDocs || (globalThis as any).MindFlowConstants?.listWorkspaceDocs;
+        return listFn({ keys, directory, Zotero, PathUtils, IOUtils, fileFor, readFile, cache: _docSummaryCache, state: _indexState });
+      }
       const result: Record<string, string> = {};
       for (const key of keys) {
         try {
@@ -319,6 +316,17 @@ export function createStorageModule(deps: any = {}) {
   return {
     workspaceStorage,
     get pendingWrites() { return _workspaceWriteQueue; },
+    getBaselineUpdatedAt(docId: string, revision?: number) {
+      const entry = docId ? _docBaseline.get(docId) : undefined;
+      if (!entry) return undefined;
+      if (Number.isSafeInteger(revision) && entry.revision !== revision) return undefined;
+      return entry.updatedAt;
+    },
+    markAttachmentSynced(docId: string, syncedUpdatedAt: number) {
+      if (!docId || !Number.isFinite(syncedUpdatedAt)) return;
+      const cur = _docBaseline.get(docId);
+      _docBaseline.set(docId, { revision: cur?.revision ?? 0, updatedAt: syncedUpdatedAt });
+    },
     checkedKey,
     fileFor,
     readFile,

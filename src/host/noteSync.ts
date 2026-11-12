@@ -27,16 +27,18 @@ export function createNoteSyncModule(deps: any = {}) {
     if (!node) return '';
     const indent = '  '.repeat(level);
 
-    const isAbstractText = (str: any) => typeof str === 'string' && /摘要|abstract|summary/i.test(str);
-    const hasAbstractChild = level === 1 && Array.isArray(node.children) && node.children.some((c: any) => c && isAbstractText(c.text));
+    const isAutoAbstractHeading = (str: any) =>
+      typeof str === 'string' && /^(?:💡\s*)?(?:核心摘要|文献摘要|摘要|abstract)$/i.test(str.trim());
+    const hasAbstractChild = level === 1 && Array.isArray(node.children) && node.children.some((c: any) => c && isAutoAbstractHeading(c.text));
     const isRedundantRootAbstract = hasAbstractChild && (
-      (node.note && (/(?:【文献摘要】|文献摘要|abstract|summary)/i.test(node.note))) ||
+      (node.note && /(?:【文献摘要】|文献摘要|^\s*abstract\b)/i.test(node.note)) ||
       (Array.isArray(node.children) && node.children.some((c: any) => c && c.note && (c.note === node.note || node.note?.includes(c.note))))
     );
 
-    const isDuplicateAbstractChild = Boolean(parentNode && isAbstractText(parentNode.text) && (
+    const isDuplicateAbstractChild = Boolean(parentNode && isAutoAbstractHeading(parentNode.text) && (
       (node.note && parentNode.note && (node.note === parentNode.note || parentNode.note.includes(node.note))) ||
-      (node.text && parentNode.note && parentNode.note.startsWith(node.text.replace(/\.\.\.$/, '')))
+      (typeof node.text === 'string' && node.text.trim().length >= 16 && parentNode.note &&
+        parentNode.note.startsWith(node.text.replace(/\.\.\.$/, '')))
     ));
 
     if (isDuplicateAbstractChild && (!node.children || node.children.length === 0)) {

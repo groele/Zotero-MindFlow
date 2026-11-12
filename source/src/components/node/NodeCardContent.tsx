@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Clock3, Circle, Tag, FileText, Link2, Loader2, GraduationCap, ExternalLink } from 'lucide-react';
-import { openZoteroUri } from '../../services/zotero/zoteroBridge';
+import { openZoteroUri, uiText } from '../../services/zotero/zoteroBridge';
 import type { NodeCardCtx } from './NodeCardUtils';
 
 export const NodeCardContent: React.FC<{ ctx: NodeCardCtx }> = ({ ctx }) => {
@@ -14,13 +14,19 @@ export const NodeCardContent: React.FC<{ ctx: NodeCardCtx }> = ({ ctx }) => {
 
   return (
     <div className={`flex items-center gap-1.5 min-w-0 overflow-hidden ${nodeImage ? 'w-full justify-center' : 'flex-1'}`}>
-      {node.task && !isEditing && (
+      {node.task && !isEditing && (() => {
+        const statusText = node.task.status === 'done'
+          ? uiText('已完成', 'Done')
+          : node.task.status === 'doing'
+            ? uiText('进行中', 'In Progress')
+            : uiText('待办', 'To Do');
+        return (
         <button
           type="button"
           draggable={false}
-          aria-label={`任务状态：${node.task.status === 'done' ? '已完成' : node.task.status === 'doing' ? '进行中' : '待办'}；点击切换状态`}
+          aria-label={uiText(`任务状态：${statusText}；点击切换状态`, `Task status: ${statusText}; click to cycle`)}
           aria-pressed={node.task.status === 'done'}
-          title={`任务状态：${node.task.status === 'done' ? '已完成' : node.task.status === 'doing' ? '进行中' : '待办'}；点击切换`}
+          title={uiText(`任务状态：${statusText}；点击切换`, `Task status: ${statusText}; click to cycle`)}
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => {
             event.preventDefault();
@@ -37,7 +43,8 @@ export const NodeCardContent: React.FC<{ ctx: NodeCardCtx }> = ({ ctx }) => {
             node.task.status === 'doing' ? <Clock3 className="w-4 h-4" aria-hidden="true" /> :
               <Circle className="w-4 h-4" aria-hidden="true" />}
         </button>
-      )}
+        );
+      })()}
       {/* Node icons */}
       {node.icons && node.icons.length > 0 && (
         <div className="flex items-center gap-1 flex-shrink-0">

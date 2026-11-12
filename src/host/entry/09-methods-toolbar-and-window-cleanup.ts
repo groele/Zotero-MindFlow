@@ -104,7 +104,7 @@
       if ('label' in btn) {
         try { btn.label = ''; } catch (_) {}
       }
-      btn.setAttribute('tooltiptext', '打开 MindFlow 思维导图与文献研读工作区');
+      btn.setAttribute('tooltiptext', T('打开 Zotero MindFlow 思维导图工作区', 'Open Zotero MindFlow Mind Map Workspace'));
       btn.setAttribute('aria-label', 'MindFlow');
       btn.setAttribute('image', `${CHROME_ROOT}icons/icon.svg`);
       btn.setAttribute('class', 'zotero-tb-button toolbarbutton-1 chromeclass-toolbar-additional');

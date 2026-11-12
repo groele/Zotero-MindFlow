@@ -149,7 +149,10 @@
               const path = await existingAtt.getFilePathAsync?.();
               if (!path || !await IOUtils.exists(path)) throw new Error('已有导图附件未下载；请先下载再更新');
               const original = JSON.parse(await IOUtils.readUTF8(path));
-              if (original.updatedAt > doc.updatedAt && JSON.stringify(original.root) !== JSON.stringify(doc.root)) {
+              const baselineUpdatedAt = mfStorage?.getBaselineUpdatedAt?.(doc.id, doc.revision);
+              const compareUpdatedAt = Number.isFinite(baselineUpdatedAt) ? baselineUpdatedAt : doc.updatedAt;
+              const comparableDoc = (d) => JSON.stringify([d?.title ?? '', d?.root ?? null, Array.isArray(d?.relationships) ? d.relationships : []]);
+              if (original.updatedAt > compareUpdatedAt && comparableDoc(original) !== comparableDoc(doc)) {
                 throw new Error('附件包含较新的编辑；已停止覆盖，请重新打开后核对');
               }
             }
@@ -233,6 +236,7 @@
               if (archivedAtt.parentItemID !== parentItem.id || archivedAtt.libraryID !== parentItem.libraryID ||
                   !parentAttachments.includes(archivedAtt.id) || !path || !await IOUtils.exists(path) ||
                   await IOUtils.readUTF8(path) !== serializedDoc) throw new Error('附件归属或写后回读校验失败');
+              if (doc?.id) mfStorage?.markAttachmentSynced?.(doc.id, doc.updatedAt);
             } catch (error) {
               savedAttachment = false;
               noteError = `附件未通过验证：${error.message}`;

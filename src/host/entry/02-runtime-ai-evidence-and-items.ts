@@ -261,27 +261,29 @@
       }
     }
 
-    try {
-      for (const libID of scopes) {
-        const cached = Zotero.Items?.getAll?.(libID) || [];
-        for (const item of cached) {
-          if (!item || item.deleted) continue;
-          const doiVal = (typeof item.getField === 'function' ? item.getField('DOI') : item.doi) || '';
-          const extraVal = (typeof item.getField === 'function' ? item.getField('extra') : item.extra) || '';
-          const itemDoi = normalizeDOI(doiVal);
-          const extraDoi = normalizeDOI(extraVal);
-          if (itemDoi === doi || extraDoi === doi || (extraVal && extraVal.toLowerCase().includes(doi))) {
-            if (typeof item.isRegularItem === 'function' && !item.isRegularItem() && item.parentItemID) {
-              const parent = Zotero.Items?.get?.(item.parentItemID);
-              if (parent && !parent.deleted) return parent;
-            }
-            return item;
-          }
-        }
-      }
-    } catch (_) {}
-
     return null;
+  };
+
+  const resolveCollectionItems = (collection) => {
+    const raw = typeof collection?.getChildItems === 'function' ? collection.getChildItems() : [];
+    const resolved = [];
+    const seen = new Set();
+    for (const entry of Array.isArray(raw) ? raw : []) {
+      const obj = typeof entry === 'number' || typeof entry === 'string' ? Zotero.Items?.get?.(Number(entry)) : entry;
+      if (!obj || obj.deleted) continue;
+      const reg = (typeof obj.isRegularItem === 'function' && obj.isRegularItem()) ? obj : (obj.parentItemID ? Zotero.Items?.get?.(obj.parentItemID) : null);
+      if (!reg || reg.deleted || typeof reg.isRegularItem !== 'function' || !reg.isRegularItem()) continue;
+      const regId = reg.id ?? reg.key;
+      if (regId && seen.has(regId)) continue;
+      if (regId) seen.add(regId);
+      resolved.push(reg);
+    }
+    const MAX = 100;
+    if (resolved.length > MAX) {
+      showMindFlowNotice?.(T(`分类文献较多（${resolved.length} 篇），已截取前 ${MAX} 篇生成导图`, `Collection has ${resolved.length} items; capped to ${MAX}`), true);
+      return resolved.slice(0, MAX);
+    }
+    return resolved;
   };
   const tabContainer = (tabs, tab, win) => tab?.container ||
     tabs?.getTabContent?.(tab?.id) || tabs?.getTabContainer?.(tab?.id) ||

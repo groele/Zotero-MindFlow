@@ -4,8 +4,19 @@
   "capturedAt": "2026-11-06",
   "debtCleared": true,
   "note": "Known §5.9 debt. Listed files may stay at or below the recorded line count, but must never grow; any other source file above 360 lines fails the guard. Remove an entry only after splitting that module below 360 lines. Every entry must still exist and must still exceed the ceiling - stale entries are rejected by the baseline integrity test.",
-  "lastReleasedVersion": "16.2.2",
+  "lastReleasedVersion": "16.2.3",
   "splitHistory": [
+    {
+      "version": "16.2.3",
+      "date": "2026-11-12",
+      "resolved": [
+        "Preserve baseline updatedAt and detect title/relationship conflicts across commitDocument and Zotero attachment archive",
+        "Replace full-workspace getAll scans with cached lightweight listDocs summaries on attachment open and document listing",
+        "Harden large collection mapping (numeric ID resolution, item cap, deferred child reads) and remove Items.getAll fallback on DOI miss",
+        "Memoize layout metrics and add viewport node/connection culling in canvas rendering",
+        "Improve Markdown round-trip (doi:/mailto:/bare DOI links, #123 title preservation, internalLink and relationships), outline note Summary children preservation, and locale-aware toolbar/canvas/task labels"
+      ]
+    },
     {
       "version": "16.2.2",
       "date": "2026-11-11",

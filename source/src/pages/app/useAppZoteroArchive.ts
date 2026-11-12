@@ -4,7 +4,7 @@ import { addChildNode, generateId, updateNode } from '../../core/model/treeOps';
 import { BackupService, MAX_BACKUP_BYTES, WorkspaceBackupData, validateMindMapDocument } from '../../services/storage/backupService';
 import { getTheme } from '../../core/theme/themes';
 import { computeLayout } from '../../core/layout/layoutEngine';
-import { exportToInteractiveHTML, exportToJSON, exportToMarkdown, exportToMermaid, exportToOPML, exportToPNG, exportToSVG, importFromMarkdown, importFromOPML, printToPDF } from '../../services/io/exporter';
+import { exportToInteractiveHTML, exportToJSON, exportToMarkdown, exportToMermaid, exportToOPML, exportToPNG, exportToSVG, importMarkdownDocument, importFromOPML, printToPDF } from '../../services/io/exporter';
 import { MindMapDocument } from '../../core/model/types';
 import { retargetDocumentLinks } from '../../core/model/editorState';
 import { StorageService } from '../../services/storage/storageService';
@@ -205,7 +205,7 @@ export const useAppZoteroArchive = (ctx: AppContext): void => {
         rainbowBranches: settings.rainbowBranches, curveStyle: settings.curveStyle,
       });
       if (format === 'json') exportToJSON({ ...current, relationships: latestRelationshipsRef.current }, current.title, download);
-      else if (format === 'markdown') exportToMarkdown(current.root, current.title, download);
+      else if (format === 'markdown') exportToMarkdown(current.root, current.title, download, { relationships: latestRelationshipsRef.current });
       else if (format === 'mermaid') exportToMermaid(current.root, current.title, download);
       else if (format === 'opml') exportToOPML(current.root, current.title, download);
       else if (format === 'png') await exportToPNG(currentLayout.nodes, currentLayout.connections, currentLayout.bounds, currentTheme, current.title, { watermark: false, relationships: latestRelationshipsRef.current, download });
@@ -242,10 +242,12 @@ export const useAppZoteroArchive = (ctx: AppContext): void => {
           root: retargetDocumentLinks(source.root, source.id, id),
           metadata: { ...detachedMetadata(source.metadata), aiDraft: false } };
       } else if (/\.(md|markdown|opml)$/.test(fileName)) {
+        const mdParsed = fileName.endsWith('.opml') ? null : importMarkdownDocument(content);
         importedDoc = { id, title: file.name.replace(/\.[^/.]+$/, ''),
           themeId: latestDocRef.current?.themeId || 'classic-blue', layoutType: 'mindmap',
           createdAt: Date.now(), updatedAt: Date.now(),
-          root: fileName.endsWith('.opml') ? importFromOPML(content) : importFromMarkdown(content) };
+          root: fileName.endsWith('.opml') ? importFromOPML(content) : mdParsed!.root,
+          ...(mdParsed?.relationships ? { relationships: mdParsed.relationships } : {}) };
       } else throw new Error('不支持此文件类型；请选择 MindFlow、JSON、Markdown 或 OPML');
       if (!(await flushCurrentDocument()) || token !== activeDocLoadTokenRef.current) return;
       const savedDoc = await StorageService.saveDocument(importedDoc);

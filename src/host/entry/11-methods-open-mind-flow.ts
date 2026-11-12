@@ -30,8 +30,9 @@
 
         if (tabs && typeof tabs.add === 'function') {
           this.installTabLifecycle(win);
+          const serializeOpts = { includeChildren: options.mode !== 'create_from_collection' && !(Array.isArray(options.items) && options.items.length > 20) };
           const serializedItems = Array.isArray(options.items)
-            ? options.items.map((i) => this.serializeZoteroItem(i)).filter(Boolean)
+            ? options.items.map((i) => this.serializeZoteroItem(i, serializeOpts)).filter(Boolean)
             : [];
 
           const targetItemId = openTargetIdentity(options, serializedItems);
@@ -187,8 +188,9 @@
           'chrome,dialog=no,all,centerscreen,resizable=yes,minimizable=yes,close=yes,titlebar=yes,width=1440,height=920';
         const url = this.workspaceURL;
 
+        const serializeOpts = { includeChildren: options.mode !== 'create_from_collection' && !(Array.isArray(options.items) && options.items.length > 20) };
         const serializedItems = Array.isArray(options.items)
-          ? options.items.map((i) => this.serializeZoteroItem(i)).filter(Boolean)
+          ? options.items.map((i) => this.serializeZoteroItem(i, serializeOpts)).filter(Boolean)
           : [];
 
         const targetId = openTargetIdentity(options, serializedItems);

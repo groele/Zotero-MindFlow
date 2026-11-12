@@ -44,8 +44,8 @@ export function getHostWindow(): Window | null {
 }
 
 export async function zoteroWorkspaceStorage(
-  action: 'get' | 'setMany' | 'remove' | 'getAll' | 'keys' | 'commitDocument' | 'deleteDocument' | 'mutateSnapshots' | 'mutateInbox',
-  payload: { key?: string; items?: Record<string, string>; doc?: MindMapDocument; id?: string; expectedRevision?: number; force?: boolean; restoreDeleted?: boolean;
+  action: 'get' | 'setMany' | 'remove' | 'getAll' | 'keys' | 'listDocs' | 'commitDocument' | 'deleteDocument' | 'mutateSnapshots' | 'mutateInbox',
+  payload: { key?: string; items?: Record<string, string>; doc?: MindMapDocument; id?: string; expectedRevision?: number; force?: boolean; restoreDeleted?: boolean; preserveUpdatedAt?: boolean;
     docId?: string; snapshots?: unknown[]; removeSnapshotId?: string; limit?: number;
     additions?: InboxItem[]; removeId?: string; processedId?: string; isProcessed?: boolean; clearProcessed?: boolean } = {},
 ): Promise<any> {
@@ -226,4 +226,10 @@ export function openZoteroPreferences(target: 'mindflow' | 'llm-for-zotero' = 'm
     }
   }
   return false;
+}
+
+export function uiText(zh: string, en: string): string {
+  const zotero = getZoteroInstance();
+  const locale = String(zotero?.locale || (typeof document !== 'undefined' ? document.documentElement?.lang : '') || '');
+  return /^en/i.test(locale) ? en : zh;
 }

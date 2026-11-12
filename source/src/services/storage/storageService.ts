@@ -13,11 +13,8 @@ import { safeStorage } from './safeStorage';
 import { documentSource } from '../zotero/documentIdentity';
 import { validateMindMapDocument } from './documentValidation';
 
-// Gecko can return Error objects from the host compartment. instanceof Error
-// is false across that boundary, so read the message by shape instead.
-function storageErrorMessage(error: unknown): string {
-  return error && typeof (error as any).message === 'string' ? (error as any).message : String(error);
-}
+import { storageErrorMessage, summaryForDoc, revisionOf, isDocumentSummary, isStoredDocument, type DocumentSummary } from './storageHelpers';
+export type { DocumentSummary };
 
 // Storage wrapper for Zotero 10 workspace files and dev fallback
 async function getItem(key: string): Promise<string | null> {
@@ -60,49 +57,6 @@ async function removeItem(key: string): Promise<void> {
 async function getAllItems(): Promise<Record<string, unknown>> {
   if (isZoteroWorkspace()) return await zoteroWorkspaceStorage('getAll') as Record<string, unknown>;
   return safeStorage.getAll();
-}
-
-function isDocumentSummary(value: unknown): value is DocumentSummary {
-  if (!value || typeof value !== 'object') return false;
-  const summary = value as Partial<DocumentSummary>;
-  return typeof summary.id === 'string' && typeof summary.title === 'string' && Number.isFinite(summary.updatedAt);
-}
-
-function isStoredDocument(value: unknown): value is MindMapDocument {
-  if (!value || typeof value !== 'object') return false;
-  const doc = value as Partial<MindMapDocument>;
-  return Boolean(
-    typeof doc.id === 'string' && doc.id &&
-    typeof doc.title === 'string' &&
-    doc.root && typeof doc.root === 'object' &&
-    typeof doc.root.id === 'string' &&
-    typeof doc.root.text === 'string' &&
-    Array.isArray(doc.root.children)
-  );
-}
-
-function revisionOf(doc: MindMapDocument | null): number {
-  return doc && Number.isSafeInteger(doc.revision) && (doc.revision as number) >= 0 ? doc.revision as number : 0;
-}
-
-function summaryForDoc(doc: MindMapDocument, updatedAt?: number): DocumentSummary {
-  const realBound = !doc.metadata?.mindflowUnlinkedContainer;
-  return {
-    id: doc.id,
-    title: doc.title,
-    updatedAt: updatedAt ?? (Number.isFinite(doc.updatedAt) ? doc.updatedAt : 0),
-    zoteroItemKey: realBound ? doc.metadata?.zoteroItemKey : undefined,
-    zoteroItemTitle: realBound ? doc.metadata?.zoteroItemTitle : undefined,
-  };
-}
-
-export interface DocumentSummary {
-  id: string;
-  title: string;
-  updatedAt: number;
-  nodeCount?: number;
-  zoteroItemKey?: string;
-  zoteroItemTitle?: string;
 }
 
 export class StorageService {
@@ -169,8 +123,12 @@ export class StorageService {
   public static async getDocumentBySource(incoming: MindMapDocument): Promise<MindMapDocument | null> {
     const source = documentSource(incoming);
     if (!source) return null;
+    const { zoteroAttachmentKey: attKey, zoteroAttachmentLibraryID: attLib } = incoming.metadata || {};
     const matches: MindMapDocument[] = [];
     for (const summary of await this.getDocumentList()) {
+      const summarySourceMatch = summary.zoteroAttachmentKey === attKey && Number(summary.zoteroAttachmentLibraryID) === Number(attLib);
+      const legacySummary = summary.zoteroAttachmentKey === undefined && !isZoteroWorkspace() && !summary.corrupt;
+      if (!summarySourceMatch && !legacySummary) continue;
       let candidate;
       try { candidate = await this.getDocument(summary.id, { trackRevision: false }); }
       catch (error) { console.warn('[MindFlow] Source lookup skipped unreadable document:', summary.id, error); continue; }
@@ -188,17 +146,33 @@ export class StorageService {
   }
 
   /** Called by the extension service worker; the queue serializes all document writes. */
-  public static saveDocumentDirect(doc: MindMapDocument, expectedRevision: number, force: boolean | 'restore-deleted' = false): Promise<MindMapDocument> {
-    const operation = this.writeQueue.then(() => this.writeDocumentNow(doc, expectedRevision, force));
+  public static saveDocumentDirect(
+    doc: MindMapDocument,
+    expectedRevision: number,
+    forceOrOptions: boolean | 'restore-deleted' | { force?: boolean | 'restore-deleted'; preserveUpdatedAt?: boolean } = false
+  ): Promise<MindMapDocument> {
+    const opts = typeof forceOrOptions === 'object' && forceOrOptions !== null
+      ? forceOrOptions
+      : { force: forceOrOptions, preserveUpdatedAt: false };
+    const operation = this.writeQueue.then(() =>
+      this.writeDocumentNow(doc, expectedRevision, opts.force ?? false, opts.preserveUpdatedAt === true)
+    );
     this.writeQueue = operation.catch(() => undefined);
     return operation;
   }
 
-  private static async writeDocumentNow(doc: MindMapDocument, expectedRevision: number, force: boolean | 'restore-deleted'): Promise<MindMapDocument> {
+  private static async writeDocumentNow(
+    doc: MindMapDocument,
+    expectedRevision: number,
+    force: boolean | 'restore-deleted',
+    preserveUpdatedAt = false
+  ): Promise<MindMapDocument> {
     validateMindMapDocument(doc, '待保存导图');
     if (isZoteroWorkspace()) {
       try {
-        const saved = await zoteroWorkspaceStorage('commitDocument', { doc, expectedRevision, force: force === true, restoreDeleted: force === 'restore-deleted' }) as MindMapDocument;
+        const saved = await zoteroWorkspaceStorage('commitDocument', {
+          doc, expectedRevision, force: force === true, restoreDeleted: force === 'restore-deleted', preserveUpdatedAt,
+        }) as MindMapDocument;
         this.knownRevisions.set(doc.id, revisionOf(saved));
         return saved;
       } catch (error) {
@@ -215,7 +189,8 @@ export class StorageService {
     if (force !== true && currentRevision !== expectedRevision) {
       throw new DocumentConflictError(`导图已被其他窗口修改（当前版本 ${currentRevision}，本窗口版本 ${expectedRevision}）`);
     }
-    const savedDoc = { ...doc, revision: currentRevision + 1, updatedAt: Date.now() };
+    const updatedAt = preserveUpdatedAt && Number.isFinite(doc.updatedAt) ? doc.updatedAt : Date.now();
+    const savedDoc = { ...doc, revision: currentRevision + 1, updatedAt };
     const index = await this.getDocumentList();
     const existingIdx = index.findIndex(item => item.id === savedDoc.id);
     const summary = summaryForDoc(savedDoc, savedDoc.updatedAt);
@@ -239,22 +214,8 @@ export class StorageService {
 
   public static async getDocumentList(): Promise<DocumentSummary[]> {
     if (isZoteroWorkspace()) {
-      // Document files are canonical. A per-frame read/modify/write index can
-      // lose another frame's additions; derive the list without mutating it.
-      const keys = await zoteroWorkspaceStorage('keys') as string[];
-      const summaries: DocumentSummary[] = [];
-      for (const key of keys) {
-        if (!key.startsWith(STORAGE_KEYS.DOC_PREFIX)) continue;
-        const id = key.slice(STORAGE_KEYS.DOC_PREFIX.length);
-        if (await getItem(STORAGE_KEYS.DELETED_PREFIX + id)) continue;
-        try {
-          const doc = await this.getDocument(id, { trackRevision: false });
-          if (doc) summaries.push(summaryForDoc(doc));
-        } catch {
-          summaries.push({ id, title: `数据损坏（${id}）`, updatedAt: 0 });
-        }
-      }
-      return summaries.sort((a, b) => b.updatedAt - a.updatedAt);
+      const summaries = await zoteroWorkspaceStorage('listDocs');
+      return Array.isArray(summaries) ? summaries : [];
     }
     const raw = await getItem(STORAGE_KEYS.DOC_INDEX);
     if (raw) {

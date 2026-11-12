@@ -1,10 +1,10 @@
 import { MindMapNode, LayoutNode, ConnectionCurve, LayoutType, ThemeColors } from '../model/types';
 import { isSafeNodeImage } from '../model/nodeImage';
-import { wrapReadingText } from './layoutMetrics';
+import { measureNodeWithLines } from './layoutMetrics';
 import { computeMindmapLayout } from './layoutMindmap';
 import { computeLogicRightLayout, computeOrgDownLayout } from './layoutStructured';
 
-export { measureNode, wrapReadingText } from './layoutMetrics';
+export { measureNode, measureNodeWithLines, wrapReadingText } from './layoutMetrics';
 
 interface LayoutResult {
   nodes: LayoutNode[];
@@ -55,15 +55,9 @@ export function computeLayout(
   }
 
   for (const n of nodes) {
-    let extras = (n.node.icons?.length || 0) * 22 + (n.node.tags?.length || 0) * 36;
-    if (n.node.note) extras += 20;
-    if (n.node.link) extras += 20;
-    if (n.node.internalLink) extras += 20;
-    if (n.node.task) extras += 26;
     if (!isSafeNodeImage(n.node.image)) {
-      const padding = reading ? 28 : n.level === 0 ? 48 : n.level === 1 ? 36 : 28;
-      const lines = wrapReadingText(n.node.text || ' ', Math.max(30, n.width - padding - extras));
-      if (reading || lines.length > 1) n.textLines = lines;
+      const measured = measureNodeWithLines(n.node, n.level, reading);
+      if (measured.lines && (reading || measured.lines.length > 1)) n.textLines = measured.lines;
     }
     n.readingStyle = reading;
     if (reading) {

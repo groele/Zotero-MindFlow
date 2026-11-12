@@ -259,3 +259,155 @@ test('snapshot corruption and duplicate additions never overwrite snapshot stora
   await assert.rejects(() => f.host.workspaceStorage('mutateSnapshots', { docId: doc.id, snapshots: [snap] }), /身份|属性/);
   assert.equal(await f.host.workspaceStorage('get', { key }), '[null]');
 });
+
+test('commitDocument preserves baseline updatedAt and detects relationship/title conflicts against newer attachments', async () => {
+  const f = fixture(), p = f.paper('PAPERAAA'), a = f.attachment('ATTACHAA', 1, p.id, '/a.mindflow');
+  p.attachments.push(a.id);
+  const initial = { ...f.map('doc_rel_conflict', 'Original'), updatedAt: 1000, relationships: [{ id: 'rel_1', fromId: 'root', toId: 'root', label: 'old' }] };
+  f.disk.set('/a.mindflow', JSON.stringify(initial));
+
+  // Importing attachment preserves its updatedAt baseline (1000)
+  const imported = await f.host.workspaceStorage('commitDocument', { doc: initial, expectedRevision: 0, preserveUpdatedAt: true });
+  assert.equal(imported.updatedAt, 1000);
+
+  // External edit updates attachment title/relationships at timestamp 2000
+  f.disk.set('/a.mindflow', JSON.stringify({ ...initial, updatedAt: 2000, relationships: [{ id: 'rel_1', fromId: 'root', toId: 'root', label: 'external' }] }));
+
+  // Local edit bumps local updatedAt to Date.now() (> 2000) while changing only title/relationships
+  const localEdited = await f.host.workspaceStorage('commitDocument', {
+    doc: { ...imported, title: 'Local Title', relationships: [{ id: 'rel_1', fromId: 'root', toId: 'root', label: 'local' }] },
+    expectedRevision: imported.revision,
+  });
+  assert.ok(localEdited.updatedAt > 2000);
+  const blocked = await f.host.saveMindMapToItem({ doc: localEdited, parentItemKey: 'zotero://select/library/items/PAPERAAA' });
+  assert.equal(blocked.success, false);
+  assert.match(blocked.message, /附件包含较新的编辑/);
+});
+
+test('openMindflowAttachment and listDocs skip getAll/snapshots and reuse stat cache', async () => {
+  const f = fixture(), p = f.paper('PAPERAAA'), a = f.attachment('ATTACHAA', 1, p.id, '/att.mindflow');
+  p.attachments.push(a.id);
+  const stored = { ...f.map('doc_ws_only'), metadata: { zoteroAttachmentKey: a.key, zoteroAttachmentLibraryID: 1 } };
+  f.disk.set('/data/mindflow/workspace/mindflow_doc_doc_ws_only.json', JSON.stringify(stored));
+  f.disk.set('/data/mindflow/workspace/mindflow_snapshots_doc_ws_only.json', '[{"corrupt_if_read":true}]');
+  f.disk.set('/att.mindflow', JSON.stringify({ ...f.map('doc_copy_id') }));
+
+  let readSnapCalls = 0;
+  const stats = new Map();
+  f.IOUtils.stat = async (pPath) => {
+    const content = f.disk.get(pPath);
+    if (!content) throw new Error('ENOENT');
+    if (!stats.has(pPath)) stats.set(pPath, { size: content.length, lastModified: 12345 });
+    return stats.get(pPath);
+  };
+  const origRead = f.IOUtils.readUTF8;
+  let docReadCalls = 0;
+  f.IOUtils.readUTF8 = async (pPath) => {
+    if (pPath.includes('mindflow_snapshots_')) readSnapCalls += 1;
+    if (pPath.includes('mindflow_doc_doc_ws_only.json')) docReadCalls += 1;
+    return origRead(pPath);
+  };
+
+  let usedGetAll = false;
+  const origWs = f.host.workspaceStorage.bind(f.host);
+  f.host.workspaceStorage = async (action, payload) => {
+    if (action === 'getAll') usedGetAll = true;
+    return origWs(action, payload);
+  };
+
+  await f.host.openMindflowAttachment(a, f.win);
+  assert.equal(usedGetAll, false);
+  assert.equal(readSnapCalls, 0);
+  assert.equal(docReadCalls, 1);
+
+  const list2 = await f.host.workspaceStorage('listDocs');
+  assert.equal(list2.length, 1);
+  assert.equal(list2[0].id, 'doc_ws_only');
+  assert.equal(docReadCalls, 1, 'second listDocs call should use stat-validated index cache');
+});
+
+test('collection command resolves numeric IDs, caps large collections, skips child notes/annotations, and searchItemByDoi avoids getAll on miss', async () => {
+  const f = fixture();
+  const manyIds = [];
+  let noteOrAttReads = 0;
+  for (let i = 1; i <= 115; i++) {
+    const item = f.paper(`COL${String(i).padStart(5, '0')}`);
+    item.getNotes = () => { noteOrAttReads += 1; return []; };
+    item.getAttachments = () => { noteOrAttReads += 1; return []; };
+    manyIds.push(item.id);
+  }
+  const col = { id: 9, key: 'COLL9999', libraryID: 1, name: 'BigCol', getChildItems: () => manyIds };
+  f.win.ZoteroPane.getSelectedCollections = () => [col];
+
+  let popupMenu = null;
+  const colMenu = { children: [], appendChild(el) { this.children.push(el); popupMenu = el; }, addEventListener() {} };
+  f.doc.getElementById = (id) => (id === 'zotero-collectionmenu' ? colMenu : null);
+  f.host.addToWindow(f.win);
+  assert.ok(popupMenu?.command);
+  popupMenu.command();
+
+  const tab = f.tabs._tabs.find(t => t.type === 'mindflow');
+  assert.ok(tab);
+  assert.equal(tab.data.items.length, 100);
+  assert.equal(noteOrAttReads, 0);
+
+  let getAllCalls = 0;
+  f.Zotero.Items.getAll = () => { getAllCalls += 1; return []; };
+  const frame = f.tabs.getTabContent(tab.id).children[0];
+  await f.listeners.get('message')({
+    source: frame.contentWindow,
+    origin: 'null',
+    data: { type: 'MINDFLOW_LOCATE_ITEM', requestId: 'doi-miss-test', doi: '10.1000/does-not-exist' },
+  });
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(getAllCalls, 0);
+  const locateReply = frame.contentWindow.messages.find((m) => m.requestId === 'doi-miss-test');
+  assert.equal(locateReply?.success, false);
+});
+
+test('outline note preserves ordinary Summary child nodes and respects locale-aware toolbar tooltip', async () => {
+  const f = fixture();
+  const p = f.paper('PAPERAAA');
+  const doc = {
+    ...f.map('doc_summary'),
+    root: {
+      id: 'root',
+      text: 'Root Paper',
+      children: [
+        {
+          id: 'sum_parent',
+          text: 'Summary',
+          note: 'Summary of key experiments across three regimes.',
+          children: [
+            { id: 'sum_child', text: 'Summary', children: [] },
+            { id: 'finding_child', text: 'Key Result', children: [] },
+          ],
+        },
+      ],
+    },
+  };
+  const saved = await f.host.saveMindMapToItem({ doc, parentItemKey: 'zotero://select/library/items/PAPERAAA', createNote: true });
+  assert.equal(saved.savedNote, true);
+  const noteHtml = f.items.get(p.notes[0]).note;
+  assert.match(noteHtml, /<strong[^>]*>Summary<\/strong>.*<strong[^>]*>Summary<\/strong>/s);
+
+  const fEn = fixture();
+  fEn.Zotero.locale = 'en-US';
+  const createdButtons = [];
+  const origCreate = fEn.doc.createElement;
+  fEn.doc.createElement = (tag) => {
+    const el = origCreate(tag);
+    el.hasAttribute = (k) => Object.prototype.hasOwnProperty.call(el.attrs, k);
+    el.insertBefore = (child) => { el.appendChild(child); return child; };
+    if (tag === 'toolbarbutton') createdButtons.push(el);
+    return el;
+  };
+  const toolbar = fEn.doc.createElement('toolbar');
+  toolbar.id = 'zotero-tb-add';
+  const parentTb = fEn.doc.createElement('hbox');
+  parentTb.id = 'zotero-items-toolbar';
+  parentTb.appendChild(toolbar);
+  fEn.doc.getElementById = (id) => (id === 'zotero-tb-add' ? toolbar : id === 'zotero-items-toolbar' ? parentTb : null);
+  fEn.host.addToWindow(fEn.win);
+  assert.equal(createdButtons[0]?.getAttribute('tooltiptext'), 'Open Zotero MindFlow Mind Map Workspace');
+});
