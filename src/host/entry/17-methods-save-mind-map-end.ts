@@ -1,61 +1,6 @@
 
     renderNodeToHtml(node, level = 1, parentNode = null) {
-      if (!node) return '';
-      const indent = '  '.repeat(level);
-
-      const isAbstractText = (str) =>
-        typeof str === 'string' && /^(?:💡\s*)?(?:核心摘要|文献摘要|摘要|abstract)$/i.test(str.trim());
-      const hasAbstractChild = level === 1 && Array.isArray(node.children) && node.children.some(c => c && isAbstractText(c.text));
-      const isRedundantRootAbstract = hasAbstractChild && (
-        (node.note && (/(?:【文献摘要】|文献摘要|^\s*abstract\b)/i.test(node.note))) ||
-        (Array.isArray(node.children) && node.children.some(c => c && c.note && (c.note === node.note || node.note?.includes(c.note))))
-      );
-
-      const isDuplicateAbstractChild = Boolean(parentNode && isAbstractText(parentNode.text) && (
-        (node.note && parentNode.note && (node.note === parentNode.note || parentNode.note.includes(node.note))) ||
-        (typeof node.text === 'string' && node.text.trim().length >= 16 && parentNode.note &&
-          parentNode.note.startsWith(node.text.replace(/\.\.\.$/, '')))
-      ));
-
-      if (isDuplicateAbstractChild && (!node.children || node.children.length === 0)) {
-        return '';
-      }
-
-      const linkLabel = T('链接', 'Link');
-      let taskPrefix = '';
-      let textStyle = '';
-      if (node.task) {
-        if (node.task.status === 'done') {
-          taskPrefix = '<span style="color: #10b981; font-weight: bold; margin-right: 4px;">☑</span>';
-          textStyle = 'text-decoration: line-through; opacity: 0.75;';
-        } else if (node.task.status === 'doing') {
-          taskPrefix = '<span style="color: #2563eb; font-weight: bold; margin-right: 4px;">⏳</span>';
-        } else {
-          taskPrefix = '<span style="color: #94a3b8; font-weight: bold; margin-right: 4px;">☐</span>';
-        }
-      }
-      let tagsHtml = '';
-      if (Array.isArray(node.tags) && node.tags.length > 0 && level > 1) {
-        tagsHtml = ' ' + node.tags.map(t => `<span style="display: inline-block; font-size: 11px; padding: 0 4px; border-radius: 3px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; margin-left: 3px;">#${escapeHtml(t)}</span>`).join('');
-      }
-      let html = `${indent}<li>${taskPrefix}<strong style="${textStyle}">${escapeHtml(node.text)}</strong>${tagsHtml}`;
-      if (node.link) {
-        html += ` <a href="${escapeHtml(node.link)}" style="color: #0284c7; text-decoration: none;">[${linkLabel}]</a>`;
-      }
-      if (node.note && !isRedundantRootAbstract && !isDuplicateAbstractChild) {
-        html += `<br/><small style="color: #64748b; line-height: 1.5; display: inline-block; margin-top: 3px;">${escapeHtml(node.note)}</small>`;
-      }
-      if (Array.isArray(node.children) && node.children.length > 0) {
-        const renderedChildren = node.children
-          .map(child => this.renderNodeToHtml(child, level + 1, node))
-          .filter(Boolean)
-          .join('');
-        if (renderedChildren) {
-          html += `\n${indent}<ul>\n${renderedChildren}${indent}</ul>\n${indent}`;
-        }
-      }
-      html += `</li>\n`;
-      return html;
+      return mfNoteSync.renderNodeToHtml(node, level, parentNode);
     },
 
     openPreferencesPane(targetWindow) {

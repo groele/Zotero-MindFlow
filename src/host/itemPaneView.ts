@@ -43,11 +43,12 @@ export async function renderItemPaneContent(opts: {
     return;
   }
   lastPaneActions.length = 0;
+  state?.renderAbort?.abort?.();
+  const renderCtrl = (win?.AbortController || globalThis.AbortController) ? new (win?.AbortController || globalThis.AbortController)() : null;
+  if (state) state.renderAbort = renderCtrl;
+  const onClick = (el: any, fn: any) => el.addEventListener('click', fn, renderCtrl?.signal ? { signal: renderCtrl.signal } : undefined);
   body.replaceChildren();
-  if (state) {
-    state.paneSignature = null;
-    state.paneActions = [];
-  }
+  if (state) { state.paneSignature = null; state.paneActions = []; }
 
   setSectionSummary?.(totalMaps ? String(totalMaps) : host.paneText('展开后快速新建', 'Create quickly'));
 
@@ -133,8 +134,8 @@ export async function renderItemPaneContent(opts: {
       else button.setAttribute?.('aria-disabled', 'true');
     }
   };
-  primaryBtn.addEventListener('click', makeGenerateHandler(primaryBtn));
-  templateCreateBtn.addEventListener('click', makeGenerateHandler(templateCreateBtn));
+  onClick(primaryBtn, makeGenerateHandler(primaryBtn));
+  onClick(templateCreateBtn, makeGenerateHandler(templateCreateBtn));
 
   wrapper.appendChild(createEl('div', 'mf-divider'));
 
@@ -146,7 +147,7 @@ export async function renderItemPaneContent(opts: {
   toolWorkbench.setAttribute('data-l10n-id', 'mindflow-item-pane-action-workbench');
   toolWorkbench.setAttribute('data-mindflow-action', 'workbench');
   toolWorkbench.title = T('进入 MindFlow 总工作台，查看和管理已有导图', 'Open the MindFlow workspace to browse and manage maps');
-  toolWorkbench.addEventListener('click', async (e: any = {}) => {
+  onClick(toolWorkbench, async (e: any = {}) => {
     e.preventDefault?.(); e.stopPropagation?.();
     try {
       await host.openMindFlow({ mode: 'open', targetMode: 'tab' }, win);
@@ -162,19 +163,14 @@ export async function renderItemPaneContent(opts: {
   toolSubwin.type = 'button';
   toolSubwin.setAttribute?.('data-mindflow-action', 'workspace');
   toolSubwin.title = T('打开轻量独立窗口，适合与 PDF 左右分屏伴读对照', 'Open a compact window to read side by side with the PDF');
-  toolSubwin.addEventListener('click', (e: any = {}) => {
+  onClick(toolSubwin, (e: any = {}) => {
     e.preventDefault?.(); e.stopPropagation?.();
     try {
       const currentTarget = lastPaneTargetRef.current;
       const currentMaps = currentTarget ? host.getMindflowAttachments(currentTarget) : [];
-      if (currentMaps.length > 0 && currentMaps[0]) {
-        host.openMindflowAttachment(currentMaps[0], win);
-      } else {
-        host.openMindFlow({ mode: 'open' }, win);
-      }
-    } catch (err) {
-      Zotero.logError?.('[MindFlow] Open standalone window failed: ' + err);
-    }
+      if (currentMaps.length > 0 && currentMaps[0]) host.openMindflowAttachment(currentMaps[0], win);
+      else host.openMindFlow({ mode: 'open' }, win);
+    } catch (err) { Zotero.logError?.('[MindFlow] Open standalone window failed: ' + err); }
   });
   toolsGrid.appendChild(toolSubwin);
 
@@ -184,7 +180,7 @@ export async function renderItemPaneContent(opts: {
   toolAi.disabled = false;
   toolAi.setAttribute?.('data-mindflow-action', 'ai');
   toolAi.title = T('为本文献启动 AI 智能精读与思维导图生成', 'Start AI reading and map generation for this item');
-  toolAi.addEventListener('click', async (e: any = {}) => {
+  onClick(toolAi, async (e: any = {}) => {
     e.preventDefault?.(); e.stopPropagation?.();
     const currentTarget = lastPaneTargetRef.current;
     if (toolAi.disabled || !currentTarget) return;
@@ -208,7 +204,7 @@ export async function renderItemPaneContent(opts: {
     toolPdf.disabled = false;
     toolPdf.setAttribute?.('data-mindflow-action', 'pdf');
     toolPdf.title = T('在 Zotero 内置阅读器中打开本文献的 PDF 全文', 'Open this item\'s PDF in the Zotero reader');
-    toolPdf.addEventListener('click', async (e: any = {}) => {
+    onClick(toolPdf, async (e: any = {}) => {
       e.preventDefault?.(); e.stopPropagation?.();
       const currentTarget = lastPaneTargetRef.current;
       if (toolPdf.disabled || !currentTarget) return;
@@ -239,7 +235,7 @@ export async function renderItemPaneContent(opts: {
   toolImport.type = 'button';
   toolImport.setAttribute?.('data-mindflow-action', 'import');
   toolImport.title = T('导入 MindFlow、JSON、Markdown 或 OPML 导图文件', 'Import a MindFlow, JSON, Markdown, or OPML map file');
-  toolImport.addEventListener('click', async (e: any = {}) => {
+  onClick(toolImport, async (e: any = {}) => {
     e.preventDefault?.(); e.stopPropagation?.();
     await host.openMindFlow({ mode: 'import_file' }, win);
   });
@@ -250,7 +246,7 @@ export async function renderItemPaneContent(opts: {
   toolBlank.type = 'button';
   toolBlank.setAttribute?.('data-mindflow-action', 'blank');
   toolBlank.title = T('新建不绑定本文献的独立空白思维导图', 'Create a blank map that is not linked to this item');
-  toolBlank.addEventListener('click', async (e: any = {}) => {
+  onClick(toolBlank, async (e: any = {}) => {
     e.preventDefault?.(); e.stopPropagation?.();
     await host.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
   });
@@ -267,7 +263,7 @@ export async function renderItemPaneContent(opts: {
     refreshBtn.type = 'button';
     refreshBtn.title = T('刷新列表', 'Refresh list');
     refreshBtn.setAttribute('aria-label', refreshBtn.title);
-    refreshBtn.addEventListener('click', (e: any) => {
+    onClick(refreshBtn, (e: any) => {
       e.preventDefault(); e.stopPropagation();
       state?.refresh?.();
     });
@@ -281,7 +277,7 @@ export async function renderItemPaneContent(opts: {
 
       const card = createEl('div', 'mf-map-card');
       card.title = T(`打开导图：${cleanTitle}`, `Open map: ${cleanTitle}`);
-      card.addEventListener('click', (e: any) => {
+      onClick(card, (e: any) => {
         if (e?.target?.closest?.('button')) return;
         e?.preventDefault?.(); e?.stopPropagation?.();
         host.openMindflowAttachment(att, win);
@@ -305,7 +301,7 @@ export async function renderItemPaneContent(opts: {
       const openBtn = createEl('button', 'mf-card-btn mf-card-btn-primary', T('打开', 'Open'));
       openBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-card-open');
       openBtn.type = 'button';
-      openBtn.addEventListener('click', async (e: any) => {
+      onClick(openBtn, async (e: any) => {
         e.preventDefault(); e.stopPropagation();
         await host.openMindflowAttachment(att, win);
       });
@@ -319,7 +315,7 @@ export async function renderItemPaneContent(opts: {
         exportBtn.setAttribute('aria-disabled', 'true');
         exportBtn.title = T('当前文献处于只读库或回收站中，无法导出大纲笔记', 'Parent item is read-only or in Trash, cannot export outline note');
       }
-      exportBtn.addEventListener('click', async (e: any) => {
+      onClick(exportBtn, async (e: any) => {
         e.preventDefault(); e.stopPropagation();
         const currentEditable = isTargetEditable(lastPaneTargetRef.current);
         if (exportBtn.disabled || !currentEditable) return;
@@ -339,7 +335,7 @@ export async function renderItemPaneContent(opts: {
       const locateBtn = createEl('button', 'mf-card-btn', T('定位附件', 'Locate Attachment'));
       locateBtn.setAttribute('data-l10n-id', 'mindflow-item-pane-card-locate');
       locateBtn.type = 'button';
-      locateBtn.addEventListener('click', (e: any) => {
+      onClick(locateBtn, (e: any) => {
         e.preventDefault(); e.stopPropagation();
         const targetWin = win || (att.libraryID ? Zotero.getActiveZoteroPane?.()?.window : null) || Zotero.getMainWindow?.();
         targetWin?.ZoteroPane?.selectItem?.(att.id);

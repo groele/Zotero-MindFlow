@@ -9,6 +9,11 @@ export function createBridgeModule(deps: any = {}) {
   const getZotero = () => deps.Zotero || (globalThis as any).Zotero;
   const getHost = () => deps.host || (globalThis as any).Zotero?.MindFlow;
   const getConstants = () => deps.constants || (globalThis as any).MindFlowConstants || {};
+  let boundInjectedElements: Map<any, any> | null = deps.injectedElements || null;
+
+  function setInjectedElements(map: Map<any, any> | null) {
+    boundInjectedElements = map;
+  }
 
   const sameWindow = (a: any, b: any) => {
     const constants = getConstants();
@@ -26,7 +31,8 @@ export function createBridgeModule(deps: any = {}) {
 
   function workspaceOwner(host: any, source: any) {
     const Zotero = getZotero();
-    const windows = [...(host._injectedElements?.keys() || [])];
+    const injected = boundInjectedElements || deps.injectedElements || host?._injectedElements;
+    const windows = [...(injected?.keys() || [])];
     const main = Zotero?.getMainWindow?.();
     if (main && !windows.includes(main)) windows.push(main);
     for (const win of windows) {
@@ -158,6 +164,7 @@ export function createBridgeModule(deps: any = {}) {
   }
 
   return {
+    setInjectedElements,
     sameWindow,
     tabContainer,
     workspaceOwner,

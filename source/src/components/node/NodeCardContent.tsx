@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { CheckCircle2, Clock3, Circle, Tag, FileText, Link2, Loader2, GraduationCap, ExternalLink } from 'lucide-react';
 import { openZoteroUri, uiText } from '../../services/zotero/zoteroBridge';
 import type { NodeCardCtx } from './NodeCardUtils';
@@ -11,6 +11,13 @@ export const NodeCardContent: React.FC<{ ctx: NodeCardCtx }> = ({ ctx }) => {
     onOpenInternalLink, externalUrl, isDoi, isLocating, setIsLocating,
     handleExternalClick,
   } = ctx;
+  const locateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (locateTimerRef.current) {
+      clearTimeout(locateTimerRef.current);
+      locateTimerRef.current = null;
+    }
+  }, []);
 
   return (
     <div className={`flex items-center gap-1.5 min-w-0 overflow-hidden ${nodeImage ? 'w-full justify-center' : 'flex-1'}`}>
@@ -157,7 +164,11 @@ export const NodeCardContent: React.FC<{ ctx: NodeCardCtx }> = ({ ctx }) => {
               try {
                 await openZoteroUri(externalUrl, node.text, { noteText: node.note });
               } finally {
-                setTimeout(() => setIsLocating(false), 800);
+                if (locateTimerRef.current) clearTimeout(locateTimerRef.current);
+                locateTimerRef.current = setTimeout(() => {
+                  locateTimerRef.current = null;
+                  setIsLocating(false);
+                }, 800);
               }
             }}
             className="flex-shrink-0 text-sky-600 hover:text-sky-800 p-0.5 rounded hover:bg-sky-100 dark:hover:bg-sky-950 transition-colors flex items-center"

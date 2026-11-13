@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import {
   Link2, GraduationCap, MapPin, BookOpen, RefreshCw, Check, Loader2
 } from 'lucide-react';
@@ -9,6 +10,18 @@ const PropertySidebarZoteroBox = ({ ctx }: { ctx: PropertySidebarCtx }) => {
     selectedNode, currentDoc, isLocatingItem, setIsLocatingItem, setSyncStatusMsg,
     setIsOpeningPdf, isOpeningPdf, isSyncingToZotero, setIsSyncingToZotero, syncStatusMsg,
   } = ctx;
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  useEffect(() => () => {
+    for (const timer of timersRef.current) clearTimeout(timer);
+    timersRef.current.clear();
+  }, []);
+  const schedule = (fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timersRef.current.delete(id);
+      fn();
+    }, ms);
+    timersRef.current.add(id);
+  };
   const nodeDoi = extractDoi(selectedNode.link) || extractDoi(selectedNode.text) || extractDoi(selectedNode.note);
   const nodeSpecificTarget =
     (selectedNode.link && selectedNode.link.startsWith('zotero://') ? selectedNode.link : null) ||
@@ -33,13 +46,13 @@ const PropertySidebarZoteroBox = ({ ctx }: { ctx: PropertySidebarCtx }) => {
         } else {
           setSyncStatusMsg('未在当前文献库中检索到对应条目');
         }
-        setTimeout(() => setSyncStatusMsg(null), 3500);
+        schedule(() => setSyncStatusMsg(null), 3500);
       }
     } catch (err: any) {
       setSyncStatusMsg('定位条目失败: ' + (err?.message || err));
-      setTimeout(() => setSyncStatusMsg(null), 3500);
+      schedule(() => setSyncStatusMsg(null), 3500);
     } finally {
-      setTimeout(() => setIsLocatingItem(false), 800);
+      schedule(() => setIsLocatingItem(false), 800);
     }
   };
 
@@ -50,13 +63,13 @@ const PropertySidebarZoteroBox = ({ ctx }: { ctx: PropertySidebarCtx }) => {
       const success = await openItemPdfInZotero(zoteroTargetKey, selectedNode.text, selectedNode.note);
       if (!success) {
         setSyncStatusMsg('未检测到 PDF 附件，已在文库中定位文献');
-        setTimeout(() => setSyncStatusMsg(null), 3500);
+        schedule(() => setSyncStatusMsg(null), 3500);
       }
     } catch (err: any) {
       setSyncStatusMsg('打开 PDF 失败: ' + (err?.message || err));
-      setTimeout(() => setSyncStatusMsg(null), 3500);
+      schedule(() => setSyncStatusMsg(null), 3500);
     } finally {
-      setTimeout(() => setIsOpeningPdf(false), 800);
+      schedule(() => setIsOpeningPdf(false), 800);
     }
   };
 
@@ -75,7 +88,7 @@ const PropertySidebarZoteroBox = ({ ctx }: { ctx: PropertySidebarCtx }) => {
       setSyncStatusMsg('同步出错: ' + (err?.message || err));
     } finally {
       setIsSyncingToZotero(false);
-      setTimeout(() => setSyncStatusMsg(null), 3500);
+      schedule(() => setSyncStatusMsg(null), 3500);
     }
   };
 

@@ -83,6 +83,7 @@
 
   // Track injected DOM nodes for clean shutdown
   const injectedElements = new Map();
+  mfBridge?.setInjectedElements?.(injectedElements);
   const pendingWindowLoads = new Map();
   let windowListener = null;
 
@@ -130,101 +131,11 @@
     localizedDocs: new Set(),
     resolveItemReference,
     openTargetIdentity,
-    workspaceOwner(source) {
-      const windows = [...injectedElements.keys()];
-      const main = Zotero.getMainWindow?.();
-      if (main && !windows.includes(main)) windows.push(main);
-      for (const win of windows) for (const tab of win.Zotero_Tabs?._tabs || []) {
-        if (tab.type !== 'mindflow') continue;
-        const frame = tabContainer(win.Zotero_Tabs, tab, win)?.querySelector?.('iframe');
-        if (sameWindow(frame?.contentWindow, source)) return { win, tab, frame };
-      }
-      return null;
-    },
-    updateWorkspaceContext(source, data) {
-      const owner = this.workspaceOwner(source);
-      if (!owner || typeof data.documentId !== 'string' || typeof data.title !== 'string') return false;
-      const { win, tab } = owner;
-      const switched = Boolean(tab.data?.docId && tab.data.docId !== data.documentId);
-      const prevTarget = String(tab.data?.targetItemId || '');
-      let nextTarget;
-      if (data.attachmentKey && data.attachmentLibraryID) {
-        nextTarget = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
-      } else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
-        const parent = resolveItemReference(data.parentItemUri);
-        nextTarget = parent ? `items:${itemIdentity(parent)}` : `document:${data.documentId}`;
-      } else {
-        const aiParent = data.aiDraft && data.parentItemUri ? resolveItemReference(data.parentItemUri) : null;
-        if (data.aiDraft && aiParent) {
-          nextTarget = `ai:${itemIdentity(aiParent)}`;
-        } else if (data.unlinkedContainer && !switched && prevTarget.startsWith('collection:')) {
-          nextTarget = prevTarget;
-        } else {
-          nextTarget = `document:${data.documentId}`;
-        }
-      }
-      const targetChanged = Boolean(prevTarget && prevTarget !== nextTarget);
-      tab.data = {
-        ...tab.data,
-        docId: data.documentId,
-        doc: null,
-        parentItemUri: data.parentItemUri || null,
-        openedAttachmentKey: data.attachmentKey || null,
-        openedAttachmentLibraryID: data.attachmentLibraryID || null,
-        targetItemId: nextTarget,
-        ...(switched || targetChanged ? {
-          items: [],
-          collectionName: undefined,
-          collectionKey: undefined,
-          collectionLibraryID: undefined,
-          mode: ['open', 'import_file'].includes(tab.data?.mode) ? tab.data.mode : 'open_document',
-        } : {}),
-      };
-      win.Zotero_Tabs.rename?.(tab.id, `MindFlow - ${data.title.trim().slice(0,140)}`);
-      return true;
-    },
-    ownsWorkspaceWindow(source) {
-      return Boolean(this.workspaceOwner(source) || [...this._standaloneWindows?.values() || []]
-        .some(win => !win.closed && sameWindow(win, source)));
-    },
-    connectWorkspace(source) {
-      const owner = this.workspaceOwner(source);
-      if (!owner) return false;
-      owner.frame._mindflowReady = true;
-      if (owner.frame._mindflowPending) {
-        source.postMessage(owner.frame._mindflowPending, '*');
-        owner.frame._mindflowPending = null;
-      }
-      return true;
-    },
-    updateStandaloneContext(source, data) {
-      if (!this._standaloneWindows || typeof data.documentId !== 'string') return;
-      const entry = [...this._standaloneWindows].find(([, win]) => sameWindow(win, source));
-      if (!entry) return;
-      const switched = Boolean(source._mindflowDocumentId && source._mindflowDocumentId !== data.documentId);
-      const prevTarget = String(entry[0]);
-      let target = prevTarget;
-      if (data.attachmentKey && data.attachmentLibraryID) {
-        target = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
-      } else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
-        const parent = resolveItemReference(data.parentItemUri);
-        target = parent ? `items:${itemIdentity(parent)}` : `document:${data.documentId}`;
-      } else {
-        const aiParent = data.aiDraft && data.parentItemUri ? resolveItemReference(data.parentItemUri) : null;
-        if (data.aiDraft && aiParent) {
-          target = `ai:${itemIdentity(aiParent)}`;
-        } else if (data.unlinkedContainer && !switched && prevTarget.startsWith('collection:')) {
-          target = prevTarget;
-        } else {
-          target = `document:${data.documentId}`;
-        }
-      }
-      source._mindflowDocumentId = data.documentId;
-      if (target !== entry[0]) {
-        this._standaloneWindows.delete(entry[0]);
-        this._standaloneWindows.set(target, entry[1]);
-      }
-    },
+    workspaceOwner(source) { return mfBridge.workspaceOwner(this, source); },
+    updateWorkspaceContext(source, data) { return mfBridge.updateWorkspaceContext(this, source, data); },
+    ownsWorkspaceWindow(source) { return mfBridge.ownsWorkspaceWindow(this, source); },
+    connectWorkspace(source) { return mfBridge.connectWorkspace(this, source); },
+    updateStandaloneContext(source, data) { return mfBridge.updateStandaloneContext(this, source, data); },
 
     // Durable, per-key workspace files live in Zotero's data directory. Old
     // preference values remain readable and migrate on the next normal save.

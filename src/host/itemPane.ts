@@ -98,12 +98,14 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
             ensureItemPaneStyles(document, getZotero);
           }
           const target = resolveLiteratureTarget(item, getZotero);
-          const state = {
+          const state: any = {
             itemKey: target?.key || null,
             libraryID: target?.libraryID || null,
             targetID: target?.id || null,
             window: win,
             renderVersion: 0,
+            renderAbort: null,
+            rafID: null,
             saving: false,
             refresh,
           };
@@ -115,7 +117,9 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
             owner.open = true;
             const raf = document?.defaultView?.requestAnimationFrame;
             if (typeof raf === 'function') {
-              raf.call(document.defaultView, () => {
+              state.rafID = raf.call(document.defaultView, () => {
+                state.rafID = null;
+                if (!host._itemPaneStates.has(state) || host._lifecycleActive === false) return;
                 owner.empty = false;
                 owner.open = true;
               });
@@ -126,6 +130,10 @@ export function createItemPaneModule(deps: ItemPaneDeps = {}) {
           const state = sectionStates.get(body);
           if (state) {
             state.renderVersion++;
+            state.renderAbort?.abort?.();
+            state.renderAbort = null;
+            if (state.rafID != null) try { state.window?.cancelAnimationFrame?.(state.rafID); } catch (_) {}
+            state.rafID = null;
             cancelItemPaneRefresh(state, getZotero);
             host._itemPaneStates.delete(state);
           }

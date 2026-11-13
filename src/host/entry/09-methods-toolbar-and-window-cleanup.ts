@@ -135,10 +135,13 @@
         this.triggerMindFlowOpen(window);
       };
 
+      const winSignal = this._windowControllers?.get(window)?.signal;
       if (!btn.hasAttribute('data-mindflow-handler')) {
-        btn.addEventListener('command', trigger);
-        btn.addEventListener('click', trigger);
+        const listenerOpts = winSignal ? { signal: winSignal } : undefined;
+        btn.addEventListener('command', trigger, listenerOpts);
+        btn.addEventListener('click', trigger, listenerOpts);
         btn.setAttribute('data-mindflow-handler', 'true');
+        windowElements.push({ remove: () => btn.removeAttribute?.('data-mindflow-handler') });
       }
 
       if (anchor && anchor.parentNode === toolbar) {
@@ -161,6 +164,11 @@
 
     removeFromWindow(window) {
       if (!window) return;
+      const winController = this._windowControllers?.get(window);
+      if (winController) {
+        try { winController.abort(); } catch (_) {}
+        this._windowControllers.delete(window);
+      }
       const hookState = this._tabHookStates?.get(window);
       if (hookState) {
         for (const [action, hook, previous] of hookState) {
@@ -186,7 +194,7 @@
       try { window._mindflowInjected = false; } catch (_) {}
     },
 
-    installTabLifecycle(win) {
+    installTabLifecycle(win, winSignal = null) {
       const tabs = win?.Zotero_Tabs;
       if (!tabs?.tabHooks) return;
       if (!this._tabHookStates) this._tabHookStates = new WeakMap();
@@ -226,7 +234,18 @@
       if (this.restoreSessionOnStartup && win === Zotero.getMainWindow?.() && !this._startupSessionScheduled) {
         this._startupSessionScheduled = true;
         const savedTabs = Zotero.Session?.state?.windows?.find(w=>w.type==='pane')?.tabs || [];
-        win.setTimeout(() => {
+        const activeSignal = winSignal || this._windowControllers?.get(win)?.signal;
+        let reconcileTimer = null;
+        const cancelTimer = () => {
+          if (reconcileTimer != null) {
+            try { win.clearTimeout?.(reconcileTimer); } catch (_) {}
+            reconcileTimer = null;
+          }
+        };
+        activeSignal?.addEventListener('abort', cancelTimer, { once: true });
+        reconcileTimer = win.setTimeout(() => {
+          reconcileTimer = null;
+          activeSignal?.removeEventListener('abort', cancelTimer);
           if (this._lifecycleActive === false || win.closed) return;
           this._startupRestoreQueue = (async () => {
             const occurrences = new Map(), restoredItemIDs = [];

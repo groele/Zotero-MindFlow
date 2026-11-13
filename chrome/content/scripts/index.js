@@ -91,67 +91,25 @@
   const AI_CANCELLED = 'AI 分析已取消；未创建或归档导图。';
   const AI_OMISSION_MARKER = '[原文区间采样，区间之间有省略]';
   const AI_READING_MODES = ['abstract', 'introduction', 'conclusion', 'key-sections', 'full'];
+  const {
+    extractPaperSections,
+    isPrivateOrLocalHost,
+    reasoningProvider,
+    publicLLMConfig,
+    reasoningChoices,
+    modelPreview,
+    extractJsonFromLlmOutput,
+    normalizeEvidence,
+    sampleAcrossText,
+    samplePreparedPDF,
+    splitTextForAI,
+    pdfSegmentsForAI,
+    normalizeAIClaimEntry,
+    compactSegmentDrafts,
+    normalizeDOI,
+  } = mfConstants;
   // Conservative local heading detection. Missing sections never fall back to
   // sending the full paper; the user must explicitly choose another scope.
-  const extractPaperSections = (text, readingMode) => {
-    const lines = String(text || '').replace(/\r\n?/g, '\n')
-      .replace(/^(\s*(?:abstract|摘要))\s*[:：]\s*(\S.*)$/gim, '$1\n$2').split('\n');
-    // Use the same heading grammar for target sections and their boundaries.
-    // Otherwise e.g. "Summary and outlook" can leak into an introduction.
-    const intro = /^(?:introduction(?:\s+and\s+background)?|background|引言|绪论|前言)$/i;
-    const abstractHeading = /^(?:abstract|摘要)$/i;
-    const conclusion = /^(?:conclusions?(?:\s+(?:and|&)\s+(?:outlook|perspectives?|discussion))?|concluding remarks|summary(?:\s+(?:and|&)\s+(?:conclusions?|outlook|perspectives?))?|结论(?:与展望)?|总结(?:与展望)?|结语)$/i;
-    const heading = /^(?:abstract|results?(?:\s+(?:and|&)\s+discussion)?|discussion|methods?|materials(?:\s+(?:and|&)\s+methods)?|experimental(?: section| methods| setup| procedure)?|sample preparation|characterization|theory|theoretical(?: model| framework)?|computational(?: methods| details)?|references|bibliography|acknowledg(?:e)?ments?|supporting information|supplementary(?: material| information)?|摘要|实验(?:部分|方法|条件)?|材料与方法|样品制备|理论模型|结果(?:与讨论)?|讨论|参考文献|致谢)$/i;
-    const parseHeading = (line) => {
-      const value = line.trim().replace(/[:：]$/, '').trim();
-      if (/^(?:key\s*words?|关键词)(?:\s*[:：].*|\s*)$/i.test(value)) return { title: 'Keywords', major: true };
-      if (/^\d{1,2}\.\d/.test(value)) return { title: value, major: false };
-      const numbered = value.match(/^(?:\d{1,2}|[IVX]+)(?:[.、．:]\s*|\s+)([A-Za-z\u4e00-\u9fff].{0,90})$/i);
-      const title = numbered ? numbered[1].trim() : value;
-      // A numeric measurement line is not a numbered section heading.
-      const measurement = /^(?:m?K|nm|[µμu]?m|m?W|eV|meV|[mµμu]?A|m?V|T|Hz|kHz|MHz|GHz|s|ms|ps|fs)\b/.test(title);
-      return { title, major: intro.test(title) || conclusion.test(title) || heading.test(title) ||
-        Boolean(numbered && !measurement && !/[.!?。！？]$/.test(title)) };
-    };
-    const locate = (pattern, minimum) => {
-      const candidates = [];
-      for (let start = 0; start < lines.length; start++) {
-        if (!pattern.test(parseHeading(lines[start]).title)) continue;
-        let end = start + 1;
-        for (; end < lines.length; end++) {
-          if (parseHeading(lines[end]).major) break;
-        }
-        const content = lines.slice(start, end).join('\n').trim();
-        // An unterminated introduction is indistinguishable from the full
-        // remaining manuscript; omit it rather than widen the chosen scope.
-        if (content.length >= minimum && (![intro, abstractHeading].includes(pattern) || end < lines.length)) candidates.push(content);
-      }
-      // A single credible section is required. Duplicate headings can be a
-      // contents page, concatenated manuscripts or supplementary material.
-      return candidates.length === 1 ? candidates[0] : '';
-    };
-    const locateInlineAbstract = () => {
-      // Zotero may flatten a PDF page into one line. Require one explicit
-      // abstract marker and a keyword/introduction boundary, never a whole page.
-      const raw = lines.join('\n');
-      const markers = Array.from(raw.matchAll(/(?:^|\s)(?:Abstract|ABSTRACT|摘要)\s*[:：]?\s+(?=\S)/g));
-      if (markers.length !== 1) return '';
-      const marker = markers[0];
-      const tail = raw.slice(marker.index + marker[0].length);
-      const end = tail.search(/(?:^|\s)(?:(?:[Kk][Ee][Yy]\s*[Ww][Oo][Rr][Dd][Ss]?|关键词)\s*[:：]|(?:1|I)[.．、]?\s+Introduction\b|Introduction\s*(?:\n|[A-Z]))/);
-      if (end < 0) return '';
-      const content = tail.slice(0, end).trim();
-      return content.length >= 100 && content.length <= 12000 ? `Abstract\n${content}` : '';
-    };
-    const sections = {};
-    if (readingMode === 'abstract') sections.abstract = locate(abstractHeading, 100) || locateInlineAbstract();
-    if (['introduction', 'key-sections'].includes(readingMode)) sections.introduction = locate(intro, 200);
-    if (['conclusion', 'key-sections'].includes(readingMode)) sections.conclusion = locate(conclusion, 40);
-    const missing = Object.keys(sections).filter((key) => !sections[key]);
-    const blocks = Object.entries(sections).filter(([, content]) => content);
-    return { text: blocks.map(([key, content]) => `[所选部分：${key}]\n${content}`).join('\n\n'),
-      found: blocks.map(([key]) => key), missing };
-  };
   const LLM_PREF_PREFIX = 'extensions.zotero.llmforzotero.';
   const getLLMAddon = () => {
     const addon = Zotero.LLMForZotero;
@@ -208,55 +166,9 @@
       apiKey, authMode, providerProtocol: entry.providerProtocol || group.providerProtocol,
       advanced, host: url.host, local };
   };
-  const publicLLMConfig = ({ apiKey, ...config }) => ({ ...config,
-    fingerprint: JSON.stringify(config) });
-  // Consume user-configured upstream choices, never reproduce its provider
-  // registry or construct reasoning request bodies. Upstream owns the mapping.
-  const reasoningChoices = (config, capabilities) => {
-    const defaults = [{ id: 'default', label: '模型默认' }];
-    if (capabilities?.reasoning === false) return { reasoningSupported: false, reasoningOptions: defaults, reasoningOptionsSource: 'unsupported' };
-    const profile = config.advanced?.profileOverride;
-    const override = (!profile?.forModel || profile.forModel.trim().toLowerCase() === config.model.toLowerCase()) ? profile?.reasoning : null;
-    if (override && Array.isArray(override.options)) {
-      const seen = new Set(['default']);
-      const options = override.options.filter((option) => {
-        if (!option || typeof option.id !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,31}$/.test(option.id) || seen.has(option.id)) return false;
-        seen.add(option.id); return option.enabled !== false;
-      });
-      if (options.length || override.kind === 'none' || override.options.length) {
-        return { reasoningSupported: options.length > 0, reasoningOptions: [...defaults,
-          ...options.map((option) => ({ id: option.id, label: String(option.label || option.id).slice(0, 120) }))],
-          reasoningOptionsSource: 'llm-for-zotero-profile' };
-      }
-    }
-    return { reasoningSupported: true, reasoningOptions: [...defaults,
-      ...[['minimal', '最低（minimal）'], ['low', '低（low）'], ['medium', '中（medium）'],
-        ['high', '高（high）'], ['xhigh', '更高（xhigh）']].map(([id, label]) => ({ id, label }))],
-      reasoningOptionsSource: 'upstream-mapping' };
-  };
-  const modelPreview = (entry) => Object.fromEntries(['entryId', 'model', 'host', 'local', 'available',
-    'message', 'reasoningSupported', 'reasoningOptions', 'reasoningOptionsSource']
-    .filter((key) => entry[key] !== undefined).map((key) => [key, entry[key]]));
-
-  const isPrivateOrLocalHost = (hostname) => {
-    if (!hostname) return false;
-    if (['localhost', '127.0.0.1', '[::1]', '::1', '0.0.0.0', 'host.docker.internal'].includes(hostname)) return true;
-    if (hostname.endsWith('.local') || hostname.endsWith('.lan') || hostname.endsWith('.home.arpa')) return true;
-    return /^(?:10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(hostname);
-  };
   const getAbortControllerClass = () => Zotero.getMainWindow?.()?.AbortController || globalThis.AbortController;
 
   let llmConversationSequence = 0;
-  const reasoningProvider = (config) => {
-    const name = `${config.model} ${config.apiBase}`.toLowerCase();
-    for (const [pattern, provider] of [
-      [/deepseek/, 'deepseek'], [/kimi|moonshot/, 'kimi'], [/qwen|dashscope/, 'qwen'],
-      [/gemini|generativelanguage/, 'gemini'], [/claude|anthropic/, 'anthropic'],
-      [/glm|bigmodel/, 'glm'], [/minimax/, 'minimax'], [/mimo/, 'mimo'], [/grok|x\.ai/, 'grok'],
-      [/gpt|openai|^o[134](?:-|\s)/, 'openai'],
-    ]) if (pattern.test(name)) return provider;
-    return config.local ? 'local' : 'customized';
-  };
   const callLLMForZotero = async ({ config, systemPrompt, payload, reasoningLevel = 'default', signal, timeout = 120000 }) => {
     if (signal?.aborted) throw new Error(AI_CANCELLED);
     const addon = getLLMAddon();
@@ -321,102 +233,6 @@
       signal?.removeEventListener('abort', onAbort);
     }
   };
-
-  const extractJsonFromLlmOutput = (text) => {
-    if (!text || typeof text !== 'string') return null;
-    const trimmed = text.trim();
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (parsed && typeof parsed === 'object') return parsed;
-    } catch (_) {}
-
-    const blockMatches = Array.from(trimmed.matchAll(/```(?:json)?\s*([\s\S]*?)\s*```/gi));
-    for (const match of blockMatches) {
-      if (match[1]) {
-        try {
-          const parsed = JSON.parse(match[1].trim());
-          if (parsed && typeof parsed === 'object') return parsed;
-        } catch (_) {}
-      }
-    }
-
-    const first = trimmed.indexOf('{');
-    const last = trimmed.lastIndexOf('}');
-    if (first !== -1 && last !== -1 && last > first) {
-      try {
-        const parsed = JSON.parse(trimmed.slice(first, last + 1));
-        if (parsed && typeof parsed === 'object') return parsed;
-      } catch (_) {}
-    }
-    return null;
-  };
-
-  const normalizeEvidence = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
-  const sampleAcrossText = (value, limit) => {
-    if (value.length <= limit) return value;
-    const slices = 8;
-    const width = Math.floor(limit / slices);
-    return Array.from({ length: slices }, (_, index) => {
-      const start = Math.floor((value.length - width) * index / (slices - 1));
-      return value.slice(start, start + width);
-    }).join(`\n${AI_OMISSION_MARKER}\n`);
-  };
-  const samplePreparedPDF = (value, limit) => {
-    const passages = value.split(AI_OMISSION_MARKER).map((piece) => piece.trim()).filter(Boolean);
-    if (passages.length <= 1) return sampleAcrossText(value, limit);
-    const perPassage = Math.floor(limit / passages.length);
-    return passages.map((piece) => sampleAcrossText(piece, perPassage))
-      .join(`\n${AI_OMISSION_MARKER}\n`);
-  };
-  const splitTextForAI = (value, maxLength) => {
-    const chunks = [];
-    for (let start = 0; start < value.length;) {
-      let end = Math.min(start + maxLength, value.length);
-      if (end < value.length) {
-        const paragraph = value.lastIndexOf('\n\n', end);
-        const line = value.lastIndexOf('\n', end);
-        const boundary = paragraph > start + maxLength * 0.65 ? paragraph + 2
-          : line > start + maxLength * 0.8 ? line + 1 : end;
-        end = boundary;
-      }
-      chunks.push(value.slice(start, end));
-      start = end;
-    }
-    return chunks;
-  };
-  // An omission marker separates unrelated stretches of a sampled PDF. Never
-  // let one evidence quote span that gap, even when both stretches are sent in
-  // the same request.
-  const pdfSegmentsForAI = (value, maxLength) => value.split(AI_OMISSION_MARKER)
-    .flatMap((passage) => splitTextForAI(passage.trim(), maxLength))
-    .filter((text) => text.trim())
-    .map((text, index) => ({ id: `P${index + 1}`, text }));
-  // Round-robin across PDF segments before taking additional facts from each.
-  // The story template keeps a larger evidence bank; legacy density is preserved.
-  const normalizeAIClaimEntry = entry => typeof entry === 'string' ? {
-    text: entry, detail: '模型返回了未带结构化引文的文字；保留内容供阅读，但必须人工核对原文。',
-    basis: 'inference', source: 'none', quote: '',
-  } : entry;
-  const compactSegmentDrafts = (drafts, limit = 5) => Object.fromEntries(AI_SECTION_KEYS.map((key) => {
-    const selected = [];
-    const seen = new Set();
-    const maxLength = Math.max(0, ...drafts.map(draft => draft[key]?.length || 0));
-    for (let rank = 0; rank < maxLength && selected.length < limit; rank += 1) {
-      for (const draft of drafts) {
-        const entry = draft[key]?.[rank];
-        if (!entry || selected.length >= limit) continue;
-        const identity = `${entry.sourceId}:${normalizeEvidence(entry.text)}`;
-        if (seen.has(identity)) continue;
-        seen.add(identity); selected.push(entry);
-      }
-    }
-    return [key, selected.map(entry => ({
-      text: entry.text.slice(0, 600), detail: entry.detail.slice(0, 1000),
-      topic: entry.topic, subtopic: entry.subtopic,
-      basis: entry.basis, source: entry.source, sourceId: entry.sourceId,
-      quote: entry.quote.slice(0, 240),
-    }))];
-  }));
 
   const itemSelectUri = (item) => {
     const key = item.key || item.id;
@@ -497,33 +313,6 @@
     const found = scopes.map((id) => Zotero.Items?.getByLibraryAndKey?.(id, key))
       .filter((item) => item && !item.deleted);
     return found.length === 1 ? found[0] : null;
-  };
-
-  const normalizeDOI = (value) => {
-    if (!value || typeof value !== 'string') return '';
-    let clean = value
-      .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
-      .replace(/[\uFF01-\uFF5E]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
-      .trim()
-      .toLowerCase();
-    const urlMatch = clean.match(/https?:\/\/(?:dx\.)?doi\.org\/[^\s]+/i)?.[0];
-    if (urlMatch) {
-      clean = urlMatch.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '').split(/[?#]/, 1)[0];
-    }
-    try {
-      clean = decodeURIComponent(clean).toLowerCase();
-    } catch (_) {}
-    clean = clean.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '');
-    clean = clean.replace(/^doi:\s*/i, '');
-    const match = clean.match(/10\.\d{4,9}\/[^\s"'`\\]+/);
-    if (!match) return '';
-    let result = match[0].replace(/[.,;:，。；：、]+$/, '');
-    for (const [open, close] of [['(', ')'], ['[', ']'], ['{', '}'], ['<', '>']]) {
-      while (result.endsWith(close) && result.split(close).length > result.split(open).length) {
-        result = result.slice(0, -1);
-      }
-    }
-    return /^10\.\d{4,9}\/.+/.test(result) ? result : '';
   };
 
   const searchItemByDoi = async (doiInput, libraryID = null) => {
@@ -609,31 +398,11 @@
     }
     return resolved;
   };
-  const tabContainer = (tabs, tab, win) => tab?.container ||
-    tabs?.getTabContent?.(tab?.id) || tabs?.getTabContainer?.(tab?.id) ||
-    win?.document?.getElementById?.(tab?.id);
+  const tabContainer = mfBridge.tabContainer;
   const currentTabFor = (tabs) => tabs?._tabs?.find((tab) => tab.id === tabs.selectedID) || tabs?.selectedTab;
   const itemIdentity = (item) => `${item.libraryID}:${item.key}`;
-  const openTargetIdentity = (options, items) => {
-    if (options.forceNew) return `new:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-    if (options.mode === 'open_document') {
-      const metadata = options.doc?.metadata || {};
-      const key = options.openedAttachmentKey || metadata.zoteroAttachmentKey;
-      const library = options.openedAttachmentLibraryID || metadata.zoteroAttachmentLibraryID;
-      if (key && library) return `attachment:${library}:${key}`;
-      return `document:${metadata.zoteroUri || metadata.zoteroItemKey || 'unlinked'}:${options.doc?.id}`;
-    }
-    if (options.mode === 'create_from_collection') {
-      return `collection:${options.collectionLibraryID}:${options.collectionKey}`;
-    }
-    if (items.length) return `${options.mode === 'ai_analyze' ? 'ai' : 'items'}:${items.map(itemIdentity).sort().join('|')}`;
-    if (options.mode === 'create_blank' || options.mode === 'create_from_selection' || options.mode === 'create_from_items' || options.mode === 'ai_analyze') return `blank:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-    return 'workspace';
-  };
-  const openActionMessage = (options, items) => ({
-    type: 'MINDFLOW_OPEN_ACTION', action: { ...options, items },
-    requestId: `open-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-  });
+  const openTargetIdentity = mfBridge.openTargetIdentity;
+  const openActionMessage = mfBridge.openActionMessage;
 
   const openPDFForItem = async (item, hostWindow = null) => {
     if (!item) return false;
@@ -720,6 +489,7 @@
 
   // Track injected DOM nodes for clean shutdown
   const injectedElements = new Map();
+  mfBridge?.setInjectedElements?.(injectedElements);
   const pendingWindowLoads = new Map();
   let windowListener = null;
 
@@ -767,101 +537,11 @@
     localizedDocs: new Set(),
     resolveItemReference,
     openTargetIdentity,
-    workspaceOwner(source) {
-      const windows = [...injectedElements.keys()];
-      const main = Zotero.getMainWindow?.();
-      if (main && !windows.includes(main)) windows.push(main);
-      for (const win of windows) for (const tab of win.Zotero_Tabs?._tabs || []) {
-        if (tab.type !== 'mindflow') continue;
-        const frame = tabContainer(win.Zotero_Tabs, tab, win)?.querySelector?.('iframe');
-        if (sameWindow(frame?.contentWindow, source)) return { win, tab, frame };
-      }
-      return null;
-    },
-    updateWorkspaceContext(source, data) {
-      const owner = this.workspaceOwner(source);
-      if (!owner || typeof data.documentId !== 'string' || typeof data.title !== 'string') return false;
-      const { win, tab } = owner;
-      const switched = Boolean(tab.data?.docId && tab.data.docId !== data.documentId);
-      const prevTarget = String(tab.data?.targetItemId || '');
-      let nextTarget;
-      if (data.attachmentKey && data.attachmentLibraryID) {
-        nextTarget = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
-      } else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
-        const parent = resolveItemReference(data.parentItemUri);
-        nextTarget = parent ? `items:${itemIdentity(parent)}` : `document:${data.documentId}`;
-      } else {
-        const aiParent = data.aiDraft && data.parentItemUri ? resolveItemReference(data.parentItemUri) : null;
-        if (data.aiDraft && aiParent) {
-          nextTarget = `ai:${itemIdentity(aiParent)}`;
-        } else if (data.unlinkedContainer && !switched && prevTarget.startsWith('collection:')) {
-          nextTarget = prevTarget;
-        } else {
-          nextTarget = `document:${data.documentId}`;
-        }
-      }
-      const targetChanged = Boolean(prevTarget && prevTarget !== nextTarget);
-      tab.data = {
-        ...tab.data,
-        docId: data.documentId,
-        doc: null,
-        parentItemUri: data.parentItemUri || null,
-        openedAttachmentKey: data.attachmentKey || null,
-        openedAttachmentLibraryID: data.attachmentLibraryID || null,
-        targetItemId: nextTarget,
-        ...(switched || targetChanged ? {
-          items: [],
-          collectionName: undefined,
-          collectionKey: undefined,
-          collectionLibraryID: undefined,
-          mode: ['open', 'import_file'].includes(tab.data?.mode) ? tab.data.mode : 'open_document',
-        } : {}),
-      };
-      win.Zotero_Tabs.rename?.(tab.id, `MindFlow - ${data.title.trim().slice(0,140)}`);
-      return true;
-    },
-    ownsWorkspaceWindow(source) {
-      return Boolean(this.workspaceOwner(source) || [...this._standaloneWindows?.values() || []]
-        .some(win => !win.closed && sameWindow(win, source)));
-    },
-    connectWorkspace(source) {
-      const owner = this.workspaceOwner(source);
-      if (!owner) return false;
-      owner.frame._mindflowReady = true;
-      if (owner.frame._mindflowPending) {
-        source.postMessage(owner.frame._mindflowPending, '*');
-        owner.frame._mindflowPending = null;
-      }
-      return true;
-    },
-    updateStandaloneContext(source, data) {
-      if (!this._standaloneWindows || typeof data.documentId !== 'string') return;
-      const entry = [...this._standaloneWindows].find(([, win]) => sameWindow(win, source));
-      if (!entry) return;
-      const switched = Boolean(source._mindflowDocumentId && source._mindflowDocumentId !== data.documentId);
-      const prevTarget = String(entry[0]);
-      let target = prevTarget;
-      if (data.attachmentKey && data.attachmentLibraryID) {
-        target = `attachment:${data.attachmentLibraryID}:${data.attachmentKey}`;
-      } else if (data.parentItemUri && !data.unlinkedContainer && !data.aiDraft) {
-        const parent = resolveItemReference(data.parentItemUri);
-        target = parent ? `items:${itemIdentity(parent)}` : `document:${data.documentId}`;
-      } else {
-        const aiParent = data.aiDraft && data.parentItemUri ? resolveItemReference(data.parentItemUri) : null;
-        if (data.aiDraft && aiParent) {
-          target = `ai:${itemIdentity(aiParent)}`;
-        } else if (data.unlinkedContainer && !switched && prevTarget.startsWith('collection:')) {
-          target = prevTarget;
-        } else {
-          target = `document:${data.documentId}`;
-        }
-      }
-      source._mindflowDocumentId = data.documentId;
-      if (target !== entry[0]) {
-        this._standaloneWindows.delete(entry[0]);
-        this._standaloneWindows.set(target, entry[1]);
-      }
-    },
+    workspaceOwner(source) { return mfBridge.workspaceOwner(this, source); },
+    updateWorkspaceContext(source, data) { return mfBridge.updateWorkspaceContext(this, source, data); },
+    ownsWorkspaceWindow(source) { return mfBridge.ownsWorkspaceWindow(this, source); },
+    connectWorkspace(source) { return mfBridge.connectWorkspace(this, source); },
+    updateStandaloneContext(source, data) { return mfBridge.updateStandaloneContext(this, source, data); },
 
     // Durable, per-key workspace files live in Zotero's data directory. Old
     // preference values remain readable and migrate on the next normal save.
@@ -1311,6 +991,8 @@
               targetID: target?.id || null,
               window: win,
               renderVersion: 0,
+              renderAbort: null,
+              rafID: null,
               saving: false,
               refresh,
             };
@@ -1323,7 +1005,8 @@
               owner.removeAttribute('empty');
               const raf = document?.defaultView?.requestAnimationFrame;
               if (typeof raf === 'function') {
-                raf.call(document.defaultView, () => {
+                state.rafID = raf.call(document.defaultView, () => {
+                  state.rafID = null;
                   if (!this._itemPaneStates.has(state) || this._lifecycleActive === false) return;
                   owner.removeAttribute('empty');
                 });
@@ -1334,6 +1017,10 @@
             const state = sectionStates.get(body);
             if (state) {
               state.renderVersion++;
+              state.renderAbort?.abort();
+              state.renderAbort = null;
+              if (state.rafID != null) try { state.window?.cancelAnimationFrame?.(state.rafID); } catch (_) {}
+              state.rafID = null;
               state.disposeVisibility?.();
               this.cancelItemPaneRefresh(state);
               this._itemPaneStates.delete(state);
@@ -1398,15 +1085,16 @@
               return;
             }
             lastPaneActions = [];
+            state?.renderAbort?.abort();
+            const Controller = getAbortControllerClass();
+            const renderCtrl = Controller ? new Controller() : null;
+            if (state) state.renderAbort = renderCtrl;
+            const listenerOpts = renderCtrl?.signal ? { signal: renderCtrl.signal } : undefined;
             const maps = target ? this.getMindflowAttachments(target) : [];
             const totalMaps = maps.length;
             setSectionSummary?.(totalMaps ? String(totalMaps) : this.paneText('展开后快速新建', 'Create quickly'));
             body.replaceChildren();
-            if (state) {
-              state.paneSignature = null;
-              state.paneActions = [];
-            }
-
+            if (state) { state.paneSignature = null; state.paneActions = []; }
             const html = 'http://www.w3.org/1999/xhtml';
             const createEl = (tag, className = '', text = null) => {
               const el = document.createElementNS ? document.createElementNS(html, tag) : document.createElement(tag);
@@ -1414,7 +1102,6 @@
               if (text !== null && text !== undefined) el.textContent = text;
               return el;
             };
-
             const fallback = createEl('div', 'mf-pane-wrap mf-pane-fallback');
             const primaryBtn = createEl('button', 'mf-btn-primary', target
               ? (totalMaps > 0 ? this.paneText('打开思维导图工作台', 'Open map workspace') : this.paneText('一键生成文献思维导图', 'Create a map for this item'))
@@ -1425,18 +1112,12 @@
               if (primaryBtn.disabled) return;
               primaryBtn.disabled = true;
               try {
-                if (target && totalMaps > 0 && maps[0]) {
-                  await this.openMindflowAttachment(maps[0], win);
-                } else if (target) {
-                  await this.openMindFlow({ mode: 'create_from_selection', items: [target], forceNew: false }, win);
-                } else {
-                  await this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
-                }
+                if (target && totalMaps > 0 && maps[0]) await this.openMindflowAttachment(maps[0], win);
+                else if (target) await this.openMindFlow({ mode: 'create_from_selection', items: [target], forceNew: false }, win);
+                else await this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
                 await state?.refresh?.();
-              } finally {
-                primaryBtn.disabled = false;
-              }
-            });
+              } finally { primaryBtn.disabled = false; }
+            }, listenerOpts);
             fallback.appendChild(primaryBtn);
             body.appendChild(fallback);
           },
@@ -1494,6 +1175,11 @@
               return;
             }
             if (state && renderVersion !== state.renderVersion) return;
+            state?.renderAbort?.abort();
+            const Controller = getAbortControllerClass();
+            const renderCtrl = Controller ? new Controller() : null;
+            if (state) state.renderAbort = renderCtrl;
+            const listenerOpts = renderCtrl?.signal ? { signal: renderCtrl.signal } : undefined;
             lastPaneActions = [];
             body.replaceChildren();
             if (state) {
@@ -1587,8 +1273,8 @@
                 else button.removeAttribute?.('aria-disabled');
               }
             };
-            primaryBtn.addEventListener('click', makeGenerateHandler(primaryBtn));
-            templateCreateBtn.addEventListener('click', makeGenerateHandler(templateCreateBtn));
+            primaryBtn.addEventListener('click', makeGenerateHandler(primaryBtn), listenerOpts);
+            templateCreateBtn.addEventListener('click', makeGenerateHandler(templateCreateBtn), listenerOpts);
 
             // Divider before action grid
             wrapper.appendChild(createEl('div', 'mf-divider'));
@@ -1613,7 +1299,7 @@
               } finally {
                 toolWorkbench.disabled = false;
               }
-            });
+            }, listenerOpts);
             toolsGrid.appendChild(toolWorkbench);
 
             const toolSubwin = createEl('button', 'mf-tool-btn', T('伴读窗口', 'Companion'));
@@ -1634,7 +1320,7 @@
               } catch (err) {
                 Zotero.logError?.('[MindFlow] Open standalone window failed: ' + err);
               }
-            });
+            }, listenerOpts);
             toolsGrid.appendChild(toolSubwin);
 
             const toolAi = createEl('button', 'mf-tool-btn', T('AI 论文精读', 'AI Reading'));
@@ -1656,7 +1342,7 @@
               } finally {
                 toolAi.disabled = !lastPaneTarget;
               }
-            });
+            }, listenerOpts);
             toolsGrid.appendChild(toolAi);
             lastPaneActions.push({ id: 'ai', button: toolAi, hasPDF: true });
 
@@ -1688,7 +1374,7 @@
                   const latestTarget = lastPaneTarget;
                   toolPdf.disabled = !latestTarget || !this.hasPaneTargetPDF(latestTarget, lastPaneItem);
                 }
-              });
+              }, listenerOpts);
               toolsGrid.appendChild(toolPdf);
               lastPaneActions.push({ id: 'pdf', button: toolPdf, hasPDF: true });
             }
@@ -1702,7 +1388,7 @@
             toolImport.addEventListener('click', async (e = {}) => {
               e.preventDefault?.(); e.stopPropagation?.();
               await this.openMindFlow({ mode: 'import_file' }, win);
-            });
+            }, listenerOpts);
             toolsGrid.appendChild(toolImport);
 
             const toolBlank = createEl('button', 'mf-tool-btn', T('独立空白导图', 'Blank Map'));
@@ -1714,7 +1400,7 @@
             toolBlank.addEventListener('click', async (e = {}) => {
               e.preventDefault?.(); e.stopPropagation?.();
               await this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
-            });
+            }, listenerOpts);
             toolsGrid.appendChild(toolBlank);
             wrapper.appendChild(toolsGrid);
 
@@ -1731,7 +1417,7 @@
               refreshBtn.addEventListener('click', (e) => {
                 e.preventDefault(); e.stopPropagation();
                 state?.refresh?.();
-              });
+              }, listenerOpts);
               mapsHeader.appendChild(refreshBtn);
               mapsSection.appendChild(mapsHeader);
 
@@ -1744,7 +1430,7 @@
                 mapsList.addEventListener('click', (e = {}) => {
                   if (e.target?.closest?.('button')) return;
                   this.openMindflowAttachment(maps[0], win);
-                });
+                }, listenerOpts);
               }
               for (const att of maps) {
                 const rawTitle = att.getField?.('title') || att.attachmentFilename || T('思维导图', 'Mind map');
@@ -1760,7 +1446,7 @@
                   e?.preventDefault?.();
                   e?.stopPropagation?.();
                   this.openMindflowAttachment(att, win);
-                });
+                }, listenerOpts);
 
                 const cardTop = createEl('div', 'mf-map-card-top');
                 const cardName = createEl('span', 'mf-map-name', cleanTitle);
@@ -1793,7 +1479,7 @@
                   } finally {
                     openBtn.disabled = false;
                   }
-                });
+                }, listenerOpts);
                 cardActions.appendChild(openBtn);
 
                 const exportBtn = createEl('button', 'mf-card-btn', T('导出大纲', 'Export Outline'));
@@ -1825,7 +1511,7 @@
                     if (latestTarget && latestEditable) exportBtn.removeAttribute('aria-disabled');
                     else exportBtn.setAttribute('aria-disabled', 'true');
                   }
-                });
+                }, listenerOpts);
                 cardActions.appendChild(exportBtn);
                 lastPaneActions.push({ id: 'export', button: exportBtn });
 
@@ -1841,7 +1527,7 @@
                   } catch (err) {
                     Zotero.logError?.('[MindFlow] Locate attachment failed: ' + err);
                   }
-                });
+                }, listenerOpts);
                 cardActions.appendChild(locateBtn);
 
                 card.appendChild(cardActions);
@@ -1877,7 +1563,7 @@
           const onLoad = () => {
             domWindow.removeEventListener('load', onLoad, false);
             pendingWindowLoads.delete(domWindow);
-            if (!domWindow.closed) {
+            if (!domWindow.closed && this._lifecycleActive !== false) {
               const winType = domWindow.document?.documentElement?.getAttribute?.('windowtype');
               if (winType && winType !== 'navigator:browser') {
                 return;
@@ -1906,13 +1592,19 @@
     },
 
     addToWindow(window) {
-      if (!window || !window.document) return;
+      if (!window || !window.document || this._lifecycleActive === false) return;
       const doc = window.document;
 
       const winType = doc.documentElement?.getAttribute?.('windowtype');
       if (winType && winType !== 'navigator:browser') return;
 
-      this.installTabLifecycle(window);
+      const Controller = window.AbortController || globalThis.AbortController;
+      const winController = Controller ? new Controller() : null;
+      const winSignal = winController?.signal;
+      if (!this._windowControllers) this._windowControllers = new WeakMap();
+      this._windowControllers.set(window, winController);
+
+      this.installTabLifecycle(window, winSignal);
 
       // Clean up any legacy tools menu items
       try {
@@ -1921,10 +1613,18 @@
       } catch (_) {}
 
       // Prevent duplicate injection
-      if (doc.getElementById('mindflow-collectionmenu-create') || window._mindflowInjected) return;
+      if (doc.getElementById('mindflow-collectionmenu-create') || window._mindflowInjected) {
+        winController?.abort();
+        this._windowControllers.delete(window);
+        return;
+      }
       window._mindflowInjected = true;
 
       const windowElements = [];
+      if (winController) windowElements.push({ remove: () => winController.abort() });
+      if (winSignal) {
+        window.addEventListener('unload', () => this.removeFromWindow(window), { once: true, signal: winSignal });
+      }
       this.ensureLocalization(doc);
 
       // 2. Add to Collection Context Menu (分类列表右键菜单)
@@ -1969,7 +1669,8 @@
           }
         };
 
-        collectionMenu.addEventListener('popupshowing', updateCollectionMenuState);
+        const winListenerOpts = winSignal ? { signal: winSignal } : undefined;
+        collectionMenu.addEventListener('popupshowing', updateCollectionMenuState, winListenerOpts);
         windowElements.push({
           remove: () => collectionMenu.removeEventListener('popupshowing', updateCollectionMenuState),
         });
@@ -1988,7 +1689,7 @@
               window
             );
           }
-        });
+        }, winListenerOpts);
         collectionMenu.appendChild(colItem);
         windowElements.push(colItem);
       }
@@ -2049,7 +1750,7 @@
           this.triggerMindFlowOpen(window);
         }
       };
-      window.addEventListener('keydown', handleGlobalKeyDown, true);
+      window.addEventListener('keydown', handleGlobalKeyDown, winSignal ? { capture: true, signal: winSignal } : true);
       windowElements.push({
         remove: () => window.removeEventListener('keydown', handleGlobalKeyDown, true),
       });
@@ -2318,6 +2019,8 @@
             const source = event.source;
             const responseOrigin = event.origin && event.origin !== 'null' ? event.origin : '*';
             const job = { cancelled: false, cancel() { this.cancelled = true; } };
+            const onWinAbort = () => job.cancel();
+            winSignal?.addEventListener('abort', onWinAbort, { once: true });
             if (!this._aiJobs) this._aiJobs = new Map();
             this._aiJobs.set(data.requestId, job);
             const reply = (payload) => {
@@ -2331,7 +2034,10 @@
             })
               .then((result) => reply({ result }))
               .catch((error) => reply({ error: String(error?.message || error).slice(0, 300) }))
-              .finally(() => this._aiJobs?.delete(data.requestId));
+              .finally(() => {
+                winSignal?.removeEventListener('abort', onWinAbort);
+                this._aiJobs?.delete(data.requestId);
+              });
           }
 
           if (data.type === 'MINDFLOW_CANCEL_PAPER' && typeof data.requestId === 'string') {
@@ -2347,6 +2053,8 @@
               catch (error) { Zotero.log?.('[MindFlow] AI result window closed: ' + error); }
             };
             const job = { cancelled: false, cancel() { this.cancelled = true; } };
+            const onWinAbort = () => job.cancel();
+            winSignal?.addEventListener('abort', onWinAbort, { once: true });
             if (!this._aiJobs) this._aiJobs = new Map();
             this._aiJobs.set(data.requestId, job);
             const progress = (phase, completed, total) => {
@@ -2366,13 +2074,16 @@
             })
               .then((result) => reply({ result }))
               .catch((error) => reply({ error: String(error?.message || error).slice(0, 300) }))
-              .finally(() => this._aiJobs?.delete(data.requestId));
+              .finally(() => {
+                winSignal?.removeEventListener('abort', onWinAbort);
+                this._aiJobs?.delete(data.requestId);
+              });
           }
         } catch (e) {
           Zotero.log?.('[MindFlow] Message processing note: ' + e);
         }
       };
-      window.addEventListener('message', handleHostMessage);
+      window.addEventListener('message', handleHostMessage, winSignal ? { signal: winSignal } : undefined);
       windowElements.push({
         remove: () => window.removeEventListener('message', handleHostMessage),
       });
@@ -2415,7 +2126,7 @@
         // Never attach this shortcut to the whole document: a selected map
         // must not hijack double-clicks in the item pane or other Zotero UI.
         if (itemsTree) {
-          itemsTree.addEventListener('dblclick', handleTreeDblClick, true);
+          itemsTree.addEventListener('dblclick', handleTreeDblClick, winSignal ? { capture: true, signal: winSignal } : true);
           windowElements.push({
             remove: () => itemsTree.removeEventListener('dblclick', handleTreeDblClick, true),
           });
@@ -2564,10 +2275,13 @@
         this.triggerMindFlowOpen(window);
       };
 
+      const winSignal = this._windowControllers?.get(window)?.signal;
       if (!btn.hasAttribute('data-mindflow-handler')) {
-        btn.addEventListener('command', trigger);
-        btn.addEventListener('click', trigger);
+        const listenerOpts = winSignal ? { signal: winSignal } : undefined;
+        btn.addEventListener('command', trigger, listenerOpts);
+        btn.addEventListener('click', trigger, listenerOpts);
         btn.setAttribute('data-mindflow-handler', 'true');
+        windowElements.push({ remove: () => btn.removeAttribute?.('data-mindflow-handler') });
       }
 
       if (anchor && anchor.parentNode === toolbar) {
@@ -2590,6 +2304,11 @@
 
     removeFromWindow(window) {
       if (!window) return;
+      const winController = this._windowControllers?.get(window);
+      if (winController) {
+        try { winController.abort(); } catch (_) {}
+        this._windowControllers.delete(window);
+      }
       const hookState = this._tabHookStates?.get(window);
       if (hookState) {
         for (const [action, hook, previous] of hookState) {
@@ -2615,7 +2334,7 @@
       try { window._mindflowInjected = false; } catch (_) {}
     },
 
-    installTabLifecycle(win) {
+    installTabLifecycle(win, winSignal = null) {
       const tabs = win?.Zotero_Tabs;
       if (!tabs?.tabHooks) return;
       if (!this._tabHookStates) this._tabHookStates = new WeakMap();
@@ -2655,7 +2374,18 @@
       if (this.restoreSessionOnStartup && win === Zotero.getMainWindow?.() && !this._startupSessionScheduled) {
         this._startupSessionScheduled = true;
         const savedTabs = Zotero.Session?.state?.windows?.find(w=>w.type==='pane')?.tabs || [];
-        win.setTimeout(() => {
+        const activeSignal = winSignal || this._windowControllers?.get(win)?.signal;
+        let reconcileTimer = null;
+        const cancelTimer = () => {
+          if (reconcileTimer != null) {
+            try { win.clearTimeout?.(reconcileTimer); } catch (_) {}
+            reconcileTimer = null;
+          }
+        };
+        activeSignal?.addEventListener('abort', cancelTimer, { once: true });
+        reconcileTimer = win.setTimeout(() => {
+          reconcileTimer = null;
+          activeSignal?.removeEventListener('abort', cancelTimer);
           if (this._lifecycleActive === false || win.closed) return;
           this._startupRestoreQueue = (async () => {
             const occurrences = new Map(), restoredItemIDs = [];
@@ -3033,6 +2763,19 @@
           };
 
           let workspaceFrame = null;
+          const Controller = win?.AbortController || getAbortControllerClass();
+          const tabController = Controller ? new Controller() : null;
+          const tabSignal = tabController?.signal;
+          const winSignal = this._windowControllers?.get(win)?.signal;
+          const abortTab = () => {
+            for (const timer of tabIconTimers) {
+              try { win?.clearTimeout?.(timer); } catch (_) {}
+            }
+            tabIconTimers.length = 0;
+            try { tabController?.abort(); } catch (_) {}
+          };
+          const tabIconTimers = [];
+          winSignal?.addEventListener('abort', abortTab, { once: true });
           const tabResult = tabs.add({
             type: 'mindflow',
             title: tabTitle,
@@ -3040,6 +2783,8 @@
             index: Number.isInteger(options.tabIndex) ? options.tabIndex : undefined,
             data: tabData,
             onClose: () => {
+              winSignal?.removeEventListener('abort', abortTab);
+              abortTab();
               this.captureWorkspaceOnClose(workspaceFrame?.contentWindow);
               Zotero.log?.('[MindFlow] Workspace tab closed: ' + tabTitle);
             },
@@ -3049,6 +2794,7 @@
             const tabId = tabResult?.id;
             if (tabId) {
               const applyTabIcon = () => {
+                if (tabSignal?.aborted || this._lifecycleActive === false) return;
                 const tabEl = win.document?.querySelector?.(`.tab[data-id="${tabId}"]`);
                 if (tabEl) {
                   tabEl.setAttribute('data-type', 'mindflow');
@@ -3062,8 +2808,10 @@
                 }
               };
               applyTabIcon();
-              win.setTimeout?.(applyTabIcon, 50);
-              win.setTimeout?.(applyTabIcon, 300);
+              const t50 = win.setTimeout?.(applyTabIcon, 50);
+              if (t50 != null) tabIconTimers.push(t50);
+              const t300 = win.setTimeout?.(applyTabIcon, 300);
+              if (t300 != null) tabIconTimers.push(t300);
             }
           } catch (_) {}
 
@@ -3107,7 +2855,7 @@
               } catch (e) {
                 Zotero.log?.('[MindFlow] Note on tab iframe load: ' + e);
               }
-            });
+            }, tabSignal ? { signal: tabSignal } : undefined);
 
             container.appendChild(iframe);
           }
@@ -3172,21 +2920,29 @@
           appWindow.Zotero = Zotero;
           appWindow._mindflowInitialAction = params;
           this._standaloneWindows.set(targetId, win);
-          win.addEventListener('beforeunload', () => { this.captureWorkspaceOnClose(win); });
+          const Controller = win.AbortController || getAbortControllerClass();
+          const standaloneController = Controller ? new Controller() : null;
+          const standaloneSignal = standaloneController?.signal;
+          if (!this._standaloneControllers) this._standaloneControllers = new Map();
+          if (standaloneController) this._standaloneControllers.set(win, standaloneController);
+          const listenerOpts = standaloneSignal ? { signal: standaloneSignal } : undefined;
+          win.addEventListener('beforeunload', () => { this.captureWorkspaceOnClose(win); }, listenerOpts);
           win.addEventListener('unload', (event) => {
             // openWindow first navigates away from about:blank. That unload
             // must not unregister the workspace which is still starting.
             if (event.target?.documentURI !== url) return;
+            standaloneController?.abort();
+            this._standaloneControllers?.delete(win);
             for (const [key, registered] of this._standaloneWindows || []) {
               if (registered === win) this._standaloneWindows.delete(key);
             }
-          });
+          }, listenerOpts);
           try {
             win.addEventListener('load', () => {
               if (win.document) {
                 win.document.title = 'MindFlow 思维导图与学术研读工作区';
               }
-            }, { once: true });
+            }, standaloneSignal ? { once: true, signal: standaloneSignal } : { once: true });
           } catch (_) {}
           if (win.focus) {
             win.focus();
@@ -4395,62 +4151,7 @@
     },
 
     renderNodeToHtml(node, level = 1, parentNode = null) {
-      if (!node) return '';
-      const indent = '  '.repeat(level);
-
-      const isAbstractText = (str) =>
-        typeof str === 'string' && /^(?:💡\s*)?(?:核心摘要|文献摘要|摘要|abstract)$/i.test(str.trim());
-      const hasAbstractChild = level === 1 && Array.isArray(node.children) && node.children.some(c => c && isAbstractText(c.text));
-      const isRedundantRootAbstract = hasAbstractChild && (
-        (node.note && (/(?:【文献摘要】|文献摘要|^\s*abstract\b)/i.test(node.note))) ||
-        (Array.isArray(node.children) && node.children.some(c => c && c.note && (c.note === node.note || node.note?.includes(c.note))))
-      );
-
-      const isDuplicateAbstractChild = Boolean(parentNode && isAbstractText(parentNode.text) && (
-        (node.note && parentNode.note && (node.note === parentNode.note || parentNode.note.includes(node.note))) ||
-        (typeof node.text === 'string' && node.text.trim().length >= 16 && parentNode.note &&
-          parentNode.note.startsWith(node.text.replace(/\.\.\.$/, '')))
-      ));
-
-      if (isDuplicateAbstractChild && (!node.children || node.children.length === 0)) {
-        return '';
-      }
-
-      const linkLabel = T('链接', 'Link');
-      let taskPrefix = '';
-      let textStyle = '';
-      if (node.task) {
-        if (node.task.status === 'done') {
-          taskPrefix = '<span style="color: #10b981; font-weight: bold; margin-right: 4px;">☑</span>';
-          textStyle = 'text-decoration: line-through; opacity: 0.75;';
-        } else if (node.task.status === 'doing') {
-          taskPrefix = '<span style="color: #2563eb; font-weight: bold; margin-right: 4px;">⏳</span>';
-        } else {
-          taskPrefix = '<span style="color: #94a3b8; font-weight: bold; margin-right: 4px;">☐</span>';
-        }
-      }
-      let tagsHtml = '';
-      if (Array.isArray(node.tags) && node.tags.length > 0 && level > 1) {
-        tagsHtml = ' ' + node.tags.map(t => `<span style="display: inline-block; font-size: 11px; padding: 0 4px; border-radius: 3px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; margin-left: 3px;">#${escapeHtml(t)}</span>`).join('');
-      }
-      let html = `${indent}<li>${taskPrefix}<strong style="${textStyle}">${escapeHtml(node.text)}</strong>${tagsHtml}`;
-      if (node.link) {
-        html += ` <a href="${escapeHtml(node.link)}" style="color: #0284c7; text-decoration: none;">[${linkLabel}]</a>`;
-      }
-      if (node.note && !isRedundantRootAbstract && !isDuplicateAbstractChild) {
-        html += `<br/><small style="color: #64748b; line-height: 1.5; display: inline-block; margin-top: 3px;">${escapeHtml(node.note)}</small>`;
-      }
-      if (Array.isArray(node.children) && node.children.length > 0) {
-        const renderedChildren = node.children
-          .map(child => this.renderNodeToHtml(child, level + 1, node))
-          .filter(Boolean)
-          .join('');
-        if (renderedChildren) {
-          html += `\n${indent}<ul>\n${renderedChildren}${indent}</ul>\n${indent}`;
-        }
-      }
-      html += `</li>\n`;
-      return html;
+      return mfNoteSync.renderNodeToHtml(node, level, parentNode);
     },
 
     openPreferencesPane(targetWindow) {
@@ -4516,6 +4217,10 @@
         this._shutdownBarrier = null;
       }
       for (const state of [...(this._itemPaneStates || [])]) {
+        state.renderAbort?.abort();
+        state.renderAbort = null;
+        if (state.rafID != null) try { state.window?.cancelAnimationFrame?.(state.rafID); } catch (_) {}
+        state.rafID = null;
         this.cancelItemPaneRefresh(state);
         state.disposeVisibility?.();
       }
@@ -4549,7 +4254,9 @@
       for (const win of new Set(this._standaloneWindows?.values() || [])) {
         try { if (!win.closed) win.close(); }
         catch (error) { Zotero.logError?.('[MindFlow] Could not close workspace: ' + error); }
+        try { this._standaloneControllers?.get(win)?.abort(); } catch (_) {}
       }
+      this._standaloneControllers?.clear?.();
       for (const [win] of injectedElements) {
         for (const tab of [...(win.Zotero_Tabs?._tabs || [])]) {
           if (tab.type === 'mindflow') {

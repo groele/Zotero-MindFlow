@@ -88,9 +88,21 @@ export const LeftWorkbench: React.FC<LeftWorkbenchProps> = ({
     finally { operationBusyRef.current = false; setOperationBusy(false); }
   };
 
+  const noticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (noticeTimerRef.current) {
+      clearTimeout(noticeTimerRef.current);
+      noticeTimerRef.current = null;
+    }
+  }, []);
+
   const showBackupNotice = (msg: string) => {
     setBackupNotice(msg);
-    setTimeout(() => setBackupNotice(null), 3000);
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = setTimeout(() => {
+      noticeTimerRef.current = null;
+      setBackupNotice(null);
+    }, 3000);
   };
 
   // --- Handlers for Docs ---

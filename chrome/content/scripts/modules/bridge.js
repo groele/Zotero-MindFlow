@@ -6,6 +6,10 @@
     const getZotero = () => deps.Zotero || globalThis.Zotero;
     const getHost = () => deps.host || globalThis.Zotero?.MindFlow;
     const getConstants = () => deps.constants || globalThis.MindFlowConstants || {};
+    let boundInjectedElements = deps.injectedElements || null;
+    function setInjectedElements(map) {
+      boundInjectedElements = map;
+    }
     const sameWindow = (a, b) => {
       const constants = getConstants();
       if (typeof constants.sameWindow === "function") return constants.sameWindow(a, b);
@@ -21,7 +25,8 @@
     }
     function workspaceOwner(host, source) {
       const Zotero = getZotero();
-      const windows = [...host._injectedElements?.keys() || []];
+      const injected = boundInjectedElements || deps.injectedElements || host?._injectedElements;
+      const windows = [...injected?.keys() || []];
       const main = Zotero?.getMainWindow?.();
       if (main && !windows.includes(main)) windows.push(main);
       for (const win of windows) {
@@ -145,6 +150,7 @@
       };
     }
     return {
+      setInjectedElements,
       sameWindow,
       tabContainer,
       workspaceOwner,

@@ -21,7 +21,7 @@
               } finally {
                 toolWorkbench.disabled = false;
               }
-            });
+            }, listenerOpts);
             toolsGrid.appendChild(toolWorkbench);
 
             const toolSubwin = createEl('button', 'mf-tool-btn', T('伴读窗口', 'Companion'));
@@ -42,7 +42,7 @@
               } catch (err) {
                 Zotero.logError?.('[MindFlow] Open standalone window failed: ' + err);
               }
-            });
+            }, listenerOpts);
             toolsGrid.appendChild(toolSubwin);
 
             const toolAi = createEl('button', 'mf-tool-btn', T('AI 论文精读', 'AI Reading'));
@@ -64,7 +64,7 @@
               } finally {
                 toolAi.disabled = !lastPaneTarget;
               }
-            });
+            }, listenerOpts);
             toolsGrid.appendChild(toolAi);
             lastPaneActions.push({ id: 'ai', button: toolAi, hasPDF: true });
 
@@ -96,7 +96,7 @@
                   const latestTarget = lastPaneTarget;
                   toolPdf.disabled = !latestTarget || !this.hasPaneTargetPDF(latestTarget, lastPaneItem);
                 }
-              });
+              }, listenerOpts);
               toolsGrid.appendChild(toolPdf);
               lastPaneActions.push({ id: 'pdf', button: toolPdf, hasPDF: true });
             }
@@ -110,7 +110,7 @@
             toolImport.addEventListener('click', async (e = {}) => {
               e.preventDefault?.(); e.stopPropagation?.();
               await this.openMindFlow({ mode: 'import_file' }, win);
-            });
+            }, listenerOpts);
             toolsGrid.appendChild(toolImport);
 
             const toolBlank = createEl('button', 'mf-tool-btn', T('独立空白导图', 'Blank Map'));
@@ -122,7 +122,7 @@
             toolBlank.addEventListener('click', async (e = {}) => {
               e.preventDefault?.(); e.stopPropagation?.();
               await this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
-            });
+            }, listenerOpts);
             toolsGrid.appendChild(toolBlank);
             wrapper.appendChild(toolsGrid);
 
@@ -139,7 +139,7 @@
               refreshBtn.addEventListener('click', (e) => {
                 e.preventDefault(); e.stopPropagation();
                 state?.refresh?.();
-              });
+              }, listenerOpts);
               mapsHeader.appendChild(refreshBtn);
               mapsSection.appendChild(mapsHeader);
 
@@ -152,7 +152,7 @@
                 mapsList.addEventListener('click', (e = {}) => {
                   if (e.target?.closest?.('button')) return;
                   this.openMindflowAttachment(maps[0], win);
-                });
+                }, listenerOpts);
               }
               for (const att of maps) {
                 const rawTitle = att.getField?.('title') || att.attachmentFilename || T('思维导图', 'Mind map');
@@ -168,7 +168,7 @@
                   e?.preventDefault?.();
                   e?.stopPropagation?.();
                   this.openMindflowAttachment(att, win);
-                });
+                }, listenerOpts);
 
                 const cardTop = createEl('div', 'mf-map-card-top');
                 const cardName = createEl('span', 'mf-map-name', cleanTitle);
@@ -201,7 +201,7 @@
                   } finally {
                     openBtn.disabled = false;
                   }
-                });
+                }, listenerOpts);
                 cardActions.appendChild(openBtn);
 
                 const exportBtn = createEl('button', 'mf-card-btn', T('导出大纲', 'Export Outline'));
@@ -233,7 +233,7 @@
                     if (latestTarget && latestEditable) exportBtn.removeAttribute('aria-disabled');
                     else exportBtn.setAttribute('aria-disabled', 'true');
                   }
-                });
+                }, listenerOpts);
                 cardActions.appendChild(exportBtn);
                 lastPaneActions.push({ id: 'export', button: exportBtn });
 
@@ -249,7 +249,7 @@
                   } catch (err) {
                     Zotero.logError?.('[MindFlow] Locate attachment failed: ' + err);
                   }
-                });
+                }, listenerOpts);
                 cardActions.appendChild(locateBtn);
 
                 card.appendChild(cardActions);
@@ -285,7 +285,7 @@
           const onLoad = () => {
             domWindow.removeEventListener('load', onLoad, false);
             pendingWindowLoads.delete(domWindow);
-            if (!domWindow.closed) {
+            if (!domWindow.closed && this._lifecycleActive !== false) {
               const winType = domWindow.document?.documentElement?.getAttribute?.('windowtype');
               if (winType && winType !== 'navigator:browser') {
                 return;

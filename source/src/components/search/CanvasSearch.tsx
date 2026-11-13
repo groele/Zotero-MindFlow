@@ -28,23 +28,35 @@ export const CanvasSearch: React.FC<CanvasSearchProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [replaceNotice, setReplaceNotice] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const noticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (noticeTimerRef.current) {
+      clearTimeout(noticeTimerRef.current);
+      noticeTimerRef.current = null;
+    }
+  }, []);
 
   // Focus input when opened
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         inputRef.current?.focus();
         inputRef.current?.select();
       }, 50);
-    } else {
-      setQuery('');
-      setReplaceText('');
-      setMatches([]);
-      setCurrentIndex(0);
-      setShowReplace(false);
-      setReplaceNotice(null);
-      onHighlightMatches([]);
+      return () => clearTimeout(timer);
     }
+    if (noticeTimerRef.current) {
+      clearTimeout(noticeTimerRef.current);
+      noticeTimerRef.current = null;
+    }
+    setQuery('');
+    setReplaceText('');
+    setMatches([]);
+    setCurrentIndex(0);
+    setShowReplace(false);
+    setReplaceNotice(null);
+    onHighlightMatches([]);
   }, [isOpen]);
 
   // Search through all nodes
@@ -122,14 +134,22 @@ export const CanvasSearch: React.FC<CanvasSearchProps> = ({
     const currentId = matches[currentIndex];
     const count = onReplaceCurrent?.(currentId, query, replaceText) || 0;
     setReplaceNotice(count ? `已替换 ${count} 处` : '没有可替换的文字（标签匹配仅用于定位）');
-    setTimeout(() => setReplaceNotice(null), 2000);
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = setTimeout(() => {
+      noticeTimerRef.current = null;
+      setReplaceNotice(null);
+    }, 2000);
   };
 
   const handleReplaceAll = () => {
     if (!query.trim() || matches.length === 0) return;
     const count = onReplaceAll?.(query, replaceText) || 0;
     setReplaceNotice(count ? `已完成全部替换 (${count} 处)` : '没有可替换的文字（标签匹配仅用于定位）');
-    setTimeout(() => setReplaceNotice(null), 2500);
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = setTimeout(() => {
+      noticeTimerRef.current = null;
+      setReplaceNotice(null);
+    }, 2500);
   };
 
   if (!isOpen) return null;

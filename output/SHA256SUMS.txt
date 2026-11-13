@@ -1,1 +1,1 @@
-e4c2475bcdc754a22995b6c66f4fec0c26ec625bc9ce1c6dd9989398bfd2591d  zotero-mindflow-12.6.8.xpi
+5e1bd12e0c409daddd318ed533fee0ad5cd5f075bdc9ad345f7c8d5eb2c9bb13  zotero-mindflow-17.0.0.xpi

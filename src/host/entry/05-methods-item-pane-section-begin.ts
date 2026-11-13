@@ -70,6 +70,8 @@
               targetID: target?.id || null,
               window: win,
               renderVersion: 0,
+              renderAbort: null,
+              rafID: null,
               saving: false,
               refresh,
             };
@@ -82,7 +84,8 @@
               owner.removeAttribute('empty');
               const raf = document?.defaultView?.requestAnimationFrame;
               if (typeof raf === 'function') {
-                raf.call(document.defaultView, () => {
+                state.rafID = raf.call(document.defaultView, () => {
+                  state.rafID = null;
                   if (!this._itemPaneStates.has(state) || this._lifecycleActive === false) return;
                   owner.removeAttribute('empty');
                 });
@@ -93,6 +96,10 @@
             const state = sectionStates.get(body);
             if (state) {
               state.renderVersion++;
+              state.renderAbort?.abort();
+              state.renderAbort = null;
+              if (state.rafID != null) try { state.window?.cancelAnimationFrame?.(state.rafID); } catch (_) {}
+              state.rafID = null;
               state.disposeVisibility?.();
               this.cancelItemPaneRefresh(state);
               this._itemPaneStates.delete(state);
@@ -157,15 +164,16 @@
               return;
             }
             lastPaneActions = [];
+            state?.renderAbort?.abort();
+            const Controller = getAbortControllerClass();
+            const renderCtrl = Controller ? new Controller() : null;
+            if (state) state.renderAbort = renderCtrl;
+            const listenerOpts = renderCtrl?.signal ? { signal: renderCtrl.signal } : undefined;
             const maps = target ? this.getMindflowAttachments(target) : [];
             const totalMaps = maps.length;
             setSectionSummary?.(totalMaps ? String(totalMaps) : this.paneText('展开后快速新建', 'Create quickly'));
             body.replaceChildren();
-            if (state) {
-              state.paneSignature = null;
-              state.paneActions = [];
-            }
-
+            if (state) { state.paneSignature = null; state.paneActions = []; }
             const html = 'http://www.w3.org/1999/xhtml';
             const createEl = (tag, className = '', text = null) => {
               const el = document.createElementNS ? document.createElementNS(html, tag) : document.createElement(tag);
@@ -173,7 +181,6 @@
               if (text !== null && text !== undefined) el.textContent = text;
               return el;
             };
-
             const fallback = createEl('div', 'mf-pane-wrap mf-pane-fallback');
             const primaryBtn = createEl('button', 'mf-btn-primary', target
               ? (totalMaps > 0 ? this.paneText('打开思维导图工作台', 'Open map workspace') : this.paneText('一键生成文献思维导图', 'Create a map for this item'))
@@ -184,18 +191,12 @@
               if (primaryBtn.disabled) return;
               primaryBtn.disabled = true;
               try {
-                if (target && totalMaps > 0 && maps[0]) {
-                  await this.openMindflowAttachment(maps[0], win);
-                } else if (target) {
-                  await this.openMindFlow({ mode: 'create_from_selection', items: [target], forceNew: false }, win);
-                } else {
-                  await this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
-                }
+                if (target && totalMaps > 0 && maps[0]) await this.openMindflowAttachment(maps[0], win);
+                else if (target) await this.openMindFlow({ mode: 'create_from_selection', items: [target], forceNew: false }, win);
+                else await this.openMindFlow({ mode: 'create_blank', forceNew: true }, win);
                 await state?.refresh?.();
-              } finally {
-                primaryBtn.disabled = false;
-              }
-            });
+              } finally { primaryBtn.disabled = false; }
+            }, listenerOpts);
             fallback.appendChild(primaryBtn);
             body.appendChild(fallback);
           },
@@ -253,6 +254,11 @@
               return;
             }
             if (state && renderVersion !== state.renderVersion) return;
+            state?.renderAbort?.abort();
+            const Controller = getAbortControllerClass();
+            const renderCtrl = Controller ? new Controller() : null;
+            if (state) state.renderAbort = renderCtrl;
+            const listenerOpts = renderCtrl?.signal ? { signal: renderCtrl.signal } : undefined;
             lastPaneActions = [];
             body.replaceChildren();
             if (state) {
@@ -346,6 +352,6 @@
                 else button.removeAttribute?.('aria-disabled');
               }
             };
-            primaryBtn.addEventListener('click', makeGenerateHandler(primaryBtn));
-            templateCreateBtn.addEventListener('click', makeGenerateHandler(templateCreateBtn));
+            primaryBtn.addEventListener('click', makeGenerateHandler(primaryBtn), listenerOpts);
+            templateCreateBtn.addEventListener('click', makeGenerateHandler(templateCreateBtn), listenerOpts);
 

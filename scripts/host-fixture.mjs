@@ -23,13 +23,63 @@ function hangingTurn(_request, _onEvent, { signal }) {
 function fixture(options = {}) {
   const items = new Map(), disk = new Map(), prefs = new Map(), elements = new Map(), listeners = new Map();
   let nextID = 10;
+  let nextTimerID = 1;
+  const activeTimers = new Map();
+  const bindEventHelpers = (target, onEmpty = () => {}, onSet = () => {}) => {
+    const table = new Map();
+    const abortCleanups = [];
+    const removeListener = (type, fn) => {
+      const set = table.get(type);
+      if (set) {
+        set.delete(fn);
+        if (set.size === 0) {
+          table.delete(type);
+          onEmpty(type);
+        } else {
+          onSet(type, [...set][set.size - 1]);
+        }
+      }
+      for (let i = abortCleanups.length - 1; i >= 0; i--) {
+        const entry = abortCleanups[i];
+        if (entry.type === type && entry.fn === fn) {
+          entry.signal?.removeEventListener?.('abort', entry.handler);
+          abortCleanups.splice(i, 1);
+        }
+      }
+    };
+    const addListener = (type, fn, opts) => {
+      const sig = typeof opts === 'object' ? opts?.signal : null;
+      const once = typeof opts === 'object' ? Boolean(opts?.once) : false;
+      if (sig?.aborted || typeof fn !== 'function') return;
+      const wrapped = once ? (...args) => { removeListener(type, wrapped); return fn(...args); } : fn;
+      let set = table.get(type);
+      if (!set) { set = new Set(); table.set(type, set); }
+      set.add(wrapped);
+      onSet(type, wrapped);
+      if (sig) {
+        const onAbort = () => removeListener(type, wrapped);
+        abortCleanups.push({ type, fn: wrapped, signal: sig, handler: onAbort });
+        sig.addEventListener('abort', onAbort, { once: true });
+      }
+    };
+    const dispatchEvent = (event) => {
+      const list = [...(table.get(event?.type) || [])];
+      for (const fn of list) fn(event);
+    };
+    return { addListener, removeListener, dispatchEvent, table };
+  };
   function element(tag) {
     const node = { localName: tag, children: [], childNodes: [], style: {}, attrs: {}, ownerDocument: doc, isConnected: true,
       replaceChildren(...children) { this.children = []; for (const c of children) this.appendChild(c); },
       setAttribute(k,v) { this.attrs[k] = v; }, getAttribute(k) { return this.attrs[k]; }, removeAttribute(k) { delete this.attrs[k]; },
       appendChild(child) { this.children.push(child); child.parentNode = this; },
       querySelector(sel) { return this.children.find(x => x.localName === 'iframe') || null; },
-      querySelectorAll() { return []; }, addEventListener(type, fn) { this[type] = fn; }, removeEventListener() {}, remove() {} };
+      querySelectorAll() { return []; }, remove() {} };
+    const ev = bindEventHelpers(node, (type) => { delete node[type]; }, (type, fn) => { node[type] = fn; });
+    node.addEventListener = ev.addListener;
+    node.removeEventListener = ev.removeListener;
+    node.dispatchEvent = ev.dispatchEvent;
+    node._eventListeners = ev.table;
     if (tag === 'iframe') node.contentWindow = { messages: [], postMessage(data) { this.messages.push(data); } };
     return node;
   }
@@ -38,14 +88,22 @@ function fixture(options = {}) {
     querySelectorAll: () => [...elements.values()].flatMap(n => n.children || []).filter(n => n.localName === 'iframe'),
     createElement: tag => element(tag), addEventListener() {}, removeEventListener() {}, head: { appendChild() {} } };
   const tabs = { _tabs: [{ id: 'zotero-pane', type: 'library' }], selectedID: 'zotero-pane',
-    add({type, title, data}) { const id = `tab-${nextID++}`; const container = element('tab-content');
-      elements.set(id, container); this._tabs.push({ id, type, title, data }); this.selectedID = id; return { id, container }; },
+    add({type, title, data, onClose}) { const id = `tab-${nextID++}`; const container = element('tab-content');
+      elements.set(id, container); this._tabs.push({ id, type, title, data, onClose }); this.selectedID = id; return { id, container }; },
+    close(id) { const idx = this._tabs.findIndex(t => t.id === id);
+      if (idx >= 0) { const [removed] = this._tabs.splice(idx, 1); removed.onClose?.(); } },
     getTabContent(id) { return elements.get(id); }, select(id) { this.selectedID = id; },
     rename(id, title) { this._tabs.find(t=>t.id===id).title = title; } };
   const win = { document: doc, Zotero_Tabs: tabs, ZoteroPane: { getSelectedItems: () => [] }, focus() {},
     fetch: options.fetch, AbortController,
-    addEventListener(type, fn) { listeners.set(type, fn); }, removeEventListener() {},
-    setTimeout() { return 1; }, clearTimeout() {} };
+    _activeTimers: activeTimers,
+    setTimeout(fn) { const id = nextTimerID++; activeTimers.set(id, fn); return id; },
+    clearTimeout(id) { activeTimers.delete(id); } };
+  const winEv = bindEventHelpers(win, (type) => { listeners.delete(type); }, (type, fn) => { listeners.set(type, fn); });
+  win.addEventListener = winEv.addListener;
+  win.removeEventListener = winEv.removeListener;
+  win.dispatchEvent = winEv.dispatchEvent;
+  win._eventListeners = winEv.table;
   const Zotero = { log() {}, logError() {}, getMainWindow: () => win, getActiveZoteroPane: () => win.ZoteroPane,
     File: { getContentsFromURL: async () => fs.readFileSync(path.join(root, 'chrome/content/research-templates.json'), 'utf8') },
     Search: class {

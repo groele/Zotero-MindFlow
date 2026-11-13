@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { getSelectedZoteroItems, saveMindMapToZoteroAttachment } from '../../services/zotero/zoteroBridge';
 import { ResearchAnalysisIntensity, ResearchModelSelection, ResearchReadingMode, ResearchRequestOptions, ResearchSourceSelection, createResearchDocument, prepareResearchAnalysis, requestResearchAnalysis } from '../../services/zotero/researchAnalysis';
 import { computeLayout } from '../../core/layout/layoutEngine';
@@ -13,6 +13,17 @@ export const useAppAiResearch = (ctx: AppContext): void => {
          setRelationships, settings, setSaveStatus, cleanDocRef, cleanRelationshipsRef,
          latestDocRef, latestRelationshipsRef, currentDocIdRef, zoteroSyncQueueRef, historyRef, syncHistoryState, centerCanvas,
          flushCurrentDocument, persistArchiveAssociation, handleOpenSettings } = ctx;
+  const centerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    ++aiRequestTokenRef.current;
+    aiAbortRef.current?.abort();
+    aiAbortRef.current = null;
+    aiAnalyzingRef.current = false;
+    if (centerTimerRef.current) {
+      clearTimeout(centerTimerRef.current);
+      centerTimerRef.current = null;
+    }
+  }, []);
   // The welcome-card action analyzes the selected Zotero paper/PDF. It must
   // never substitute sample records when the host selection is unavailable.
   const handleCreateAiResearchFromSelection = useCallback(() => {
@@ -141,7 +152,11 @@ export const useAppAiResearch = (ctx: AppContext): void => {
       historyRef.current.clear();
       syncHistoryState();
       setIsWelcomeOpen(false);
-      setTimeout(() => centerCanvas(generatedBounds, 0.05), 60);
+      if (centerTimerRef.current) clearTimeout(centerTimerRef.current);
+      centerTimerRef.current = setTimeout(() => {
+        centerTimerRef.current = null;
+        centerCanvas(generatedBounds, 0.05);
+      }, 60);
       setAiWorkflow(null);
       const evidenceCount = Number(newDoc.metadata?.aiEvidenceCount) || 0;
       const reviewCount = Number(newDoc.metadata?.aiReviewCount) || 0;

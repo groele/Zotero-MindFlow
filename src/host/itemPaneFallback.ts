@@ -16,6 +16,11 @@ export function renderItemPaneFallback(opts: {
 }): void {
   const { document, body, target, totalMaps, maps, state, host, win } = opts;
   const createEl = makeElementFactory(document);
+  state?.renderAbort?.abort?.();
+  const Controller = win?.AbortController || globalThis.AbortController;
+  const renderCtrl = Controller ? new Controller() : null;
+  if (state) state.renderAbort = renderCtrl;
+  const listenerOpts = renderCtrl?.signal ? { signal: renderCtrl.signal } : undefined;
   body.replaceChildren();
   if (state) {
     state.paneSignature = null;
@@ -43,7 +48,7 @@ export function renderItemPaneFallback(opts: {
     } finally {
       primaryBtn.disabled = false;
     }
-  });
+  }, listenerOpts);
   fallback.appendChild(primaryBtn);
   body.appendChild(fallback);
 }

@@ -72,6 +72,8 @@
             const source = event.source;
             const responseOrigin = event.origin && event.origin !== 'null' ? event.origin : '*';
             const job = { cancelled: false, cancel() { this.cancelled = true; } };
+            const onWinAbort = () => job.cancel();
+            winSignal?.addEventListener('abort', onWinAbort, { once: true });
             if (!this._aiJobs) this._aiJobs = new Map();
             this._aiJobs.set(data.requestId, job);
             const reply = (payload) => {
@@ -85,7 +87,10 @@
             })
               .then((result) => reply({ result }))
               .catch((error) => reply({ error: String(error?.message || error).slice(0, 300) }))
-              .finally(() => this._aiJobs?.delete(data.requestId));
+              .finally(() => {
+                winSignal?.removeEventListener('abort', onWinAbort);
+                this._aiJobs?.delete(data.requestId);
+              });
           }
 
           if (data.type === 'MINDFLOW_CANCEL_PAPER' && typeof data.requestId === 'string') {
@@ -101,6 +106,8 @@
               catch (error) { Zotero.log?.('[MindFlow] AI result window closed: ' + error); }
             };
             const job = { cancelled: false, cancel() { this.cancelled = true; } };
+            const onWinAbort = () => job.cancel();
+            winSignal?.addEventListener('abort', onWinAbort, { once: true });
             if (!this._aiJobs) this._aiJobs = new Map();
             this._aiJobs.set(data.requestId, job);
             const progress = (phase, completed, total) => {
@@ -120,13 +127,16 @@
             })
               .then((result) => reply({ result }))
               .catch((error) => reply({ error: String(error?.message || error).slice(0, 300) }))
-              .finally(() => this._aiJobs?.delete(data.requestId));
+              .finally(() => {
+                winSignal?.removeEventListener('abort', onWinAbort);
+                this._aiJobs?.delete(data.requestId);
+              });
           }
         } catch (e) {
           Zotero.log?.('[MindFlow] Message processing note: ' + e);
         }
       };
-      window.addEventListener('message', handleHostMessage);
+      window.addEventListener('message', handleHostMessage, winSignal ? { signal: winSignal } : undefined);
       windowElements.push({
         remove: () => window.removeEventListener('message', handleHostMessage),
       });
@@ -169,7 +179,7 @@
         // Never attach this shortcut to the whole document: a selected map
         // must not hijack double-clicks in the item pane or other Zotero UI.
         if (itemsTree) {
-          itemsTree.addEventListener('dblclick', handleTreeDblClick, true);
+          itemsTree.addEventListener('dblclick', handleTreeDblClick, winSignal ? { capture: true, signal: winSignal } : true);
           windowElements.push({
             remove: () => itemsTree.removeEventListener('dblclick', handleTreeDblClick, true),
           });

@@ -2,6 +2,25 @@
  * Zotero MindFlow - Host Constants & Validation Module
  */
 
+import {
+  ALL_AI_SECTION_KEYS,
+  extractPaperSections,
+  isPrivateOrLocalHost,
+  reasoningProvider,
+  publicLLMConfig,
+  reasoningChoices,
+  modelPreview,
+  extractJsonFromLlmOutput,
+  normalizeEvidence,
+  sampleAcrossText,
+  samplePreparedPDF,
+  splitTextForAI,
+  pdfSegmentsForAI,
+  normalizeAIClaimEntry,
+  compactSegmentDrafts,
+  normalizeDOI,
+} from './aiHelpers.js';
+
 export const ADDON_ID = 'mindflow@groele.org';
 export const CHROME_ROOT = 'chrome://mindflow/content/';
 export const PREF_PREFIX = 'extensions.mindflow.';
@@ -250,6 +269,22 @@ export const MindFlowConstants = {
   toDocSummary,
   fileStamp,
   listWorkspaceDocs,
+  ALL_AI_SECTION_KEYS,
+  extractPaperSections,
+  isPrivateOrLocalHost,
+  reasoningProvider,
+  publicLLMConfig,
+  reasoningChoices,
+  modelPreview,
+  extractJsonFromLlmOutput,
+  normalizeEvidence,
+  sampleAcrossText,
+  samplePreparedPDF,
+  splitTextForAI,
+  pdfSegmentsForAI,
+  normalizeAIClaimEntry,
+  compactSegmentDrafts,
+  normalizeDOI,
 };
 
 (function (global: any) {

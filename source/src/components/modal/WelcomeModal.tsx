@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Plus, BookOpen, LayoutTemplate, Upload,
   Clock, ArrowRight, X, Lightbulb, RefreshCw
@@ -36,37 +36,22 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   const [recentDocs, setRecentDocs] = useState<DocumentSummary[]>([]);
   const [selectedZoteroItems, setSelectedZoteroItems] = useState<ZoteroItemData[]>([]);
   const [isRefreshingZotero, setIsRefreshingZotero] = useState(false);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current); }, []);
 
   const refreshZoteroSelection = useCallback(() => {
-    try {
-      const items = getSelectedZoteroItems();
-      setSelectedZoteroItems(items);
-    } catch (_) {
-      setSelectedZoteroItems([]);
-    }
+    try { setSelectedZoteroItems(getSelectedZoteroItems()); }
+    catch (_) { setSelectedZoteroItems([]); }
   }, []);
 
   useEffect(() => {
     if (!isOpen) return;
     refreshZoteroSelection();
-
-    // Poll selection periodically so switching items in Zotero library pane updates live
-    let interval: ReturnType<typeof setInterval> | null = null;
-    if (isZoteroMode) {
-      interval = setInterval(refreshZoteroSelection, 1500);
-    }
-
+    const interval = isZoteroMode ? setInterval(refreshZoteroSelection, 1500) : null;
     StorageService.getDocumentList()
-      .then((list) => {
-        // Filter out legacy default doc and take top 4
-        const filtered = list.filter((item) => item.id !== 'doc_welcome_default');
-        setRecentDocs(filtered.slice(0, 4));
-      })
+      .then((list) => setRecentDocs(list.filter((item) => item.id !== 'doc_welcome_default').slice(0, 4)))
       .catch(() => setRecentDocs([]));
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => { if (interval) clearInterval(interval); };
   }, [isOpen, isZoteroMode, refreshZoteroSelection]);
 
   if (!isOpen) return null;
@@ -196,7 +181,11 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                             e.stopPropagation();
                             setIsRefreshingZotero(true);
                             refreshZoteroSelection();
-                            setTimeout(() => setIsRefreshingZotero(false), 500);
+                            if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+                            refreshTimerRef.current = setTimeout(() => {
+                              refreshTimerRef.current = null;
+                              setIsRefreshingZotero(false);
+                            }, 500);
                           }}
                           title="刷新 Zotero 选中条目"
                           className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors"

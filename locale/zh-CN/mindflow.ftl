@@ -189,9 +189,9 @@ mindflow-pref-webdav-autoSyncOnSave-desc = 每次在工作台保存导图时，�
 
 
 mindflow-pref-version = v{ $version }
-mindflow-pref-release-notes-text = 16.2.8：焕新「彗尾星云图谱」全套品牌与插件图标（矢量 / 位图 / 侧栏 / 工作台统一）
+mindflow-pref-release-notes-text = 17.0.0：宿主机理与 AbortController 生命周期加固、工作台图谱与关系测试及全家桶统一大版本
 mindflow-pref-release-date = 2026-11-13
-mindflow-pref-release-xpi = zotero-mindflow-16.2.8.xpi
+mindflow-pref-release-xpi = zotero-mindflow-17.0.0.xpi
 mindflow-pref-release-repo = github.com/groele/Zotero-MindFlow
 mindflow-pref-release-aria = 版本信息
 mindflow-pref-notice-backup = 提示：额外保存文件夹不代替文献条目下的 .mindflow 附件。历史快照与完整版本回溯可在导图工作台顶栏的「历史」面板中直接浏览与一键恢复。

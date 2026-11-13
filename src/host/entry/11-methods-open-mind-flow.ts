@@ -87,6 +87,19 @@
           };
 
           let workspaceFrame = null;
+          const Controller = win?.AbortController || getAbortControllerClass();
+          const tabController = Controller ? new Controller() : null;
+          const tabSignal = tabController?.signal;
+          const winSignal = this._windowControllers?.get(win)?.signal;
+          const abortTab = () => {
+            for (const timer of tabIconTimers) {
+              try { win?.clearTimeout?.(timer); } catch (_) {}
+            }
+            tabIconTimers.length = 0;
+            try { tabController?.abort(); } catch (_) {}
+          };
+          const tabIconTimers = [];
+          winSignal?.addEventListener('abort', abortTab, { once: true });
           const tabResult = tabs.add({
             type: 'mindflow',
             title: tabTitle,
@@ -94,6 +107,8 @@
             index: Number.isInteger(options.tabIndex) ? options.tabIndex : undefined,
             data: tabData,
             onClose: () => {
+              winSignal?.removeEventListener('abort', abortTab);
+              abortTab();
               this.captureWorkspaceOnClose(workspaceFrame?.contentWindow);
               Zotero.log?.('[MindFlow] Workspace tab closed: ' + tabTitle);
             },
@@ -103,6 +118,7 @@
             const tabId = tabResult?.id;
             if (tabId) {
               const applyTabIcon = () => {
+                if (tabSignal?.aborted || this._lifecycleActive === false) return;
                 const tabEl = win.document?.querySelector?.(`.tab[data-id="${tabId}"]`);
                 if (tabEl) {
                   tabEl.setAttribute('data-type', 'mindflow');
@@ -116,8 +132,10 @@
                 }
               };
               applyTabIcon();
-              win.setTimeout?.(applyTabIcon, 50);
-              win.setTimeout?.(applyTabIcon, 300);
+              const t50 = win.setTimeout?.(applyTabIcon, 50);
+              if (t50 != null) tabIconTimers.push(t50);
+              const t300 = win.setTimeout?.(applyTabIcon, 300);
+              if (t300 != null) tabIconTimers.push(t300);
             }
           } catch (_) {}
 
@@ -161,7 +179,7 @@
               } catch (e) {
                 Zotero.log?.('[MindFlow] Note on tab iframe load: ' + e);
               }
-            });
+            }, tabSignal ? { signal: tabSignal } : undefined);
 
             container.appendChild(iframe);
           }
@@ -226,21 +244,29 @@
           appWindow.Zotero = Zotero;
           appWindow._mindflowInitialAction = params;
           this._standaloneWindows.set(targetId, win);
-          win.addEventListener('beforeunload', () => { this.captureWorkspaceOnClose(win); });
+          const Controller = win.AbortController || getAbortControllerClass();
+          const standaloneController = Controller ? new Controller() : null;
+          const standaloneSignal = standaloneController?.signal;
+          if (!this._standaloneControllers) this._standaloneControllers = new Map();
+          if (standaloneController) this._standaloneControllers.set(win, standaloneController);
+          const listenerOpts = standaloneSignal ? { signal: standaloneSignal } : undefined;
+          win.addEventListener('beforeunload', () => { this.captureWorkspaceOnClose(win); }, listenerOpts);
           win.addEventListener('unload', (event) => {
             // openWindow first navigates away from about:blank. That unload
             // must not unregister the workspace which is still starting.
             if (event.target?.documentURI !== url) return;
+            standaloneController?.abort();
+            this._standaloneControllers?.delete(win);
             for (const [key, registered] of this._standaloneWindows || []) {
               if (registered === win) this._standaloneWindows.delete(key);
             }
-          });
+          }, listenerOpts);
           try {
             win.addEventListener('load', () => {
               if (win.document) {
                 win.document.title = 'MindFlow 思维导图与学术研读工作区';
               }
-            }, { once: true });
+            }, standaloneSignal ? { once: true, signal: standaloneSignal } : { once: true });
           } catch (_) {}
           if (win.focus) {
             win.focus();

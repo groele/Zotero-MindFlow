@@ -90,67 +90,25 @@
   const AI_CANCELLED = 'AI 分析已取消；未创建或归档导图。';
   const AI_OMISSION_MARKER = '[原文区间采样，区间之间有省略]';
   const AI_READING_MODES = ['abstract', 'introduction', 'conclusion', 'key-sections', 'full'];
+  const {
+    extractPaperSections,
+    isPrivateOrLocalHost,
+    reasoningProvider,
+    publicLLMConfig,
+    reasoningChoices,
+    modelPreview,
+    extractJsonFromLlmOutput,
+    normalizeEvidence,
+    sampleAcrossText,
+    samplePreparedPDF,
+    splitTextForAI,
+    pdfSegmentsForAI,
+    normalizeAIClaimEntry,
+    compactSegmentDrafts,
+    normalizeDOI,
+  } = mfConstants;
   // Conservative local heading detection. Missing sections never fall back to
   // sending the full paper; the user must explicitly choose another scope.
-  const extractPaperSections = (text, readingMode) => {
-    const lines = String(text || '').replace(/\r\n?/g, '\n')
-      .replace(/^(\s*(?:abstract|摘要))\s*[:：]\s*(\S.*)$/gim, '$1\n$2').split('\n');
-    // Use the same heading grammar for target sections and their boundaries.
-    // Otherwise e.g. "Summary and outlook" can leak into an introduction.
-    const intro = /^(?:introduction(?:\s+and\s+background)?|background|引言|绪论|前言)$/i;
-    const abstractHeading = /^(?:abstract|摘要)$/i;
-    const conclusion = /^(?:conclusions?(?:\s+(?:and|&)\s+(?:outlook|perspectives?|discussion))?|concluding remarks|summary(?:\s+(?:and|&)\s+(?:conclusions?|outlook|perspectives?))?|结论(?:与展望)?|总结(?:与展望)?|结语)$/i;
-    const heading = /^(?:abstract|results?(?:\s+(?:and|&)\s+discussion)?|discussion|methods?|materials(?:\s+(?:and|&)\s+methods)?|experimental(?: section| methods| setup| procedure)?|sample preparation|characterization|theory|theoretical(?: model| framework)?|computational(?: methods| details)?|references|bibliography|acknowledg(?:e)?ments?|supporting information|supplementary(?: material| information)?|摘要|实验(?:部分|方法|条件)?|材料与方法|样品制备|理论模型|结果(?:与讨论)?|讨论|参考文献|致谢)$/i;
-    const parseHeading = (line) => {
-      const value = line.trim().replace(/[:：]$/, '').trim();
-      if (/^(?:key\s*words?|关键词)(?:\s*[:：].*|\s*)$/i.test(value)) return { title: 'Keywords', major: true };
-      if (/^\d{1,2}\.\d/.test(value)) return { title: value, major: false };
-      const numbered = value.match(/^(?:\d{1,2}|[IVX]+)(?:[.、．:]\s*|\s+)([A-Za-z\u4e00-\u9fff].{0,90})$/i);
-      const title = numbered ? numbered[1].trim() : value;
-      // A numeric measurement line is not a numbered section heading.
-      const measurement = /^(?:m?K|nm|[µμu]?m|m?W|eV|meV|[mµμu]?A|m?V|T|Hz|kHz|MHz|GHz|s|ms|ps|fs)\b/.test(title);
-      return { title, major: intro.test(title) || conclusion.test(title) || heading.test(title) ||
-        Boolean(numbered && !measurement && !/[.!?。！？]$/.test(title)) };
-    };
-    const locate = (pattern, minimum) => {
-      const candidates = [];
-      for (let start = 0; start < lines.length; start++) {
-        if (!pattern.test(parseHeading(lines[start]).title)) continue;
-        let end = start + 1;
-        for (; end < lines.length; end++) {
-          if (parseHeading(lines[end]).major) break;
-        }
-        const content = lines.slice(start, end).join('\n').trim();
-        // An unterminated introduction is indistinguishable from the full
-        // remaining manuscript; omit it rather than widen the chosen scope.
-        if (content.length >= minimum && (![intro, abstractHeading].includes(pattern) || end < lines.length)) candidates.push(content);
-      }
-      // A single credible section is required. Duplicate headings can be a
-      // contents page, concatenated manuscripts or supplementary material.
-      return candidates.length === 1 ? candidates[0] : '';
-    };
-    const locateInlineAbstract = () => {
-      // Zotero may flatten a PDF page into one line. Require one explicit
-      // abstract marker and a keyword/introduction boundary, never a whole page.
-      const raw = lines.join('\n');
-      const markers = Array.from(raw.matchAll(/(?:^|\s)(?:Abstract|ABSTRACT|摘要)\s*[:：]?\s+(?=\S)/g));
-      if (markers.length !== 1) return '';
-      const marker = markers[0];
-      const tail = raw.slice(marker.index + marker[0].length);
-      const end = tail.search(/(?:^|\s)(?:(?:[Kk][Ee][Yy]\s*[Ww][Oo][Rr][Dd][Ss]?|关键词)\s*[:：]|(?:1|I)[.．、]?\s+Introduction\b|Introduction\s*(?:\n|[A-Z]))/);
-      if (end < 0) return '';
-      const content = tail.slice(0, end).trim();
-      return content.length >= 100 && content.length <= 12000 ? `Abstract\n${content}` : '';
-    };
-    const sections = {};
-    if (readingMode === 'abstract') sections.abstract = locate(abstractHeading, 100) || locateInlineAbstract();
-    if (['introduction', 'key-sections'].includes(readingMode)) sections.introduction = locate(intro, 200);
-    if (['conclusion', 'key-sections'].includes(readingMode)) sections.conclusion = locate(conclusion, 40);
-    const missing = Object.keys(sections).filter((key) => !sections[key]);
-    const blocks = Object.entries(sections).filter(([, content]) => content);
-    return { text: blocks.map(([key, content]) => `[所选部分：${key}]\n${content}`).join('\n\n'),
-      found: blocks.map(([key]) => key), missing };
-  };
   const LLM_PREF_PREFIX = 'extensions.zotero.llmforzotero.';
   const getLLMAddon = () => {
     const addon = Zotero.LLMForZotero;
@@ -207,55 +165,9 @@
       apiKey, authMode, providerProtocol: entry.providerProtocol || group.providerProtocol,
       advanced, host: url.host, local };
   };
-  const publicLLMConfig = ({ apiKey, ...config }) => ({ ...config,
-    fingerprint: JSON.stringify(config) });
-  // Consume user-configured upstream choices, never reproduce its provider
-  // registry or construct reasoning request bodies. Upstream owns the mapping.
-  const reasoningChoices = (config, capabilities) => {
-    const defaults = [{ id: 'default', label: '模型默认' }];
-    if (capabilities?.reasoning === false) return { reasoningSupported: false, reasoningOptions: defaults, reasoningOptionsSource: 'unsupported' };
-    const profile = config.advanced?.profileOverride;
-    const override = (!profile?.forModel || profile.forModel.trim().toLowerCase() === config.model.toLowerCase()) ? profile?.reasoning : null;
-    if (override && Array.isArray(override.options)) {
-      const seen = new Set(['default']);
-      const options = override.options.filter((option) => {
-        if (!option || typeof option.id !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,31}$/.test(option.id) || seen.has(option.id)) return false;
-        seen.add(option.id); return option.enabled !== false;
-      });
-      if (options.length || override.kind === 'none' || override.options.length) {
-        return { reasoningSupported: options.length > 0, reasoningOptions: [...defaults,
-          ...options.map((option) => ({ id: option.id, label: String(option.label || option.id).slice(0, 120) }))],
-          reasoningOptionsSource: 'llm-for-zotero-profile' };
-      }
-    }
-    return { reasoningSupported: true, reasoningOptions: [...defaults,
-      ...[['minimal', '最低（minimal）'], ['low', '低（low）'], ['medium', '中（medium）'],
-        ['high', '高（high）'], ['xhigh', '更高（xhigh）']].map(([id, label]) => ({ id, label }))],
-      reasoningOptionsSource: 'upstream-mapping' };
-  };
-  const modelPreview = (entry) => Object.fromEntries(['entryId', 'model', 'host', 'local', 'available',
-    'message', 'reasoningSupported', 'reasoningOptions', 'reasoningOptionsSource']
-    .filter((key) => entry[key] !== undefined).map((key) => [key, entry[key]]));
-
-  const isPrivateOrLocalHost = (hostname) => {
-    if (!hostname) return false;
-    if (['localhost', '127.0.0.1', '[::1]', '::1', '0.0.0.0', 'host.docker.internal'].includes(hostname)) return true;
-    if (hostname.endsWith('.local') || hostname.endsWith('.lan') || hostname.endsWith('.home.arpa')) return true;
-    return /^(?:10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(hostname);
-  };
   const getAbortControllerClass = () => Zotero.getMainWindow?.()?.AbortController || globalThis.AbortController;
 
   let llmConversationSequence = 0;
-  const reasoningProvider = (config) => {
-    const name = `${config.model} ${config.apiBase}`.toLowerCase();
-    for (const [pattern, provider] of [
-      [/deepseek/, 'deepseek'], [/kimi|moonshot/, 'kimi'], [/qwen|dashscope/, 'qwen'],
-      [/gemini|generativelanguage/, 'gemini'], [/claude|anthropic/, 'anthropic'],
-      [/glm|bigmodel/, 'glm'], [/minimax/, 'minimax'], [/mimo/, 'mimo'], [/grok|x\.ai/, 'grok'],
-      [/gpt|openai|^o[134](?:-|\s)/, 'openai'],
-    ]) if (pattern.test(name)) return provider;
-    return config.local ? 'local' : 'customized';
-  };
   const callLLMForZotero = async ({ config, systemPrompt, payload, reasoningLevel = 'default', signal, timeout = 120000 }) => {
     if (signal?.aborted) throw new Error(AI_CANCELLED);
     const addon = getLLMAddon();

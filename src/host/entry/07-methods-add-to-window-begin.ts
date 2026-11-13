@@ -1,11 +1,17 @@
     addToWindow(window) {
-      if (!window || !window.document) return;
+      if (!window || !window.document || this._lifecycleActive === false) return;
       const doc = window.document;
 
       const winType = doc.documentElement?.getAttribute?.('windowtype');
       if (winType && winType !== 'navigator:browser') return;
 
-      this.installTabLifecycle(window);
+      const Controller = window.AbortController || globalThis.AbortController;
+      const winController = Controller ? new Controller() : null;
+      const winSignal = winController?.signal;
+      if (!this._windowControllers) this._windowControllers = new WeakMap();
+      this._windowControllers.set(window, winController);
+
+      this.installTabLifecycle(window, winSignal);
 
       // Clean up any legacy tools menu items
       try {
@@ -14,10 +20,18 @@
       } catch (_) {}
 
       // Prevent duplicate injection
-      if (doc.getElementById('mindflow-collectionmenu-create') || window._mindflowInjected) return;
+      if (doc.getElementById('mindflow-collectionmenu-create') || window._mindflowInjected) {
+        winController?.abort();
+        this._windowControllers.delete(window);
+        return;
+      }
       window._mindflowInjected = true;
 
       const windowElements = [];
+      if (winController) windowElements.push({ remove: () => winController.abort() });
+      if (winSignal) {
+        window.addEventListener('unload', () => this.removeFromWindow(window), { once: true, signal: winSignal });
+      }
       this.ensureLocalization(doc);
 
       // 2. Add to Collection Context Menu (分类列表右键菜单)
@@ -62,7 +76,8 @@
           }
         };
 
-        collectionMenu.addEventListener('popupshowing', updateCollectionMenuState);
+        const winListenerOpts = winSignal ? { signal: winSignal } : undefined;
+        collectionMenu.addEventListener('popupshowing', updateCollectionMenuState, winListenerOpts);
         windowElements.push({
           remove: () => collectionMenu.removeEventListener('popupshowing', updateCollectionMenuState),
         });
@@ -81,7 +96,7 @@
               window
             );
           }
-        });
+        }, winListenerOpts);
         collectionMenu.appendChild(colItem);
         windowElements.push(colItem);
       }
@@ -142,7 +157,7 @@
           this.triggerMindFlowOpen(window);
         }
       };
-      window.addEventListener('keydown', handleGlobalKeyDown, true);
+      window.addEventListener('keydown', handleGlobalKeyDown, winSignal ? { capture: true, signal: winSignal } : true);
       windowElements.push({
         remove: () => window.removeEventListener('keydown', handleGlobalKeyDown, true),
       });

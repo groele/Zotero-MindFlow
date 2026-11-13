@@ -10,3 +10,4 @@ import './host-tests/host-runtime-04.test.mjs';
 import './host-tests/host-runtime-05.test.mjs';
 import './host-tests/host-runtime-06.test.mjs';
 import './host-tests/host-runtime-07.test.mjs';
+import './host-tests/host-runtime-08.test.mjs';

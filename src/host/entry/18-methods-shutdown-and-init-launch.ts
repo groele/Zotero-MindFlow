@@ -14,6 +14,10 @@
         this._shutdownBarrier = null;
       }
       for (const state of [...(this._itemPaneStates || [])]) {
+        state.renderAbort?.abort();
+        state.renderAbort = null;
+        if (state.rafID != null) try { state.window?.cancelAnimationFrame?.(state.rafID); } catch (_) {}
+        state.rafID = null;
         this.cancelItemPaneRefresh(state);
         state.disposeVisibility?.();
       }
@@ -47,7 +51,9 @@
       for (const win of new Set(this._standaloneWindows?.values() || [])) {
         try { if (!win.closed) win.close(); }
         catch (error) { Zotero.logError?.('[MindFlow] Could not close workspace: ' + error); }
+        try { this._standaloneControllers?.get(win)?.abort(); } catch (_) {}
       }
+      this._standaloneControllers?.clear?.();
       for (const [win] of injectedElements) {
         for (const tab of [...(win.Zotero_Tabs?._tabs || [])]) {
           if (tab.type === 'mindflow') {

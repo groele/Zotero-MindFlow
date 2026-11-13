@@ -1,99 +1,3 @@
-  const extractJsonFromLlmOutput = (text) => {
-    if (!text || typeof text !== 'string') return null;
-    const trimmed = text.trim();
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (parsed && typeof parsed === 'object') return parsed;
-    } catch (_) {}
-
-    const blockMatches = Array.from(trimmed.matchAll(/```(?:json)?\s*([\s\S]*?)\s*```/gi));
-    for (const match of blockMatches) {
-      if (match[1]) {
-        try {
-          const parsed = JSON.parse(match[1].trim());
-          if (parsed && typeof parsed === 'object') return parsed;
-        } catch (_) {}
-      }
-    }
-
-    const first = trimmed.indexOf('{');
-    const last = trimmed.lastIndexOf('}');
-    if (first !== -1 && last !== -1 && last > first) {
-      try {
-        const parsed = JSON.parse(trimmed.slice(first, last + 1));
-        if (parsed && typeof parsed === 'object') return parsed;
-      } catch (_) {}
-    }
-    return null;
-  };
-
-  const normalizeEvidence = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
-  const sampleAcrossText = (value, limit) => {
-    if (value.length <= limit) return value;
-    const slices = 8;
-    const width = Math.floor(limit / slices);
-    return Array.from({ length: slices }, (_, index) => {
-      const start = Math.floor((value.length - width) * index / (slices - 1));
-      return value.slice(start, start + width);
-    }).join(`\n${AI_OMISSION_MARKER}\n`);
-  };
-  const samplePreparedPDF = (value, limit) => {
-    const passages = value.split(AI_OMISSION_MARKER).map((piece) => piece.trim()).filter(Boolean);
-    if (passages.length <= 1) return sampleAcrossText(value, limit);
-    const perPassage = Math.floor(limit / passages.length);
-    return passages.map((piece) => sampleAcrossText(piece, perPassage))
-      .join(`\n${AI_OMISSION_MARKER}\n`);
-  };
-  const splitTextForAI = (value, maxLength) => {
-    const chunks = [];
-    for (let start = 0; start < value.length;) {
-      let end = Math.min(start + maxLength, value.length);
-      if (end < value.length) {
-        const paragraph = value.lastIndexOf('\n\n', end);
-        const line = value.lastIndexOf('\n', end);
-        const boundary = paragraph > start + maxLength * 0.65 ? paragraph + 2
-          : line > start + maxLength * 0.8 ? line + 1 : end;
-        end = boundary;
-      }
-      chunks.push(value.slice(start, end));
-      start = end;
-    }
-    return chunks;
-  };
-  // An omission marker separates unrelated stretches of a sampled PDF. Never
-  // let one evidence quote span that gap, even when both stretches are sent in
-  // the same request.
-  const pdfSegmentsForAI = (value, maxLength) => value.split(AI_OMISSION_MARKER)
-    .flatMap((passage) => splitTextForAI(passage.trim(), maxLength))
-    .filter((text) => text.trim())
-    .map((text, index) => ({ id: `P${index + 1}`, text }));
-  // Round-robin across PDF segments before taking additional facts from each.
-  // The story template keeps a larger evidence bank; legacy density is preserved.
-  const normalizeAIClaimEntry = entry => typeof entry === 'string' ? {
-    text: entry, detail: '模型返回了未带结构化引文的文字；保留内容供阅读，但必须人工核对原文。',
-    basis: 'inference', source: 'none', quote: '',
-  } : entry;
-  const compactSegmentDrafts = (drafts, limit = 5) => Object.fromEntries(AI_SECTION_KEYS.map((key) => {
-    const selected = [];
-    const seen = new Set();
-    const maxLength = Math.max(0, ...drafts.map(draft => draft[key]?.length || 0));
-    for (let rank = 0; rank < maxLength && selected.length < limit; rank += 1) {
-      for (const draft of drafts) {
-        const entry = draft[key]?.[rank];
-        if (!entry || selected.length >= limit) continue;
-        const identity = `${entry.sourceId}:${normalizeEvidence(entry.text)}`;
-        if (seen.has(identity)) continue;
-        seen.add(identity); selected.push(entry);
-      }
-    }
-    return [key, selected.map(entry => ({
-      text: entry.text.slice(0, 600), detail: entry.detail.slice(0, 1000),
-      topic: entry.topic, subtopic: entry.subtopic,
-      basis: entry.basis, source: entry.source, sourceId: entry.sourceId,
-      quote: entry.quote.slice(0, 240),
-    }))];
-  }));
-
   const itemSelectUri = (item) => {
     const key = item.key || item.id;
     const groupID = Zotero.Libraries?.get?.(item.libraryID)?.groupID;
@@ -173,33 +77,6 @@
     const found = scopes.map((id) => Zotero.Items?.getByLibraryAndKey?.(id, key))
       .filter((item) => item && !item.deleted);
     return found.length === 1 ? found[0] : null;
-  };
-
-  const normalizeDOI = (value) => {
-    if (!value || typeof value !== 'string') return '';
-    let clean = value
-      .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
-      .replace(/[\uFF01-\uFF5E]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
-      .trim()
-      .toLowerCase();
-    const urlMatch = clean.match(/https?:\/\/(?:dx\.)?doi\.org\/[^\s]+/i)?.[0];
-    if (urlMatch) {
-      clean = urlMatch.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '').split(/[?#]/, 1)[0];
-    }
-    try {
-      clean = decodeURIComponent(clean).toLowerCase();
-    } catch (_) {}
-    clean = clean.replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, '');
-    clean = clean.replace(/^doi:\s*/i, '');
-    const match = clean.match(/10\.\d{4,9}\/[^\s"'`\\]+/);
-    if (!match) return '';
-    let result = match[0].replace(/[.,;:，。；：、]+$/, '');
-    for (const [open, close] of [['(', ')'], ['[', ']'], ['{', '}'], ['<', '>']]) {
-      while (result.endsWith(close) && result.split(close).length > result.split(open).length) {
-        result = result.slice(0, -1);
-      }
-    }
-    return /^10\.\d{4,9}\/.+/.test(result) ? result : '';
   };
 
   const searchItemByDoi = async (doiInput, libraryID = null) => {
@@ -285,29 +162,9 @@
     }
     return resolved;
   };
-  const tabContainer = (tabs, tab, win) => tab?.container ||
-    tabs?.getTabContent?.(tab?.id) || tabs?.getTabContainer?.(tab?.id) ||
-    win?.document?.getElementById?.(tab?.id);
+  const tabContainer = mfBridge.tabContainer;
   const currentTabFor = (tabs) => tabs?._tabs?.find((tab) => tab.id === tabs.selectedID) || tabs?.selectedTab;
   const itemIdentity = (item) => `${item.libraryID}:${item.key}`;
-  const openTargetIdentity = (options, items) => {
-    if (options.forceNew) return `new:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-    if (options.mode === 'open_document') {
-      const metadata = options.doc?.metadata || {};
-      const key = options.openedAttachmentKey || metadata.zoteroAttachmentKey;
-      const library = options.openedAttachmentLibraryID || metadata.zoteroAttachmentLibraryID;
-      if (key && library) return `attachment:${library}:${key}`;
-      return `document:${metadata.zoteroUri || metadata.zoteroItemKey || 'unlinked'}:${options.doc?.id}`;
-    }
-    if (options.mode === 'create_from_collection') {
-      return `collection:${options.collectionLibraryID}:${options.collectionKey}`;
-    }
-    if (items.length) return `${options.mode === 'ai_analyze' ? 'ai' : 'items'}:${items.map(itemIdentity).sort().join('|')}`;
-    if (options.mode === 'create_blank' || options.mode === 'create_from_selection' || options.mode === 'create_from_items' || options.mode === 'ai_analyze') return `blank:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-    return 'workspace';
-  };
-  const openActionMessage = (options, items) => ({
-    type: 'MINDFLOW_OPEN_ACTION', action: { ...options, items },
-    requestId: `open-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-  });
+  const openTargetIdentity = mfBridge.openTargetIdentity;
+  const openActionMessage = mfBridge.openActionMessage;
 
