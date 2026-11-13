@@ -424,6 +424,8 @@
   function status(doc, message, error = false) {
     const node = doc.getElementById("mindflow-pref-status");
     if (node) {
+      node.removeAttribute("data-l10n-id");
+      node.removeAttribute("data-l10n-args");
       node.textContent = message;
       node.classList.toggle("mindflow-pref-error", error);
     }
