@@ -102,9 +102,11 @@
   transition: transform .15s ease;
 }
 .mindflow-setting-card[open] > .mindflow-card-summary {
+  border-bottom: 1px solid var(--flow-pref-divider);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
+.mindflow-card-summary:hover { background: var(--flow-pref-hover); }
 .mindflow-setting-card[open] > .mindflow-card-summary::after { transform: rotate(90deg); }
 .mindflow-card-summary:focus-visible {
   outline: 2px solid var(--flow-pref-accent);
@@ -294,6 +296,13 @@ select.mindflow-control {
 .mindflow-btn-secondary:hover,
 .mindflow-icon-btn:hover,
 .mindflow-btn-open-llm:hover { background: var(--flow-pref-hover); }
+.mindflow-prefs-container button:disabled,
+.mindflow-prefs-container input:disabled,
+.mindflow-prefs-container select:disabled,
+.mindflow-prefs-container textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .mindflow-icon-btn { min-width: 28px; padding-inline: 8px; }
 .mindflow-btn-open-llm { align-self: flex-start; margin-top: 6px; }
 
@@ -364,7 +373,7 @@ select.mindflow-control {
 .mindflow-pref-release a { color: var(--flow-pref-accent); text-decoration: none; }
 .mindflow-pref-release a:hover { text-decoration: underline; }
 
-@media (max-width: 620px) {
+@media (max-width: 420px) {
   .mindflow-prefs-container { padding: 8px 8px 20px; }
   .mindflow-pref-header { align-items: flex-start; flex-direction: column; }
   .mindflow-form-row { grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 6px; }
