@@ -44,7 +44,7 @@
   color: var(--flow-pref-text);
   font-size: 18px;
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.45;
 }
 .mindflow-pref-version {
   display: inline-block;
@@ -121,7 +121,7 @@
   font-weight: 600;
   line-height: 1.5;
 }
-.mindflow-card-body { min-width: 0; padding-block: 8px 16px; padding-inline: 16px; border-top: 1px solid var(--flow-pref-divider); }
+.mindflow-card-body { min-width: 0; padding-block: 10px 16px; padding-inline: 16px; }
 .mindflow-pref-content { display: flex; flex-direction: column; min-width: 0; }
 
 /* §4.2.4 A card-level overview is a Level-1 element: it starts on the 16px
@@ -200,7 +200,7 @@
   max-width: 16px;
   height: 16px;
   min-height: 16px;
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   padding: 0;
   border: initial;
   background: initial;

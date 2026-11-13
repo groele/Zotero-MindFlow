@@ -1,9 +1,9 @@
 {
-  "version": "16.2.5",
-  "file": "zotero-mindflow-16.2.5.xpi",
-  "size": 587297,
-  "sha256": "b1bf21743cbb82a464ff9c20d5ca02151a9c4883ffcd18b85a70412d4badc54a",
-  "sha512": "fa08832a8c198bb3e873e58edb77059137964dbbd8cdfa3752472143cb97d12eef31bf7c2a2551add2fc970091117e3d574f746cd2005f500971bb44d3ee3b37",
+  "version": "16.2.6",
+  "file": "zotero-mindflow-16.2.6.xpi",
+  "size": 587295,
+  "sha256": "87268376f8a7723436fee51985f7d61d507e77ca22b18d0da1cb8ef45e5e9720",
+  "sha512": "a48547472ff8ab068f2b8432d21f8469a5f23ade252a1a733c730e8db6602c09ba0bd3b8f1436a21362e980f27a851a8dfeb9959102a00133f9bb985770280c1",
   "entries": 68,
   "payloadVerifiedAgainstWorkspace": true,
   "updateFeedsVerified": [
