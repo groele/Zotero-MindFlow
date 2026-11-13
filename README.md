@@ -8,12 +8,12 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 
 [简体中文](README.md) · [English](README.en.md)
 
-[![Version](https://img.shields.io/badge/version-16.2.7-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v16.2.7)
+[![Version](https://img.shields.io/badge/version-16.2.8-245ac7?style=flat-square)](https://github.com/groele/Zotero-MindFlow/releases/tag/v16.2.8)
 [![Zotero Compatibility](https://img.shields.io/badge/Zotero-10.0--12.*-brightgreen?style=flat-square)](https://www.zotero.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange?style=flat-square)](LICENSE)
-[![Tests Passing](https://img.shields.io/badge/host_tests-116%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
+[![Tests Passing](https://img.shields.io/badge/host_tests-124%20passed-success?style=flat-square)](https://github.com/groele/Zotero-MindFlow)
 
-[📦 下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v16.2.7/zotero-mindflow-16.2.7.xpi) · [📝 更新日志](docs/releases/v16.2.7.md) · [💬 问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
+[📦 下载 XPI](https://github.com/groele/Zotero-MindFlow/releases/download/v16.2.8/zotero-mindflow-16.2.8.xpi) · [📝 更新日志](docs/releases/v16.2.8.md) · [💬 问题反馈](https://github.com/groele/Zotero-MindFlow/issues)
 
 [📖 产品定位](#overview) · [📦 安装与更新](#installation) · [🚀 快速开始](#quick-start) · [🛠️ 核心功能](#features) · [✨ 深度特性解析](#highlights) · [⚙️ 设置与使用](#settings) · [🔒 数据、同步与外部服务](#data) · [🧪 兼容性与验证范围](#compatibility) · [❓ 常见问题](#troubleshooting) · [💻 开发与详细文档](#development) · [🔗 系列产品](#series) · [📄 项目来源与许可](#license)
 
@@ -38,24 +38,24 @@ _让研究的每一步衔接起来。 / Connect each step of research._
 | 规范指标 | 官方参数与要求 |
 |---|---|
 | **插件标识 (Add-on ID)** | `mindflow@groele.org` |
-| **当前正式版** | `v16.2.7` (Feature Release) |
+| **当前正式版** | `v16.2.8` (Feature Release) |
 | **宿主兼容范围** | Zotero `10.0` 至 `12.*`（声明范围；本轮实测 Zotero 10.0.7，11/12 待实测） |
-| **安装包文件名** | `zotero-mindflow-16.2.7.xpi` |
-| **发布文件大小** | `583,295 字节` |
-| **SHA-256 校验和** | `4589ea6b00fce6b749589be33426d9815c31b0715eb512a759d54c655bee66c8` |
+| **安装包文件名** | `zotero-mindflow-16.2.8.xpi` |
+| **发布文件大小** | `622,525 字节` |
+| **SHA-256 校验和** | `4266eac8d56c16151fc085a34459fc6c9102888f493af9d7b0a1e26cb301e980` |
 | **在线更新源** | [zotero/update.json](zotero/update.json) |
 
 ### 安装步骤
 
-1. 从官方 Release 下载最新的正式发布包 [zotero-mindflow-16.2.7.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v16.2.7/zotero-mindflow-16.2.7.xpi)（**当前正式版 v16.2.7**，请直接下载 XPI 文件，切勿下载 Source code 源码压缩包）。
+1. 从官方 Release 下载最新的正式发布包 [zotero-mindflow-16.2.8.xpi](https://github.com/groele/Zotero-MindFlow/releases/download/v16.2.8/zotero-mindflow-16.2.8.xpi)（**当前正式版 v16.2.8**，请直接下载 XPI 文件，切勿下载 Source code 源码压缩包）。
 2. 在 Zotero 顶部菜单依次打开 **工具 → 插件／附加组件**（Tools → Plugins / Add-ons）。
-3. 点击附加组件管理器右上角的**齿轮设置图标**，选择 **从文件安装插件...**（Install Add-on From File...），或直接将下载好的 `zotero-mindflow-16.2.7.xpi` 拖入窗口。
-4. 选中已下载的 `zotero-mindflow-16.2.7.xpi` 文件完成载入，根据系统提示重启 Zotero。
+3. 点击附加组件管理器右上角的**齿轮设置图标**，选择 **从文件安装插件...**（Install Add-on From File...），或直接将下载好的 `zotero-mindflow-16.2.8.xpi` 拖入窗口。
+4. 选中已下载的 `zotero-mindflow-16.2.8.xpi` 文件完成载入，根据系统提示重启 Zotero。
 
 > [!TIP]
 > **更新与校验说明**  
 > - **在线自动更新**：更新清单由不可变资产源托管于 [zotero/update.json](zotero/update.json)，后续可在 Zotero 插件管理器中直接自动或手动检查升级。  
-> - **文件校验和**：`4589ea6b00fce6b749589be33426d9815c31b0715eb512a759d54c655bee66c8` (SHA-256)。
+> - **文件校验和**：`4266eac8d56c16151fc085a34459fc6c9102888f493af9d7b0a1e26cb301e980` (SHA-256)。
 > - **下载重命名提示**：部分浏览器（如 Safari 或 Edge 某些配置）可能在下载后自动将扩展名改为 `.zip`。遇到此情况请将其重新命名为 `.xpi` 后再进行安装。  
 > - **数据安全建议**：跨大版本升级前，建议在 MindFlow 设置中先导出工作区完整备份。
 
@@ -76,7 +76,7 @@ graph LR
     style C fill:#dcfce7,stroke:#4ade80,stroke-width:1px
 ```
 
-1. **选中文献与开启导图**：在 Zotero 文献列表中选中目标论文，展开右侧文献信息栏（ItemPane）中的“思维导图”区域，点击 **一键生成思维导图**（或 **打开思维导图工作台**），亦可直接点击 Zotero 主工具栏的 MindFlow 旋翼图标。
+1. **选中文献与开启导图**：在 Zotero 文献列表中选中目标论文，展开右侧文献信息栏（ItemPane）中的“思维导图”区域，点击 **一键生成思维导图**（或 **打开思维导图工作台**），亦可直接点击 Zotero 主工具栏的 MindFlow 星云图谱图标。
 2. **提取材料与结构梳理**：选用内置研读模板（如“论文精读”），一键抓取文献元数据、摘要与高亮笔记；利用全键盘流式操作（`Tab` 插入子节点，`Enter` 在下方插入同级节点，`Shift + Enter` 在上方插入同级节点）迅速勾勒主线。
 3. **安全保存与多模态归档**：本地编辑实时自动保存；点击工具栏 **归档到 Zotero**（或按下 `Ctrl + S`），系统将生成与该文献条目唯一绑定的 `.mindflow` 专属附件，或一键导出为免安装的单文件离线交互 HTML。
 
@@ -248,7 +248,7 @@ python scripts/package-xpi.py --verify-only
 ```
 
 - [审查文档索引 / Audit documentation](docs/README.md)
-- [最新版本说明 / Release notes v16.2.7](docs/releases/v16.2.7.md)
+- [最新版本说明 / Release notes v16.2.8](docs/releases/v16.2.8.md)
 - [产品品牌定位 / Brand specifications](docs/brand/PRODUCT.md)
 - [发布标签与版本策略 / Release tag policy](docs/release-tag-policy.md)
 - [原详细功能指南与致谢 · Reference](docs/reference/README.md)

@@ -4,8 +4,15 @@
   "capturedAt": "2026-11-06",
   "debtCleared": true,
   "note": "Known §5.9 debt. Listed files may stay at or below the recorded line count, but must never grow; any other source file above 360 lines fails the guard. Remove an entry only after splitting that module below 360 lines. Every entry must still exist and must still exceed the ceiling - stale entries are rejected by the baseline integrity test.",
-  "lastReleasedVersion": "16.2.7",
+  "lastReleasedVersion": "16.2.8",
   "splitHistory": [
+    {
+      "version": "16.2.8",
+      "date": "2026-11-13",
+      "resolved": [
+        "Redesign MindFlow brand icon into Tapered Galaxy Flow (G2) across SVGs, 16-512px PNGs, 16px context-fill sidebar glyph, and MindFlowMark React component"
+      ]
+    },
     {
       "version": "16.2.7",
       "date": "2026-11-12",

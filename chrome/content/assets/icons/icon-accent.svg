@@ -1,19 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="24" height="24" fill="none">
   <defs>
-    <linearGradient id="w1-sm" x1="4" y1="6" x2="20" y2="9" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#06B6D4" />
-      <stop offset="100%" stop-color="#3B82F6" />
+    <linearGradient id="g2a-hub" x1="36" y1="42" x2="82" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#8B5CF6" />
+      <stop offset="50%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#EC4899" />
     </linearGradient>
-    <linearGradient id="w2-sm" x1="3" y1="11" x2="21" y2="14" gradientUnits="userSpaceOnUse">
+    <linearGradient id="g2a-arm1" x1="56" y1="64" x2="104" y2="28" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#6366F1" />
-      <stop offset="100%" stop-color="#A855F7" />
+      <stop offset="100%" stop-color="#22D3EE" />
     </linearGradient>
-    <linearGradient id="w3-sm" x1="5" y1="16" x2="19" y2="20" gradientUnits="userSpaceOnUse">
+    <linearGradient id="g2a-arm2" x1="56" y1="64" x2="24" y2="34" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#8B5CF6" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <linearGradient id="g2a-arm3" x1="56" y1="64" x2="96" y2="100" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#EC4899" />
-      <stop offset="100%" stop-color="#F43F5E" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#F97316" />
     </linearGradient>
   </defs>
-  <path d="M 5 16.5 C 9 15.8, 13 17.2, 19 15.8 C 16 19, 11 21, 5 16.5 Z" fill="url(#w3-sm)" />
-  <path d="M 2.5 11.2 C 8.5 9, 14 12.8, 21.5 9.8 C 17.5 14.5, 10.5 16.8, 2.5 11.2 Z" fill="url(#w2-sm)" />
-  <path d="M 5 6.8 C 10.5 3.5, 15 7.5, 20.5 3.5 C 17.5 9, 11 11.5, 5 6.8 Z" fill="url(#w1-sm)" />
+  <path d="M 52 56 Q 74 34, 96 28 L 100 35 Q 78 46, 62 66 Z" fill="url(#g2a-arm1)" />
+  <path d="M 48 64 Q 30 52, 22 36 L 28 31 Q 40 44, 58 56 Z" fill="url(#g2a-arm2)" />
+  <path d="M 62 60 Q 82 74, 96 94 L 89 100 Q 72 82, 52 70 Z" fill="url(#g2a-arm3)" />
+  <path d="M 50 66 Q 36 82, 24 94 L 30 99 Q 44 86, 58 72 Z" fill="#14B8A6" />
+  <circle cx="99" cy="31" r="16" fill="#06B6D4" />
+  <circle cx="99" cy="31" r="15.25" stroke="#BAE6FD" stroke-opacity="0.55" stroke-width="1.5" />
+  <circle cx="25" cy="33" r="13" fill="#3B82F6" />
+  <circle cx="25" cy="33" r="12.25" stroke="#BFDBFE" stroke-opacity="0.5" stroke-width="1.5" />
+  <circle cx="93" cy="97" r="15" fill="#F97316" />
+  <circle cx="93" cy="97" r="14.25" stroke="#FED7AA" stroke-opacity="0.5" stroke-width="1.5" />
+  <circle cx="27" cy="96" r="11" fill="#10B981" />
+  <circle cx="27" cy="96" r="10.25" stroke="#A7F3D0" stroke-opacity="0.45" stroke-width="1.5" />
+  <circle cx="56" cy="64" r="24" fill="url(#g2a-hub)" />
+  <circle cx="56" cy="64" r="23.25" stroke="#EDE9FE" stroke-opacity="0.55" stroke-width="1.5" />
+  <circle cx="56" cy="64" r="15" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="2.5" />
+  <path d="M 56 54 C 56 61, 59 64, 66 64 C 59 64, 56 67, 56 74 C 56 67, 53 64, 46 64 C 53 64, 56 61, 56 54 Z" fill="#FFFFFF" />
 </svg>
