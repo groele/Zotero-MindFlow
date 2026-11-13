@@ -79,7 +79,6 @@ mindflow-item-pane-readonly-hint = This item is read-only or in Trash. Maps are 
 ## Preferences
 mindflow-pref-title = Zotero MindFlow
 mindflow-pref-status-checking = Loading preferences…
-mindflow-pref-btn-open-workspace = Open Workspace
 
 mindflow-pref-group-workspace = Literature & Workspace
 mindflow-pref-subhead-interface = Interface & Toolbar

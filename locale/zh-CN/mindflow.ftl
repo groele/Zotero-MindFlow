@@ -78,7 +78,6 @@ mindflow-item-pane-readonly-hint = 当前文献为只读（或在回收站中）
 ## Preferences
 mindflow-pref-title = Zotero MindFlow
 mindflow-pref-status-checking = 正在加载设置项…
-mindflow-pref-btn-open-workspace = 打开导图工作台
 
 mindflow-pref-group-workspace = 文献与工作台
 mindflow-pref-subhead-interface = 工作台界面与工具栏

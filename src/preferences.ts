@@ -126,11 +126,6 @@ export function init(win: Window): void {
 
     updateDependencies(doc);
 
-    const openButton = doc.getElementById('mindflow-btn-open-workspace');
-    if (openButton) {
-      openButton.onclick = () => Zotero.MindFlow?.openMindFlow?.({ mode: 'open' });
-    }
-
     const resetButton = doc.getElementById('mindflow-btn-reset-defaults');
     if (resetButton) {
       resetButton.onclick = () => {
