@@ -282,3 +282,6 @@ python scripts/package-xpi.py --verify-only
 - **Origin Notice**: Distributed as an independently maintained add-on within the Zotero Flow series; it is not a direct downstream fork of any single third-party mind mapping add-on. `llm-for-zotero` is an optional external runtime and not a derivative source of MindFlow's codebase.
 - **License**: Released under the [MIT License](LICENSE).
 - **Trademarks & Disclaimer**: An independent open-source project, not affiliated with or endorsed by Corporation for Digital Scholarship or Zotero. All third-party trademarks belong to their respective owners.
+
+
+**Acknowledgements and third-party rights:** See [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) for upstream authorship and community credits, and [THIRD_PARTY.md](THIRD_PARTY.md) for license provenance and release verification. Credits do not replace the original license, copyright statements or distribution obligations.
