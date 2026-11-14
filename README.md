@@ -282,3 +282,9 @@ python scripts/package-xpi.py --verify-only
 - **开发来源声明**：本插件作为独立维护的 Zotero Flow 生态组件发布，未基于任何单一第三方 Zotero 导图插件进行二次分支包装。`llm-for-zotero` 为可选的外部运行时环境，非本插件的源代码派生来源。
 - **开源许可证**：遵循 [MIT License](LICENSE) 协议发布。
 - **免责与商标声明**：本系列为开源社区独立项目，并非 Corporation for Digital Scholarship 或 Zotero 官方团队所开发的产品。Zotero 名称与商标归各自权利人所有。
+
+---
+
+## 第三方版权与许可证核查 / Third-party rights
+
+本项目的开源许可证并不自动覆盖上游插件、第三方代码、图标、字体、数据集或外部服务内容。各来源的署名、许可证、实际打包内容与待完成的验证事项见 [THIRD_PARTY.md](THIRD_PARTY.md)。仓库改为 Private 不会取消已经适用的第三方许可义务；未完成的检查不能视为已获版权清查证明。
